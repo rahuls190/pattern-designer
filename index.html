@@ -1,0 +1,1639 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pattern Designer</title>
+<style>
+:root{--bg:#f4efe6;--panel:#fbf8f2;--ink:#231f2e;--mute:#6f6a78;--line:#ddd3c1;--accent:#2b3a8c;--gold:#b98a2e;--ok:#1f7a4d}
+@media(prefers-color-scheme:dark){:root{--bg:#16141d;--panel:#1e1b28;--ink:#efe9dc;--mute:#9b95a8;--line:#332f42;--accent:#8fa0ff;--gold:#d8ac4d;--ok:#4fbd8a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 Georgia,'Times New Roman',serif}
+header{display:flex;gap:20px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
+.logo{font-size:19px;letter-spacing:.04em;white-space:nowrap}.logo b{color:var(--gold)}
+nav{display:flex;gap:2px;font-family:system-ui,sans-serif;font-size:13px;flex-wrap:wrap}
+nav a{padding:6px 12px;border-radius:6px;color:var(--mute);text-decoration:none;cursor:pointer;user-select:none}
+nav a.on{background:var(--accent);color:#fff}
+.btn{font:600 13px system-ui,sans-serif;padding:7px 13px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.pri{background:var(--accent);color:#fff;border-color:var(--accent)}
+.spacer{flex:1}
+main{display:grid;grid-template-columns:250px 1fr 292px;height:calc(100vh - 58px);min-height:540px}
+aside{background:var(--panel);overflow:auto;padding:14px;font-family:system-ui,sans-serif;font-size:13px}
+aside.l{border-right:1px solid var(--line)}aside.r{border-left:1px solid var(--line)}
+h3{margin:16px 0 7px;font:600 10.5px system-ui,sans-serif;letter-spacing:.11em;text-transform:uppercase;color:var(--mute)}
+h3:first-child{margin-top:0}
+.item{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:7px 9px;border-radius:6px;cursor:pointer;margin-bottom:2px;user-select:none}
+.item:hover{background:var(--bg)}
+.item.on{background:var(--bg);box-shadow:inset 3px 0 var(--accent);font-weight:600}
+.item small{color:var(--mute);font-weight:400;font-size:11px}
+.grp{font:600 9.5px system-ui,sans-serif;letter-spacing:.09em;text-transform:uppercase;color:var(--mute);
+  margin:13px 0 4px;padding:0 0 3px 9px;border-bottom:1px solid var(--line)}
+.grp:first-child{margin-top:0}
+.grp em{display:block;font:400 10px system-ui,sans-serif;letter-spacing:0;text-transform:none;
+  opacity:.75;margin-top:1px}
+.tag{font-size:9.5px;padding:2px 6px;border-radius:99px;border:1px solid var(--line);color:var(--mute);white-space:nowrap;font-weight:400}
+.tag.doc{color:var(--ok);border-color:var(--ok)}.tag.pl{color:var(--gold);border-color:var(--gold)}
+.stage{display:flex;flex-direction:column;background:var(--bg);min-width:0}
+.tools{display:flex;gap:8px;padding:9px 14px;align-items:center;flex-wrap:wrap;font-family:system-ui,sans-serif;font-size:13px}
+.seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{border:0;border-right:1px solid var(--line);background:var(--panel);color:var(--mute);padding:7px 11px;font:13px system-ui,sans-serif;cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--ink);color:var(--bg)}
+.canvas{flex:1;margin:0 14px;border:1px solid var(--line);border-radius:8px;overflow:hidden;position:relative;min-height:220px}
+.canvas svg{width:100%;height:100%;display:block}
+.info{padding:9px 14px 12px;font-family:system-ui,sans-serif;font-size:11.5px;color:var(--mute);display:flex;gap:14px;flex-wrap:wrap}
+.info b{color:var(--ink);font-weight:600}
+.row{margin-bottom:11px}
+.row label,.rlab{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:3px;font-size:12.5px}
+.row output{color:var(--mute);font-variant-numeric:tabular-nums}
+.val{display:flex;align-items:baseline;gap:2px;color:var(--mute)}
+.val input{width:52px;padding:2px 4px;border:1px solid transparent;border-radius:4px;background:var(--bg);
+  color:var(--mute);font:12.5px system-ui,sans-serif;text-align:right;font-variant-numeric:tabular-nums;
+  -moz-appearance:textfield;appearance:textfield}
+.val input::-webkit-outer-spin-button,.val input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.val input:hover{border-color:var(--line)}
+.val input:focus{border-color:var(--accent);background:var(--bg);color:var(--ink);outline:none}
+.val u{font-size:11.5px;text-decoration:none}
+input[type=range]{width:100%;accent-color:var(--accent);margin:0}
+select{width:100%;padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:13px system-ui,sans-serif}
+.chk{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12.5px;cursor:pointer}
+.chk input{accent-color:var(--accent)}
+.sw{display:flex;gap:6px;flex-wrap:wrap}
+.sw i{width:28px;height:28px;border-radius:5px;border:2px solid transparent;box-shadow:0 0 0 1px var(--line);cursor:pointer}
+.sw i.on{border-color:var(--accent)}
+.card{border:1px solid var(--line);border-radius:8px;padding:9px 10px;margin-top:12px;background:var(--bg);line-height:1.45;font-size:12px}
+/* only a leading <b> is the card's title — bold inside the text stays inline */
+.card>b:first-child{display:block;margin-bottom:3px;font-size:11px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--mute)}
+.warn{color:var(--gold)}
+.page{display:none;max-width:860px;margin:0 auto;padding:28px 22px 60px}
+.page.on{display:block}
+.page h1{font-size:26px;margin:0 0 6px}.page h2{font-size:18px;margin:26px 0 8px;border-bottom:1px solid var(--line);padding-bottom:5px}
+.page p,.page li{font-size:14.5px}
+.page table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}
+.page td,.page th{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}
+.page th{font:600 11px system-ui,sans-serif;text-transform:uppercase;letter-spacing:.08em;color:var(--mute)}
+.lead{color:var(--mute);font-size:14px}
+code{font:12.5px ui-monospace,Consolas,monospace;background:var(--panel);padding:1px 5px;border-radius:4px}
+@media(max-width:940px){
+  main{display:flex;flex-direction:column;height:auto}
+  .stage{order:-1}.canvas{height:56vh;margin:0 10px}
+  aside.l,aside.r{border:0;border-top:1px solid var(--line)}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Pattern<b>◆</b>Designer</div>
+  <nav id="nav">
+    <a class="on" data-p="designer">Designer</a>
+    <a data-p="constructions">Constructions</a>
+    <a data-p="sources">Sources</a>
+    <a data-p="about">About</a>
+  </nav>
+  <div class="spacer"></div>
+  <button class="btn" id="rnd">Randomise</button>
+  <button class="btn" id="copy">Copy link</button>
+  <span class="seg"><button class="btn pri" id="exp">SVG</button><button class="btn" id="expPdf" title="Vector PDF — this is the format an .ai file uses internally, so Illustrator opens it directly">PDF</button><button class="btn" id="expDxf" title="DXF R12 — AutoCAD opens it directly; convert to DWG if you need that container">DXF</button></span>
+</header>
+
+<!-- ================= DESIGNER ================= -->
+<main id="p-designer">
+  <aside class="l">
+    <h3>Construction engine</h3>
+    <div id="engines"></div>
+    <h3 id="h-tiling">Underlying tiling</h3>
+    <div id="tilings"></div>
+    <div class="card" id="srcCard"></div>
+  </aside>
+
+  <section class="stage">
+    <div class="tools">
+      <div class="seg" id="modes"></div>
+      <span class="spacer"></span>
+      <span class="seg"><button id="zo">−</button><button id="zi">+</button></span>
+      <button class="btn" id="reset">Reset</button>
+    </div>
+    <div class="canvas"><svg id="svg" viewBox="0 0 1000 720" preserveAspectRatio="xMidYMid slice"></svg></div>
+    <div class="info" id="info"></div>
+  </section>
+
+  <aside class="r" id="params"></aside>
+</main>
+
+<!-- ================= CONSTRUCTIONS ================= -->
+<div class="page" id="p-constructions">
+  <h1>How each construction works</h1>
+  <p class="lead">Every pattern in the Designer is generated from a documented construction, not traced from a photograph. These are the methods implemented so far.</p>
+
+  <h2>1 · Polygons in contact (Hankin / Kaplan)</h2>
+  <p>Start with an underlying tiling of regular polygons. On every polygon edge mark the <b>midpoint</b>. From each midpoint send two rays into the tile, each making the same <b>contact angle</b> with the edge. Around each tile vertex, the ray from one edge meets the ray from the neighbouring edge; that meeting point is a star point. Joining midpoint → meeting point → midpoint all the way round the tile gives the motif, and because every midpoint is shared with the neighbouring tile the lines run continuously across the whole plane. Finally the underlying polygons are discarded.</p>
+  <p>The contact angle is the single control that turns one tiling into a whole family: shallow angles give wide, open stars, steep angles give tight, spiky ones. This is Hankin's method [3], in the computational form given by Kaplan [7].</p>
+
+  <h2>2 · Underlying tilings</h2>
+  <p>Eight tilings are implemented — the three regular ones and five Archimedean ones that historically carry the great majority of Islamic star patterns. The number of sides of a polygon sets the local symmetry of the star that forms on it: an octagon carries an 8-point star, a dodecagon a 12-point star.</p>
+  <table><tr><th>Tiling</th><th>Vertex figure</th><th>Stars it produces</th></tr>
+  <tr><th colspan="3" style="padding-top:12px">Regular — one polygon, every vertex alike</th></tr>
+  <tr><td>Square</td><td>4.4.4.4</td><td>8-point</td></tr>
+  <tr><td>Triangular</td><td>3.3.3.3.3.3</td><td>6-point</td></tr>
+  <tr><td>Hexagonal</td><td>6.6.6</td><td>6- and 12-point</td></tr>
+  <tr><th colspan="3" style="padding-top:12px">Truncated — a regular tiling with its corners cut off</th></tr>
+  <tr><td>Truncated square</td><td>4.8.8</td><td>8-point (the classic 8/4 field)</td></tr>
+  <tr><td>Truncated trihexagonal</td><td>4.6.12</td><td>12-point rosettes</td></tr>
+  <tr><td>Truncated hexagonal</td><td>3.12.12</td><td>12-point pairs</td></tr>
+  <tr><th colspan="3" style="padding-top:12px">Other semi-regular — several polygons, every vertex alike</th></tr>
+  <tr><td>Trihexagonal</td><td>3.6.3.6</td><td>6-point with triangular links</td></tr>
+  <tr><td>Rhombitrihexagonal</td><td>3.4.6.4</td><td>12-, 8- and 6-point mixed</td></tr>
+  <tr><td>Elongated triangular</td><td>3.3.3.4.4</td><td>4- and 6-point in rows</td></tr></table>
+  <p>Truncating a tiling cuts each corner back to a new edge, so an <i>n</i>-gon becomes a 2<i>n</i>-gon: truncating the square tiling turns squares into octagons and leaves small squares at the old vertices (4.8.8), and truncating the hexagonal tiling turns hexagons into dodecagons and leaves triangles (3.12.12). That is why the truncated family carries the large stars — an octagon hosts an 8-point star and a dodecagon a 12-point one.</p>
+
+  <h2>3 · Star polygons {n/d}</h2>
+  <p>Divide a circle into <b>n</b> equal parts and join every <b>d</b>-th point. When <code>gcd(n,d) &gt; 1</code> the figure falls into several separate closed components drawn on top of one another — {12/4} is three squares, {12/3} is four triangles. This is the compass construction taught in the Met's free activity pack [1] and is kept as a separate engine because it is a <i>radial</i> construction: the star's own symmetry is independent of the translation symmetry of the panel it sits in.</p>
+
+  <h2>4 · Dual (Laves) tilings</h2>
+  <p>Every tiling has a dual: put one vertex at the centre of each face and join two of them whenever their faces share an edge. Each <i>vertex</i> of the original therefore becomes a <i>face</i> of the dual, found by taking the centres of the tiles around it in angular order. This is computed from the tiles themselves, so it works for all nine tilings without a separate definition, and the duals of the uniform tilings are the Laves tilings — the trihexagonal dual is the rhombille, the truncated square dual is the tetrakis square, the truncated trihexagonal dual is the kisrhombille, and the square tiling is its own dual. Fathauer [29] ch.2.</p>
+  <p>A vertex only yields a face when every tile around it is present, so the outermost ring of generated tiles is sacrificial and the pattern is built with a wider margin whenever the dual is on.</p>
+
+  <h2>5 · Self-similar subdivision</h2>
+  <p>Replace each tile with scaled copies of the same prototile set, to a finite depth. Each rule lists its children in the prototile's own local coordinates, and a frame built from the parent's vertices maps those back to the plane — so rotation and reflection fall out of the vertex order and never have to be tracked. Fathauer [29] ch.6 and ch.8.</p>
+  <ul>
+    <li><b>Penrose deflation</b> — Robinson triangles cut by the golden ratio. Each rhombus is two mirrored triangles. Reaching the same tiling as the multigrid engine by a completely different route.</li>
+    <li><b>Triangle (rep-4)</b> — any triangle splits into four similar copies at its edge midpoints.</li>
+    <li><b>Chair (rep-4)</b> — the L-tromino; four half-scale copies fill it exactly.</li>
+    <li><b>Sierpinski</b> — the same triangle rule with the middle child dropped. This is a <i>fractal</i>, not a tiling: exactly a quarter of the area is discarded at every step, and the app says so rather than implying it fills the plane. Fathauer ch.9.</li>
+  </ul>
+
+  <h2>6 · Quasiperiodic multigrid (de Bruijn)</h2>
+  <p>Take <b>N</b> families of equally spaced parallel lines, family <i>i</i> having unit normal <b>e<sub>i</sub></b>, its <i>k</i>-th line being every point where <code>P·e_i + g_i = k</code>. Every crossing of two lines becomes one tile of the dual tiling.</p>
+  <p>For a crossing at <i>P</i>, give each family the index <code>K_m = ceil(P·e_m + g_m)</code> — which comes out as exactly <i>k</i> for the two families that cross there. The dual vertex is the vector sum <code>Σ K_m·e_m</code>. The four regions meeting at the crossing differ only in those two indices, and only by one, so the four vertices are <i>V</i>, <i>V</i>+e<sub>i</sub>, <i>V</i>+e<sub>i</sub>+e<sub>j</sub>, <i>V</i>+e<sub>j</sub>: a rhombus of unit edge whose angle is the angle between the two normals. Spacing the normals over a half turn gives N directions, ⌊N/2⌋ rhombus shapes and a patch with 2N-fold symmetry. <b>N = 5 is the Penrose tiling</b>; N = 4 is the octagonal Ammann–Beenker tiling.</p>
+  <p><b>Singular offsets.</b> The construction assumes no three lines meet at a point. At a whole-number <b>pattern offset</b> that assumption fails everywhere at once — every family passes through the centre. This is not a breakdown: a crossing of <i>m</i> lines simply has a 2<i>m</i>-gon as its dual, the zonogon generated by those <i>m</i> normals, and the rhombus is only the <i>m</i> = 2 case. Crossings are therefore gathered by position and one tile is built per distinct point, whatever its order. At offset 0 with N = 5 this puts a single <b>decagon</b> at the centre, ringed by hexagons — the decagonal rosette, which is where this construction meets the geometry Lu and Steinhardt discuss [4].</p>
+  <p>The result is <b>aperiodic</b>: it has long-range order and sharp rotational symmetry but never repeats, however far it is extended. That is a genuinely different thing from the wallpaper repeats elsewhere in this tool, and it is labelled as mathematics rather than as a historical reconstruction — de Bruijn's method is not a claim about how any historical pattern was made.</p>
+
+  <h2>7 · Voronoi — sharp to round</h2>
+  <p>Scatter seed points, then give every point the region of the panel that is closer to it than to any other point. Each region is a convex polygon, found by clipping the panel with the perpendicular bisector between that seed and every other seed. <b>Lloyd relaxation</b> repeatedly moves each seed to the centre of its own cell, which evens the cells out.</p>
+  <p><b>Repeating layouts.</b> A single scatter of seeds gives one unique panel that cannot be tiled or extended. Since the Voronoi diagram of a periodic set of seeds is itself periodic, the seeds are instead placed inside one repeat unit — on a hexagonal, square or brick lattice — and that unit is solved against copies of itself on all four sides. The finished cells are then translated across the panel, so the pattern repeats seamlessly and can be extended to any size. Only one unit is ever solved, however many repeats are shown, which is what keeps it fast enough to drag a slider against.</p>
+  <p><b>Jitter</b> moves each seed off its lattice point. At 0 the cells are the exact regular tiling the lattice implies — hexagons, or squares — and as it rises they become progressively less regular without ever losing the repeat. <b>Radial mandala</b> and <b>random scatter</b> are also available; neither repeats, and the radial one mirrors seeds around the centre so the result reads as ornament rather than as noise.</p>
+  <p>The <b>sharp → round</b> control then replaces every corner of every cell with a curve. At 0 the cells are hard-edged polygons. As the value rises, each corner is cut back along both of its edges and bridged with a quadratic curve. At 1 the cut reaches the middle of every edge, the straight parts vanish entirely, and the cell becomes a single smooth closed curve. The same control is available on the Islamic engines, where it softens star points the way a cut stone or cast metal rib naturally does.</p>
+  <p>Two details decide whether the result looks even. First, clipping leaves duplicate and collinear vertices wherever a bisector passes close to an existing corner; those have a zero-length edge, nothing to cut back, and would stay hard while everything around them softened — so they are removed before rounding. Second, the cut is sized from <i>one radius shared by the whole pattern</i>, capped at half an edge wherever the edge is too short to give it, rather than from a fixed fraction of each corner's own edges. A fraction would give a corner between two short edges a small radius and its neighbour a large one. Sizing the cut from the edge length and one global value also means two cells sharing an edge always round it identically, so their outlines stay exactly on top of one another. Where a cell has a very short edge the radius is still limited by that edge — at that point the corner is cut right back to the edge midpoint, which is as round as it can geometrically be.</p>
+  <p>This is contemporary work, not a historic reconstruction, and it is labelled that way in the app.</p>
+
+  <h2>8 · Render modes</h2>
+  <ul>
+    <li><b>Construction</b> — shows the underlying polygons, edge midpoints and contact rays that produced the pattern.</li>
+    <li><b>Line</b> — the bare pattern as single-weight line art.</li>
+    <li><b>Interlace</b> — over and under is a property of each <i>crossing</i>, not of each tile, because a strand is one arm of a tile joined to one arm of its neighbour. Every strand is walked and the assignment flips at each crossing it meets. Perfect alternation is not always possible — an odd cycle of crossings forces at least one repeat — so a small number of crossings keep the assignment they already had.</li>
+    <li><b>Solid / void</b> — the jali reading. On the Voronoi engine each cell is cut out as a <i>closed opening</i>: the cell is shrunk on every side by the rib width, which is exact because Voronoi cells are convex, and what is left is solid material. A cell too small to survive the inset simply stays solid, which is what would happen in a real panel. Closed openings are also what a cutter needs, so this exports as usable contours rather than as centre lines. The aperture is then measured from the shapes actually on screen — rounding included, clipped to the panel — not estimated from line length. On the star engines the lines are stroked as ribs instead, since those patterns have no closed faces to cut.</li>
+    <li><b>Mosaic</b> — the zellige reading: closed pieces filled from a palette and separated by grout.</li>
+  </ul>
+</div>
+
+<!-- ================= SOURCES ================= -->
+<div class="page" id="p-sources">
+  <h1>Sources</h1>
+  <p class="lead">From the research catalogue of 25 September 2026. "Access verified" means a public page or file was found, not that a copyrighted book was read in full.</p>
+  <h2>Directly used for the implemented constructions</h2>
+  <table id="srcMain"></table>
+  <h2>Full register</h2>
+  <table id="srcAll"></table>
+  <h2>Rights</h2>
+  <p>Book diagrams and plate artwork are treated as copyrighted unless the specific edition and image licence permits reuse. All geometry in this tool is constructed from documented principles; no source photograph or book plate is reproduced.</p>
+</div>
+
+<!-- ================= ABOUT ================= -->
+<div class="page" id="p-about">
+  <h1>About</h1>
+  <p class="lead">An interactive designer for geometric ornament, built on documented construction methods rather than style filters.</p>
+  <h2>Why the families are kept apart</h2>
+  <p>A family label alone cannot generate faithful geometry. The same star may arise from different grids, and the same region may contain geometric, vegetal, calligraphic and architectural ornament. So the tool exposes <i>construction engines</i>, and a named regional preset is only ever a stored parameter set pointing at a specific object.</p>
+  <p>Three star engines in particular are kept separate because they are genuinely different methods: compass-based star construction, polygons in contact, and girih tiles. A ten-fold local star can sit inside a field that repeats periodically; the tool does not promise a periodic ten-fold translation lattice.</p>
+  <h2>Confidence labels</h2>
+  <p>Every preset carries one of three labels, and the label shown to the user reflects the real evidence:</p>
+  <ul>
+    <li><b>Documented construction</b> — the method is set out in a published source and implemented directly from it.</li>
+    <li><b>Plausible reconstruction</b> — the geometry is consistent with the object but the original method is not recorded.</li>
+    <li><b>Visual inspiration only</b> — no claim of historic reconstruction is made.</li>
+  </ul>
+  <h2>Still to come</h2>
+  <p>Girih tiles with edge matching and strapwork, self-similar subdivision, arboreal jali, Gothic arch and rose geometry, Art Nouveau spline ironwork, Art Deco fan and stepped grammars, Ottoman floral fields, and fabrication export (DXF, minimum bridge validation) once a fabricator has been consulted.</p>
+</div>
+
+<script>
+'use strict';
+/* ============================================================ geometry */
+const TAU=Math.PI*2, S3=Math.sqrt(3);
+const v=(x,y)=>({x,y});
+const add=(a,b)=>v(a.x+b.x,a.y+b.y);
+const sub=(a,b)=>v(a.x-b.x,a.y-b.y);
+const mul=(a,k)=>v(a.x*k,a.y*k);
+const len=a=>Math.hypot(a.x,a.y);
+const norm=a=>{const l=len(a)||1;return v(a.x/l,a.y/l)};
+const rot=(a,t)=>{const c=Math.cos(t),s=Math.sin(t);return v(a.x*c-a.y*s,a.x*s+a.y*c)};
+const lerp=(a,b,t)=>v(a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t);
+const mid=(a,b)=>v((a.x+b.x)/2,(a.y+b.y)/2);
+function centroid(p){let x=0,y=0;for(const q of p){x+=q.x;y+=q.y}return v(x/p.length,y/p.length)}
+function regular(n,cx,cy,R,ph){const a=[];for(let i=0;i<n;i++){const t=ph+i*TAU/n;a.push(v(cx+R*Math.cos(t),cy+R*Math.sin(t)))}return a}
+/* intersection of ray p+t*d with ray q+u*e */
+function xray(p,d,q,e){const den=d.x*e.y-d.y*e.x;if(Math.abs(den)<1e-9)return null;
+  const t=((q.x-p.x)*e.y-(q.y-p.y)*e.x)/den;return v(p.x+d.x*t,p.y+d.y*t)}
+function polyArea(p){let a=0;for(let i=0,n=p.length;i<n;i++){const q=p[(i+1)%n];a+=p[i].x*q.y-q.x*p[i].y}return a/2}
+
+/* ============================================================ tilings (unit edge length) */
+const R8=1/(2*Math.sin(Math.PI/8)), D8=1+Math.SQRT2;
+const R12=1/(2*Math.sin(Math.PI/12)), A12=R12*Math.cos(Math.PI/12);
+
+/* build squares / hexagons / triangles outward on each edge of a base polygon */
+function outward(poly,kind,pick){
+  const out=[],n=poly.length,c=centroid(poly);
+  for(let i=0;i<n;i++){
+    if(pick && !pick(i)) continue;
+    const a=poly[i],b=poly[(i+1)%n],m=mid(a,b);
+    let nm=norm(sub(m,c));
+    if(kind==='sq') out.push([a,b,add(b,nm),add(a,nm)]);
+    else if(kind==='tri') out.push([a,b,add(m,mul(nm,S3/2))]);
+    else if(kind==='hex'){const hc=add(m,mul(nm,S3/2));const d=sub(a,hc);out.push(regular(6,hc.x,hc.y,1,Math.atan2(d.y,d.x)))}
+  }
+  return out;
+}
+function corners(poly){ /* triangles in the gaps between outward squares */
+  const out=[],n=poly.length,c=centroid(poly),nms=[];
+  for(let i=0;i<n;i++){const m=mid(poly[i],poly[(i+1)%n]);nms.push(norm(sub(m,c)))}
+  for(let i=0;i<n;i++){const P=poly[(i+1)%n];out.push([P,add(P,nms[i]),add(P,nms[(i+1)%n])])}
+  return out;
+}
+const TILINGS={
+  square:{label:'Square',g:'Regular',vf:'4.4.4.4',phase:45,build(){const h=[v(0,0),v(1,0),v(1,1),v(0,1)];return{protos:[h],t1:v(1,0),t2:v(0,1)}}},
+  tri:{label:'Triangular',g:'Regular',vf:'3.3.3.3.3.3',build(){return{protos:[[v(0,0),v(1,0),v(.5,S3/2)],[v(1,0),v(1.5,S3/2),v(.5,S3/2)]],t1:v(1,0),t2:v(.5,S3/2)}}},
+  hex:{label:'Hexagonal',g:'Regular',vf:'6.6.6',build(){return{protos:[regular(6,0,0,1,0)],t1:v(1.5,S3/2),t2:v(0,S3)}}},
+  trihex:{label:'Trihexagonal',g:'Other semi-regular',vf:'3.6.3.6',build(){
+    const h=regular(6,0,0,1,0);
+    return{protos:[h,...outward(h,'tri')],t1:v(2,0),t2:v(1,S3)}}},
+  octasq:{label:'Truncated square',g:'Truncated',vf:'4.8.8',build(){
+    return{protos:[regular(8,0,0,R8,Math.PI/8),regular(4,D8/2,D8/2,Math.SQRT1_2,0)],t1:v(D8,0),t2:v(0,D8)}}},
+  rhombitri:{label:'Rhombitrihexagonal',g:'Other semi-regular',vf:'3.4.6.4',build(){
+    const h=regular(6,0,0,1,0),k=1+S3;
+    return{protos:[h,...outward(h,'sq'),...corners(h)],t1:v(k*Math.cos(Math.PI/6),k*Math.sin(Math.PI/6)),t2:v(0,k)}}},
+  trunctrihex:{label:'Truncated trihexagonal',g:'Truncated',vf:'4.6.12',build(){
+    const d=regular(12,0,0,R12,Math.PI/12),k=3+S3;
+    return{protos:[d,...outward(d,'sq',i=>i%2===1),...outward(d,'hex',i=>i%2===0)],
+      t1:v(k,0),t2:v(k*.5,k*S3/2)}}},
+  elongtri:{label:'Elongated triangular',g:'Other semi-regular',vf:'3.3.3.4.4',build(){
+    const h=S3/2;
+    return{protos:[
+      [v(0,0),v(1,0),v(1,1),v(0,1)],                 /* square */
+      [v(0,1),v(1,1),v(.5,1+h)],                     /* up */
+      [v(.5,1+h),v(1.5,1+h),v(1,1)]],                /* down */
+      t1:v(1,0),t2:v(.5,1+h)}}},
+  girihRhomb:{label:'Rhombus (torange)',girih:true,vf:'72°/108°',build(){return girihTiling('girihRhomb')}},
+  girihHex:{label:'Hexagon (shesh band)',girih:true,vf:'72°·144°',build(){return girihTiling('girihHex')}},
+  girihBow:{label:'Bowtie (sormeh dan)',girih:true,vf:'72°·216°',build(){return girihTiling('girihBow')}},
+  trunchex:{label:'Truncated hexagonal',g:'Truncated',vf:'3.12.12',build(){
+    const d=regular(12,0,0,R12,Math.PI/12),k=2*A12;
+    return{protos:[d,...outward(d,'tri',i=>i%2===0)],t1:v(k,0),t2:v(k*.5,k*S3/2)}}}
+};
+
+/* ---------- girih tiles -------------------------------------------------
+   The five girih shapes all have unit edges and angles that are multiples of
+   36 degrees, so each is built by walking its edge directions. Three of them —
+   rhombus, elongated hexagon and bowtie — are centrally symmetric, and a
+   centrally symmetric polygon tiles the plane by translation on the lattice
+   generated by the sums of consecutive edge vectors. Those three therefore
+   give exact girih fields on their own.
+
+   The strapwork is not a separate construction: girih lines cross each edge at
+   its midpoint at 54 degrees, which is polygons-in-contact with a contact
+   angle of 54. So the same engine draws it. Lu & Steinhardt [4]. */
+const ev=d=>v(Math.cos(d*Math.PI/180),Math.sin(d*Math.PI/180));
+function fromEdges(deg){
+  let p=v(0,0); const o=[p];
+  for(let i=0;i<deg.length-1;i++){p=add(p,ev(deg[i]));o.push(p)}
+  return o;
+}
+const GIRIH_EDGES={
+  girihRhomb:[0,108,180,288],
+  girihHex:[36,0,-36,216,180,144],
+  girihBow:[0,108,216,180,288,36]
+};
+function girihTiling(key){
+  const d=GIRIH_EDGES[key], pts=fromEdges(d);
+  const t1=add(ev(d[0]),ev(d[1])), t2=add(ev(d[1]),ev(d[2]));
+  /* a parallelogram's lattice is simply its two edge vectors */
+  return d.length===4?{protos:[pts],t1:ev(d[0]),t2:ev(d[1])}:{protos:[pts],t1,t2};
+}
+
+/* families shown in the tiling list, in this order */
+const TILING_GROUPS=[
+  ['Regular','one polygon, every vertex alike'],
+  ['Truncated','a regular tiling with its corners cut off'],
+  ['Other semi-regular','two or more polygons, every vertex alike']
+];
+
+/* replicate the base cell over a rectangle, de-duplicating shared tiles */
+function tilePlane(key,scale,rotation,W,H,padMul){
+  const {protos,t1,t2}=TILINGS[key].build();
+  /* Each tiling carries a phase so its finished pattern sits upright. On a
+     square tile the motif joins the four edge midpoints, so it is a diamond —
+     turning the tiling by 45° is what makes the pattern read as a square grid.
+     The Rotation slider then still means "extra rotation on top of that". */
+  rotation+=(TILINGS[key].phase||0)*Math.PI/180;
+  const T1=mul(t1,scale),T2=mul(t2,scale);
+  const cx=W/2,cy=H/2, pad=scale*(padMul||2.5);
+  const reach=Math.hypot(W,H)/2+pad;
+  const N=Math.ceil(reach/Math.min(len(T1),len(T2)))+2;
+  /* protos are generated with duplicates (shared tiles appear from several
+     cells) and are matched by centre within a tolerance — an exact rounded key
+     lets duplicates slip through once the pattern is rotated */
+  const idx=pointIndex(scale*0.02), tiles=[];
+  for(let i=-N;i<=N;i++)for(let j=-N;j<=N;j++){
+    const off=add(mul(T1,i),mul(T2,j));
+    for(const pr of protos){
+      const pts=pr.map(p=>{const q=rot(add(mul(p,scale),off),rotation);return v(q.x+cx,q.y+cy)});
+      const c=centroid(pts);
+      if(c.x<-pad||c.x>W+pad||c.y<-pad||c.y>H+pad) continue;
+      if(idx.get(c)) continue; idx.add(c,1);
+      tiles.push({pts,n:pr.length,c});
+    }
+  }
+  return tiles;
+}
+
+/* Match points within a tolerance. The same corner reached through two
+   different tiles differs in the last few bits, and a plain rounded key splits
+   them whenever they straddle a rounding boundary. Rotation makes that common.
+   Buckets hold lists, so two nearby points can never overwrite each other. */
+function pointIndex(eps){
+  const m=new Map(), g=Math.max(1e-9,eps);
+  const key=(a,b)=>a+','+b;
+  return {
+    get(p){
+      const bx=Math.round(p.x/g), by=Math.round(p.y/g);
+      for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++){
+        const arr=m.get(key(bx+i,by+j));
+        if(arr) for(const e of arr)
+          if(Math.abs(e.p.x-p.x)<g&&Math.abs(e.p.y-p.y)<g) return e;
+      }
+      return null;
+    },
+    add(p,val){
+      const k=key(Math.round(p.x/g),Math.round(p.y/g));
+      let arr=m.get(k); if(!arr){arr=[];m.set(k,arr)}
+      const e={p,v:val}; arr.push(e); return e;
+    },
+    all(){const o=[];for(const arr of m.values()) o.push(...arr);return o}
+  };
+}
+
+/* The dual (Laves) tiling: one vertex per face of the original, joined when the
+   faces share an edge. So each original vertex becomes a dual face, found by
+   taking the centres of the tiles around it in angular order. Computed from the
+   tiles themselves, so it works for every tiling here without a separate
+   definition. Vertices near the generated edge have an incomplete fan, so only
+   those comfortably inside the panel are kept. */
+function dualTiling(tiles,W,H,pad,eps){
+  const idx=pointIndex(eps);
+  for(const t of tiles) for(const p of t.pts){
+    let e=idx.get(p); if(!e) e=idx.add(p,[]);
+    e.v.push(t.c);
+  }
+  const out=[];
+  for(const {p,v:c} of idx.all()){
+    if(c.length<3) continue;
+    if(p.x<-pad||p.x>W+pad||p.y<-pad||p.y>H+pad) continue;
+    const s=c.slice().sort((a,b)=>Math.atan2(a.y-p.y,a.x-p.x)-Math.atan2(b.y-p.y,b.x-p.x));
+    out.push({pts:s,n:s.length,c:centroid(s)});
+  }
+  return out;
+}
+
+/* ============================================================ polygons in contact */
+function picTile(pts,angleDeg){
+  const n=pts.length, c=centroid(pts), th=angleDeg*Math.PI/180;
+  const mids=[],dirs=[];           /* dirs[i] = {toNext, toPrev} rays from midpoint i */
+  for(let i=0;i<n;i++){
+    const a=pts[i],b=pts[(i+1)%n],m=mid(a,b);
+    const nIn=norm(sub(c,m));                       /* inward normal */
+    const uB=norm(sub(b,m)), uA=norm(sub(a,m));
+    mids.push(m);
+    dirs.push({
+      toB:add(mul(uB,Math.cos(th)),mul(nIn,Math.sin(th))),
+      toA:add(mul(uA,Math.cos(th)),mul(nIn,Math.sin(th)))
+    });
+  }
+  /* A thin tile can make the two rays nearly parallel, and their intersection
+     then flies off far outside the tile — which draws as a huge spike across
+     the panel. Keep every meeting point inside the tile's own circumcircle. */
+  let lim=0;
+  for(const q of pts) lim=Math.max(lim,len(sub(q,c)));
+  const path=[],rays=[];
+  for(let i=0;i<n;i++){
+    const j=(i+1)%n;                                 /* share vertex pts[j] */
+    let p=xray(mids[i],dirs[i].toB,mids[j],dirs[j].toA);
+    if(!p) p=mid(mids[i],mids[j]);
+    const d=len(sub(p,c));
+    if(d>lim) p=add(c,mul(sub(p,c),lim/d));
+    path.push(mids[i],p);
+    /* draw the rays past their meeting point, so the construction reads as rays */
+    rays.push([mids[i],lerp(mids[i],p,1.45)],[mids[j],lerp(mids[j],p,1.45)]);
+  }
+  return {path,mids,rays};
+}
+
+/* ============================================================ star polygons {n/d} */
+function starPolys(n,d,cx,cy,R,ph){
+  const g=(function gcd(a,b){return b?gcd(b,a%b):a})(n,d)||1, out=[];
+  for(let s=0;s<g;s++){
+    const comp=[]; let k=s;
+    do{const t=ph+k*TAU/n;comp.push(v(cx+R*Math.cos(t),cy+R*Math.sin(t)));k=(k+d)%n}while(k!==s);
+    if(comp.length>2) out.push(comp);
+  }
+  return out;
+}
+
+/* ============================================================ Voronoi */
+function clipHalf(poly,A,B){   /* keep the side of the bisector of A,B nearer A */
+  const nrm=sub(B,A), m=mid(A,B), off=nrm.x*m.x+nrm.y*m.y, out=[];
+  const side=p=>nrm.x*p.x+nrm.y*p.y-off;
+  for(let i=0,L=poly.length;i<L;i++){
+    const P=poly[i],Q=poly[(i+1)%L],sp=side(P),sq=side(Q);
+    if(sp<=0) out.push(P);
+    if((sp<0&&sq>0)||(sp>0&&sq<0)) out.push(lerp(P,Q,sp/(sp-sq)));
+  }
+  return out;
+}
+/* Half-plane clipping emits duplicate and collinear vertices wherever a bisector
+   passes close to an existing corner. They are invisible in line art but they
+   cannot be rounded — a zero-length edge has no corner to cut back — so they
+   show up as hard corners among rounded ones. Drop them. */
+function cleanPoly(p,eps){
+  const a=[];
+  for(const q of p) if(!a.length||len(sub(q,a[a.length-1]))>eps) a.push(q);
+  while(a.length>2&&len(sub(a[0],a[a.length-1]))<=eps) a.pop();
+  const out=[],n=a.length;
+  for(let i=0;i<n;i++){
+    const A=a[(i-1+n)%n],P=a[i],B=a[(i+1)%n];
+    const d1=norm(sub(P,A)),d2=norm(sub(B,P));
+    const cross=Math.abs(d1.x*d2.y-d1.y*d2.x), dot=d1.x*d2.x+d1.y*d2.y;
+    if(cross<2e-3&&dot>0) continue;          /* straight through: not a corner */
+    out.push(P);
+  }
+  return out.length>=3?out:a;
+}
+function voronoi(sites,W,H,pad){
+  const box=[v(-pad,-pad),v(W+pad,-pad),v(W+pad,H+pad),v(-pad,H+pad)];
+  return sites.map((A,i)=>{
+    let cell=box;
+    for(let j=0;j<sites.length;j++){ if(i===j) continue;
+      const B=sites[j];
+      if((A.x-B.x)**2+(A.y-B.y)**2>1e-9) cell=clipHalf(cell,A,B);
+      if(cell.length<3) break;
+    }
+    return cell.length>=3?cleanPoly(cell,0.6):[];
+  });   /* aligned with `sites` — callers filter, so Lloyd can match cell to seed */
+}
+/* keep the side of a line where nrm·P >= off */
+function clipPlane(poly,nrm,off){
+  const out=[],side=P=>nrm.x*P.x+nrm.y*P.y-off;
+  for(let i=0,L=poly.length;i<L;i++){
+    const P=poly[i],Q=poly[(i+1)%L],sp=side(P),sq=side(Q);
+    if(sp>=0) out.push(P);
+    if((sp<0&&sq>0)||(sp>0&&sq<0)) out.push(lerp(P,Q,sp/(sp-sq)));
+  }
+  return out;
+}
+/* Shrink a convex cell by d on every side. Voronoi cells are always convex, so
+   this is exact: clip by each edge moved inward. Gives closed openings rather
+   than stroked ribs, which is what a cut panel actually is — and what exports
+   as a cuttable contour. A cell too small to survive the inset disappears, i.e.
+   stays solid material, which is also correct. */
+function insetConvex(p,d){
+  if(d<=0) return p;
+  const c=centroid(p); let out=p;
+  for(let i=0,n=p.length;i<n;i++){
+    const a=p[i],b=p[(i+1)%n];
+    let nr=norm(v(-(b.y-a.y),b.x-a.x));
+    if((c.x-a.x)*nr.x+(c.y-a.y)*nr.y<0) nr=mul(nr,-1);
+    out=clipPlane(out,nr,nr.x*a.x+nr.y*a.y+d);
+    if(out.length<3) return [];
+  }
+  return out;
+}
+function rng(seed){let s=seed>>>0||1;return()=>{s^=s<<13;s>>>=0;s^=s>>17;s^=s<<5;s>>>=0;return s/4294967296}}
+
+/* ---------- repeating seed layouts --------------------------------------
+   A Voronoi diagram of a periodic set of seeds is itself periodic. So place the
+   seeds inside one repeat unit, solve that unit against copies of itself on all
+   sides, and then translate the finished cells across the panel. The pattern
+   repeats seamlessly, and only one unit is ever solved, which is what keeps it
+   fast enough to drag a slider against. */
+function unitOf(st,W){
+  const n=Math.max(1,Math.round(st.vrepeat));
+  const ux=W/n, m=Math.max(1,Math.round(Math.sqrt(Math.max(1,st.vcount))));
+  const step=ux/m;
+  return {ux,uy:step*m*(st.vlayout==='hex'?S3/2:1),m,step};
+}
+function baseSeeds(st,W){
+  const {ux,uy,m,step}=unitOf(st,W), R=rng(st.seed), j=st.vjitter/100*step*0.5, out=[];
+  const wrap=(x,L)=>((x%L)+L)%L;
+  for(let r=0;r<m;r++)for(let c=0;c<m;c++){
+    const stag=(st.vlayout==='hex'||st.vlayout==='brick')&&(r%2)?0.5:0;
+    const x=(c+0.5+stag)*step;
+    const y=(r+0.5)*step*(st.vlayout==='hex'?S3/2:1);
+    out.push(v(wrap(x+(R()*2-1)*j,ux), wrap(y+(R()*2-1)*j,uy)));
+  }
+  const seen=new Set();
+  return out.filter(p=>{const k=Math.round(p.x*4)+','+Math.round(p.y*4);
+    if(seen.has(k))return false;seen.add(k);return true});
+}
+function periodicCells(base,ux,uy,relax){
+  const box=[v(-ux,-uy),v(2*ux,-uy),v(2*ux,2*uy),v(-ux,2*uy)];
+  const solve=arr=>{
+    const all=[];
+    for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++)for(const p of arr) all.push(v(p.x+i*ux,p.y+j*uy));
+    return arr.map(A=>{
+      let cell=box;
+      for(const B of all){
+        if(Math.abs(A.x-B.x)<1e-9&&Math.abs(A.y-B.y)<1e-9) continue;
+        cell=clipHalf(cell,A,B); if(cell.length<3) break;
+      }
+      return cell.length>=3?cleanPoly(cell,0.4):[];
+    });
+  };
+  let s=base;
+  for(let k=0;k<relax;k++){                    /* Lloyd, wrapped on the torus */
+    const cs=solve(s);
+    s=cs.map((c,i)=>{ if(c.length<3) return s[i];
+      const g=centroid(c);
+      return v(((g.x%ux)+ux)%ux,((g.y%uy)+uy)%uy)});
+  }
+  return solve(s).filter(c=>c.length>=3);
+}
+function makeSites(st,W,H){
+  const R=rng(st.seed), cx=W/2, cy=H/2, out=[];
+  /* Random scatter must ignore the radial-symmetry setting — otherwise picking
+     "scatter" while symmetry is still 8 silently produces a mandala. */
+  const k=st.vlayout==='scatter'?1:st.vsym;
+  const reach=Math.hypot(W,H)/2*1.15;
+  if(k<=1){
+    /* keep the seeds inside the region that actually has cells, so the count
+       shown on the slider matches the number of cells drawn */
+    const m=st.scale*0.15;
+    for(let i=0;i<st.vcount;i++) out.push(v(-m+R()*(W+2*m), -m+R()*(H+2*m)));
+  }else{
+    /* the wedge is repeated k times, and mirrored it is doubled, so divide by
+       both — otherwise the count on the slider is nothing like what appears */
+    const per=Math.max(1,Math.round(st.vcount/(k*(st.vmirror?2:1))));
+    const base=[];
+    for(let i=0;i<per;i++){
+      const rr=reach*Math.sqrt(R())*0.98, aa=R()*TAU/k;
+      base.push(v(rr*Math.cos(aa),rr*Math.sin(aa)));
+    }
+    for(let s=0;s<k;s++)for(const b of base){
+      const p=rot(b,s*TAU/k); out.push(v(cx+p.x,cy+p.y));
+      if(st.vmirror){const q=rot(v(b.x,-b.y),s*TAU/k);out.push(v(cx+q.x,cy+q.y))}
+    }
+    out.push(v(cx,cy));                       /* the centre, once only */
+  }
+  /* drop coincident sites — they would produce duplicate, overlapping cells */
+  /* Mirroring lands many seeds within a pixel of each other on the wedge
+     boundary. Those are not duplicates to 1/8 px, so they survived and each
+     took a degenerate sliver cell that was then discarded — which is why the
+     cell count came out far below the seed count. Merge at 2 px instead. */
+  const seen=new Set();
+  let sites=out.filter(p=>{const k=Math.round(p.x/2)+','+Math.round(p.y/2);
+    if(seen.has(k))return false;seen.add(k);return true});
+  /* Lloyd relaxation. This used to bail out whenever the cell count differed
+     from the seed count — which is always, because seeds are generated beyond
+     the panel and those have no cell inside it. So it broke on the first pass
+     and the control did nothing. Cells now come back aligned with the seeds:
+     move the ones that have a cell, leave the rest where they are. */
+  const pad=st.scale*0.15;
+  for(let it=0;it<st.vrelax;it++){
+    const cells=voronoi(sites,W,H,pad);
+    sites=sites.map((p,i)=>cells[i]&&cells[i].length>=3?centroid(cells[i]):p);
+  }
+  return sites;
+}
+
+/* ============================================================ de Bruijn multigrid
+   Take N families of equally spaced parallel lines. Family i has unit normal
+   e_i, and its k-th line is the set of points with P·e_i + g_i = k. Every
+   intersection of two lines becomes one rhombus of the dual tiling.
+
+   For an intersection P of line k_i (family i) and k_j (family j), give each
+   family an index K_m = ceil(P·e_m + g_m) — which is exactly k_i and k_j for
+   the two crossing families. The vertex of the dual is then the vector sum
+   Sum(K_m · e_m). The four regions meeting at that crossing differ only in
+   K_i and K_j, by one, so the four vertices are V, V+e_i, V+e_i+e_j, V+e_j:
+   a rhombus of unit edge whose angle is the angle between e_i and e_j.
+
+   Spacing the normals over a half turn (theta_i = pi·i/N) gives N distinct
+   directions, floor(N/2) rhombus shapes, and a patch with 2N-fold symmetry.
+   N=5 is the Penrose tiling; N=4 is the octagonal Ammann–Beenker tiling.
+   The pattern never repeats, however far it is extended. */
+function multigrid(st,W,H){
+  const N=Math.max(3,Math.round(st.mN)), R=rng(st.seed), s=st.scale;
+  const rot0=st.rotation*Math.PI/180;
+  const th=[],e=[],g=[];
+  for(let i=0;i<N;i++){
+    const t=Math.PI*i/N+rot0;
+    th.push(t); e.push(v(Math.cos(t),Math.sin(t)));
+    g.push(st.mOffset+(st.mDisorder/100)*(R()-0.5));
+  }
+  /* V is about (N/2)·P, so this many lines each way covers the panel */
+  const D=Math.hypot(W,H)/2, K=Math.ceil(2*D/(s*N))+2, cx=W/2, cy=H/2;
+  /* Gather crossings by position first. Usually two lines meet and the dual is a
+     rhombus, but at integer offsets every family passes through one point. Those
+     are not broken — a crossing of m lines simply has a 2m-gon as its dual (the
+     zonogon generated by the m normals), and a rhombus is just the m=2 case. So
+     group the crossings and build one tile per distinct point. */
+  const hits=new Map(); let guard=0;
+  for(let i=0;i<N;i++)for(let j=i+1;j<N;j++){
+    const det=Math.sin(th[j]-th[i]); if(Math.abs(det)<1e-9) continue;
+    for(let ki=-K;ki<=K;ki++)for(let kj=-K;kj<=K;kj++){
+      if(++guard>400000) break;
+      const a=ki-g[i], b=kj-g[j];
+      const px=(a*Math.sin(th[j])-b*Math.sin(th[i]))/det;
+      const py=(b*Math.cos(th[i])-a*Math.cos(th[j]))/det;
+      if(px*px+py*py>K*K) continue;
+      const key=Math.round(px*1e4)+','+Math.round(py*1e4);
+      let h=hits.get(key);
+      if(!h){h={px,py,f:new Map()};hits.set(key,h)}
+      h.f.set(i,ki); h.f.set(j,kj);
+    }
+  }
+  const tiles=[];
+  for(const h of hits.values()){
+    const fams=[...h.f.keys()].sort((a,b)=>th[a]-th[b]);
+    let vx=0,vy=0;
+    for(let m=0;m<N;m++){
+      const Km=h.f.has(m)?h.f.get(m):Math.ceil(h.px*e[m].x+h.py*e[m].y+g[m]);
+      vx+=Km*e[m].x; vy+=Km*e[m].y;
+    }
+    let cur=v(cx+vx*s,cy+vy*s);
+    const pts=[cur];
+    for(const f of fams){cur=add(cur,mul(e[f],s));pts.push(cur)}
+    for(const f of fams){cur=sub(cur,mul(e[f],s));pts.push(cur)}
+    pts.pop();                                   /* closes back on the start */
+    const c=centroid(pts);
+    if(c.x<-s*2||c.x>W+s*2||c.y<-s*2||c.y>H+s*2) continue;
+    let cls;
+    if(fams.length===2){const d=fams[1]-fams[0];cls=Math.min(d,N-d)}
+    else cls=Math.floor(N/2)+fams.length;        /* rosettes get their own colour */
+    tiles.push({pts,c,n:pts.length,cls});
+  }
+  return {tiles,e,g,th,N,K,s,cx,cy};
+}
+/* the grid itself, mapped through V ≈ (N/2)P + const so it sits over its dual */
+function multigridLines(M,W,H){
+  const {e,g,th,N,K,s,cx,cy}=M, out=[];
+  let Cx=0,Cy=0;
+  for(let m=0;m<N;m++){Cx+=(g[m]+0.5)*e[m].x;Cy+=(g[m]+0.5)*e[m].y}
+  const map=P=>v(cx+s*(N/2*P.x+Cx), cy+s*(N/2*P.y+Cy));
+  const L=K*1.6;
+  for(let i=0;i<N;i++){
+    const d=v(-Math.sin(th[i]),Math.cos(th[i]));
+    for(let k=-K;k<=K;k++){
+      const P0=mul(e[i],k-g[i]);
+      out.push([map(add(P0,mul(d,-L))),map(add(P0,mul(d,L)))]);
+    }
+  }
+  return out;
+}
+
+/* ============================================================ substitution
+   Self-similar subdivision: replace a tile with scaled copies of the same
+   prototile set, to a finite depth. Fathauer [29] ch.6 (polyforms and
+   rep-tiles), ch.8 (substitution tilings) and ch.9 (fractal tilings).
+
+   A tile carries its own polygon, and each rule lists its children in the
+   prototile's local coordinates. A frame built from the parent's own vertices
+   maps local coordinates back to the plane, so rotation and reflection come
+   out of the vertex order and never have to be tracked separately. */
+const triFrame=(p,x,y)=>v(p[0].x+x*(p[1].x-p[0].x)+y*(p[2].x-p[0].x),
+                          p[0].y+x*(p[1].y-p[0].y)+y*(p[2].y-p[0].y));
+const chairFrame=(p,x,y)=>v(p[0].x+x*(p[1].x-p[0].x)/2+y*(p[5].x-p[0].x)/2,
+                            p[0].y+x*(p[1].y-p[0].y)/2+y*(p[5].y-p[0].y)/2);
+const PHI=(1+Math.sqrt(5))/2;
+const SUBST={
+  penrose:{name:'Penrose deflation', factor:'golden ratio', types:2, areaExact:true,
+    note:'Robinson triangles — each rhombus is two mirrored triangles.',
+    seed(W,H){
+      const R=Math.hypot(W,H)*0.62, cx=W/2, cy=H/2, out=[];
+      for(let i=0;i<10;i++){
+        let B=v(cx+R*Math.cos((2*i-1)*Math.PI/10), cy+R*Math.sin((2*i-1)*Math.PI/10));
+        let C=v(cx+R*Math.cos((2*i+1)*Math.PI/10), cy+R*Math.sin((2*i+1)*Math.PI/10));
+        if(i%2===0){const t=B;B=C;C=t}
+        out.push({t:0,p:[v(cx,cy),B,C]});
+      }
+      return out;
+    },
+    step(tile,out){
+      const [A,B,C]=tile.p;
+      if(tile.t===0){
+        const P=add(A,mul(sub(B,A),1/PHI));
+        out.push({t:0,p:[C,P,B]},{t:1,p:[P,C,A]});
+      }else{
+        const Q=add(B,mul(sub(A,B),1/PHI)), R=add(B,mul(sub(C,B),1/PHI));
+        out.push({t:1,p:[R,C,A]},{t:1,p:[Q,R,B]},{t:0,p:[R,Q,A]});
+      }
+    }},
+  tri4:{name:'Triangle (rep-4)', factor:'1/2', types:1, areaExact:true,
+    note:'Any triangle splits into four similar copies at its edge midpoints.',
+    seed(W,H){const m=6;return[
+      {t:0,p:[v(m,m),v(W-m,m),v(m,H-m)]},
+      {t:0,p:[v(W-m,H-m),v(m,H-m),v(W-m,m)]}]},
+    frame:triFrame,
+    children:[[0,[[0,0],[.5,0],[0,.5]]],[0,[[.5,0],[1,0],[.5,.5]]],
+              [0,[[0,.5],[.5,.5],[0,1]]],[0,[[.5,.5],[0,.5],[.5,0]]]]},
+  chair:{name:'Chair (rep-4)', factor:'1/2', types:1, areaExact:true,
+    note:'The L-tromino: four half-scale copies fill it exactly.',
+    seed(W,H){const s=Math.min(W,H)*0.44, cx=W/2-s, cy=H/2-s;
+      const P=(x,y)=>v(cx+x*s,cy+y*s);
+      return[{t:0,p:[P(0,0),P(2,0),P(2,1),P(1,1),P(1,2),P(0,2)]}]},
+    frame:chairFrame,
+    children:[
+      [0,[[0,0],[1,0],[1,.5],[.5,.5],[.5,1],[0,1]]],
+      [0,[[.5,.5],[1.5,.5],[1.5,1],[1,1],[1,1.5],[.5,1.5]]],
+      [0,[[0,2],[0,1],[.5,1],[.5,1.5],[1,1.5],[1,2]]],
+      [0,[[2,0],[2,1],[1.5,1],[1.5,.5],[1,.5],[1,0]]]]},
+  sierp:{name:'Sierpinski (fractal)', factor:'1/2, drops the middle', types:1, areaExact:false,
+    note:'Not a tiling — area is discarded at every step. Fathauer ch.9.',
+    seed(W,H){const m=6;const s=Math.min(W-2*m,(H-2*m)/(Math.sqrt(3)/2));
+      const cx=W/2, y0=H/2+s*Math.sqrt(3)/4;
+      return[{t:0,p:[v(cx-s/2,y0),v(cx+s/2,y0),v(cx,y0-s*Math.sqrt(3)/2)]}]},
+    frame:triFrame,
+    children:[[0,[[0,0],[.5,0],[0,.5]]],[0,[[.5,0],[1,0],[.5,.5]]],
+              [0,[[0,.5],[.5,.5],[0,1]]]]}
+};
+function substitution(st,W,H){
+  const rule=SUBST[st.subRule]||SUBST.penrose;
+  let tiles=rule.seed(W,H), parents=tiles;
+  const depth=Math.max(0,Math.round(st.subDepth));
+  for(let d=0;d<depth;d++){
+    const next=[];
+    if(rule.step) for(const t of tiles) rule.step(t,next);
+    else for(const t of tiles) for(const [ct,loc] of rule.children)
+      next.push({t:ct,p:loc.map(([x,y])=>rule.frame(t.p,x,y))});
+    if(!next.length) break;
+    parents=tiles; tiles=next;
+    if(tiles.length>24000) break;            /* keep a stray depth from hanging */
+  }
+  return {tiles,parents,rule};
+}
+
+/* ============================================================ path emitting */
+const f=x=>Math.round(x*100)/100;
+/* Reference edge length for the rounding radius, set once per render.
+   Cutting back a fixed FRACTION of each edge gives every corner a radius
+   proportional to its own edges, so a corner with one short edge barely rounds
+   while its neighbour rounds fully — the corners come out visibly uneven.
+   Instead aim for one radius across the whole pattern, capped at half an edge
+   where the edge is too short to give it. The cut depends only on that edge's
+   length and this global value, so two shapes sharing an edge always round it
+   identically and stroked outlines stay on top of one another. */
+let LREF=100;
+function setLref(shapes){
+  const L=[];
+  for(const sh of shapes){const p=sh.pts||sh,n=p.length;
+    for(let i=0;i<n;i++){const e=len(sub(p[(i+1)%n],p[i])); if(e>0.01) L.push(e)}}
+  if(!L.length){LREF=100;return}
+  L.sort((a,b)=>a-b);
+  LREF=L[Math.floor(L.length*0.5)]||100;      /* median, so outliers don't skew it */
+}
+function pathD(pts,round){
+  const n=pts.length; if(n<3) return '';
+  if(round<=0.004) return 'M'+pts.map(p=>f(p.x)+' '+f(p.y)).join(' L')+' Z';
+  const R=round*0.5*LREF, w=Math.pow(round,4);  /* w pulls every edge to a half */
+  const cut=L=>{const base=Math.min(0.5,R/L);return base+(0.5-base)*w};
+  let d='';
+  for(let i=0;i<n;i++){
+    const P=pts[i],A=pts[(i-1+n)%n],B=pts[(i+1)%n];
+    const lp=len(sub(P,A)),ln=len(sub(B,P));
+    if(lp<1e-6||ln<1e-6) continue;             /* degenerate: no corner here */
+    const a=lerp(P,A,cut(lp)),b=lerp(P,B,cut(ln));
+    d+=(d?' L':'M')+f(a.x)+' '+f(a.y)+' Q'+f(P.x)+' '+f(P.y)+' '+f(b.x)+' '+f(b.y);
+  }
+  return d?d+' Z':'';
+}
+const pathLen=pts=>{let L=0;for(let i=0,n=pts.length;i<n;i++)L+=len(sub(pts[(i+1)%n],pts[i]));return L};
+/* the same corner geometry pathD draws, flattened, so open area can be measured
+   from what is actually on screen rather than from the un-rounded polygon */
+function roundedPoly(pts,round){
+  if(round<=0.004) return pts;
+  const R=round*0.5*LREF, wt=Math.pow(round,4);
+  const cut=L=>{const b=Math.min(0.5,R/L);return b+(0.5-b)*wt};
+  const out=[],n=pts.length;
+  for(let i=0;i<n;i++){
+    const P=pts[i],A=pts[(i-1+n)%n],B=pts[(i+1)%n];
+    const lp=len(sub(P,A)),ln=len(sub(B,P));
+    if(lp<1e-6||ln<1e-6) continue;
+    const a=lerp(P,A,cut(lp)),b=lerp(P,B,cut(ln));
+    out.push(a);
+    for(let t=1;t<=4;t++){const u=t/4,iu=1-u;
+      out.push(v(iu*iu*a.x+2*iu*u*P.x+u*u*b.x, iu*iu*a.y+2*iu*u*P.y+u*u*b.y))}
+  }
+  return out.length>=3?out:pts;
+}
+function clipToPanel(p){
+  let o=p;
+  o=clipPlane(o,v(1,0),0);   if(o.length<3) return [];
+  o=clipPlane(o,v(-1,0),-W); if(o.length<3) return [];
+  o=clipPlane(o,v(0,1),0);   if(o.length<3) return [];
+  o=clipPlane(o,v(0,-1),-H); if(o.length<3) return [];
+  return o;
+}
+
+/* ============================================================ palettes */
+const PALETTES=[
+  {id:'indigo',  name:'Stone & indigo', bg:'#1c1a26', ink:'#e9d9a6', acc:'#b98a2e', mat:'#1c1a26', open:'#f3ead6', grout:'#efe6d2', fills:['#2b3a8c','#e9d9a6','#b98a2e','#6d2233','#3f4e96']},
+  {id:'ivory',   name:'Ivory & cobalt', bg:'#f3ead6', ink:'#22307a', acc:'#b0861f', mat:'#22307a', open:'#f8f3e6', grout:'#f8f3e6', fills:['#22307a','#f0e6d0','#b0861f','#7a1f2b','#4f6bbf']},
+  {id:'zellige', name:'Zellige green',  bg:'#0e3b39', ink:'#f0e6d0', acc:'#d8ac4d', mat:'#0e3b39', open:'#efe4c8', grout:'#efe4c8', fills:['#0e5e58','#d8ac4d','#f0e6d0','#7a1f2b','#1d8a80']},
+  /* no fill may equal the grout colour, or those pieces read as holes */
+  {id:'mono',    name:'Monochrome',     bg:'#141318', ink:'#ffffff', acc:'#9a94a8', mat:'#141318', open:'#ffffff', grout:'#ffffff', fills:['#2a2833','#6a6577','#b4aec0','#807a8e','#443f52']}
+];
+
+/* ============================================================ colour system
+   A generated palette is a ramp through hue and lightness, so the fills stay
+   distinguishable from one another and from the grout. Lightness carries most
+   of the separation because it survives greyscale printing and colour-blind
+   vision, which hue alone does not. */
+function hsl2hex(h,s,l){
+  h=((h%360)+360)%360; s=Math.max(0,Math.min(100,s))/100; l=Math.max(0,Math.min(100,l))/100;
+  const c=(1-Math.abs(2*l-1))*s, x=c*(1-Math.abs((h/60)%2-1)), m=l-c/2;
+  let r,g,b;
+  if(h<60)      [r,g,b]=[c,x,0];
+  else if(h<120)[r,g,b]=[x,c,0];
+  else if(h<180)[r,g,b]=[0,c,x];
+  else if(h<240)[r,g,b]=[0,x,c];
+  else if(h<300)[r,g,b]=[x,0,c];
+  else          [r,g,b]=[c,0,x];
+  const q=n=>Math.round((n+m)*255).toString(16).padStart(2,'0');
+  return '#'+q(r)+q(g)+q(b);
+}
+function genPalette(s){
+  const n=6, fills=[];
+  for(let i=0;i<n;i++){
+    const t=i/(n-1);
+    fills.push(hsl2hex(s.cHue+s.cSpread*(t-0.5),
+                       s.cSat,
+                       s.cLight+s.cContrast*(t-0.5)));
+  }
+  if(s.cReverse) fills.reverse();
+  const dark=s.cLight<50;
+  const bg  =hsl2hex(s.cHue+180, Math.min(30,s.cSat*0.35), dark?92:12);
+  const ink =hsl2hex(s.cHue,     Math.min(60,s.cSat),      dark?90:16);
+  const grout=hsl2hex(s.cHue+180,Math.min(18,s.cSat*0.25), dark?96:8);
+  return {id:'custom',name:'Generated',bg,ink,
+    /* the accent frames the panel, so keep it inside the ramp's own hue range
+       rather than at its far end, where it reads as an unrelated colour */
+    acc:hsl2hex(s.cHue+s.cSpread*0.15,Math.min(70,s.cSat+10),dark?68:38),
+    mat:ink, open:bg, grout, fills};
+}
+const paletteOf=s=>s.palMode==='custom'?genPalette(s):PALETTES[s.pal];
+
+/* which palette entry a shape takes */
+function colourer(shapes,mode,n){
+  if(mode==='area'){
+    const a=shapes.map(s=>Math.abs(polyArea(s.pts)));
+    const lo=Math.min(...a), hi=Math.max(...a)||1;
+    return (sh,i)=>hi>lo?Math.min(n-1,Math.floor((a[i]-lo)/(hi-lo)*n)):0;
+  }
+  if(mode==='angle') return sh=>{
+    const d=sub(sh.pts[1],sh.pts[0]);
+    let t=Math.atan2(d.y,d.x)*180/Math.PI; t=((t%180)+180)%180;
+    return Math.min(n-1,Math.floor(t/180*n));
+  };
+  if(mode==='sides') return sh=>sh.pts.length%n;
+  if(mode==='position') return sh=>Math.abs(Math.round(sh.c.x/47)+Math.round(sh.c.y/43)*3)%n;
+  /* 'type': a tiling may have only two or three tile types, so spread whatever
+     classes exist evenly across the ramp rather than always taking the first
+     few swatches and leaving the rest of the palette unused */
+  const key=sh=>sh.cls!==undefined?sh.cls:sh.pts.length;
+  const keys=[...new Set(shapes.map(key))].sort((a,b)=>a-b);
+  const at=new Map(keys.map((k,i)=>
+    [k, keys.length<2?0:Math.round(i/(keys.length-1)*(n-1))]));
+  return sh=>at.get(key(sh))||0;
+}
+
+/* ============================================================ engines / modes */
+const ENGINES=[
+  {id:'pic',  name:'Polygons in contact', sub:'Hankin · Kaplan', tag:'doc', def:{angle:50,scale:76,width:4,round:0},
+   src:'Hankin, <i>Drawing of Geometric Patterns in Saracenic Art</i> (1925) [3]; Kaplan, <i>Islamic Star Patterns from Polygons in Contact</i> (2005) [7]. Documented construction, implemented directly.'},
+  {id:'star', name:'Star polygons {n/d}', sub:'compass construction', tag:'doc', def:{scell:150,width:3,round:0},
+   src:'The Metropolitan Museum of Art, <i>Islamic Art and Geometric Design</i> activity pack [1]. Documented construction.'},
+  {id:'girih',name:'Girih strapwork', sub:'Lu &amp; Steinhardt · 54°', tag:'pl', tagText:'partial', def:{angle:54,scale:95,width:5,round:0,rotation:0}, note:'Documented tiles — single-tile fields only',
+   src:'The five girih tiles built from their edge directions — unit edges, angles in multiples of 36°. Strapwork crosses each edge midpoint at <b>54°</b>, so it is polygons-in-contact at that angle [4]. The rhombus, hexagon and bowtie are centrally symmetric and tile on their own, which is verified here. The <b>decagon-and-bowtie field is not solved</b>: its area works out to exactly one bowtie per cell, but no edge-to-edge placement was found, so it is not offered rather than shown wrong.'},
+  {id:'subst',name:'Self-similar subdivision', sub:'rep-tiles · substitution', tag:'doc', tagText:'documented', def:{subDepth:4,width:3,round:0},
+   src:'Robert Fathauer, <i>Tessellations: Mathematics, Art, and Recreation</i>, A K Peters/CRC Press 2021 [29] — ch.6 polyforms and rep-tiles, ch.8 substitution tilings, ch.9 fractal tilings. Answers item 07 of the research catalogue: subdivide a tile configuration at a smaller scale by a stored rule, to a finite depth.'},
+  {id:'multi',name:'Quasiperiodic multigrid', sub:'de Bruijn · Penrose', tag:'doc', tagText:'documented', def:{mN:5,mOffset:0.2,scale:40,width:3,round:0},
+   src:'N. G. de Bruijn, <i>Algebraic theory of Penrose\'s non-periodic tilings</i> (1981) [26]; method implemented from the mathematics. Prompted by Bhatia &amp; Reich, <i>Pattern Collider</i> [27]. Relates to the decagonal geometry discussed by Lu &amp; Steinhardt [4] — but this is a mathematical construction, <b>not</b> a claim about historical method.'},
+  {id:'voro', name:'Voronoi — sharp to round', sub:'contemporary', tag:'pl', def:{vlayout:'hex',vrepeat:2,vcount:12,vjitter:55,vrelax:2,width:5,round:0.5},
+   src:'Contemporary construction, not a historic reconstruction. Related to controlled-variation work such as <i>Random Zellij Compositions</i>, Bridges archive [20].'}
+];
+const MODES=[['construct','Construction'],['line','Line'],['interlace','Interlace'],['jali','Solid / void'],['mosaic','Mosaic']];
+
+/* ============================================================ state */
+const DEF={engine:'pic',tiling:'octasq',mode:'line',
+  angle:50,scale:76,rotation:0,round:0,width:4,frame:true,dual:false,
+  sn:12,sd:5,scell:150,ssec:true,
+  mN:5,mOffset:0.2,mDisorder:0,
+  subRule:'penrose',subDepth:4,
+  vlayout:'hex',vrepeat:3,vjitter:55,vcount:24,vsym:8,vmirror:true,vrelax:2,seed:7,
+  pal:0,palMode:'preset',colourBy:'type',
+  cHue:210,cSpread:120,cSat:55,cLight:48,cContrast:55,cReverse:false};
+let st=Object.assign({},DEF);
+
+/* ============================================================ controls */
+const PERIODIC=s=>s.vlayout!=='radial'&&s.vlayout!=='scatter';
+const cv=(x,s)=>typeof x==='function'?x(s||st):x;      /* control fields may be functions of state */
+const CTRL={
+ pic:[
+  {k:'dual',     label:'Dual (Laves) tiling', type:'chk'},
+  {k:'angle',    label:'Contact angle', min:15,max:80,step:1,unit:'°'},
+  {k:'scale',    label:'Edge length',   min:40,max:220,step:1,unit:' px'},
+  {k:'rotation', label:'Rotation',      min:0,max:90,step:1,unit:'°',deg:true},
+  {k:'round',    label:'Sharp → round', min:0,max:1,step:0.01,pct:true}
+ ],
+ star:[
+  {k:'sn',   label:'Divisions n',    min:5,max:24,step:1},
+  {k:'sd',   label:'Step d',         min:2,max:11,step:1},
+  {k:'scell',label:'Spacing',        min:70,max:300,step:1,unit:' px'},
+  {k:'rotation',label:'Rotation',    min:0,max:90,step:1,unit:'°',deg:true},
+  {k:'round',label:'Sharp → round',  min:0,max:1,step:0.01,pct:true},
+  {k:'ssec', label:'Secondary stars',type:'chk'}
+ ],
+ girih:[
+  {k:'tiling',label:'Girih tile',type:'sel',opts:[
+    ['girihHex','Hexagon — shesh band'],['girihBow','Bowtie — sormeh dan'],['girihRhomb','Rhombus — torange']]},
+  {k:'angle',   label:'Strap angle',   min:15,max:80,step:1,unit:'°'},
+  {k:'scale',   label:'Edge length',   min:30,max:220,step:1,unit:' px'},
+  {k:'rotation',label:'Rotation',      min:0,max:90,step:1,unit:'°'},
+  {k:'round',   label:'Sharp → round', min:0,max:1,step:0.01,pct:true}
+ ],
+ subst:[
+  {k:'subRule', label:'Substitution rule',type:'sel',opts:[
+    ['penrose','Penrose deflation'],['tri4','Triangle (rep-4)'],
+    ['chair','Chair / L-tromino (rep-4)'],['sierp','Sierpinski (fractal)']]},
+  {k:'subDepth',label:'Depth',         min:0,max:8,step:1,unit:'steps'},
+  {k:'rotation',label:'Rotation',      min:0,max:90,step:1,unit:'°'},
+  {k:'round',   label:'Sharp → round', min:0,max:1,step:0.01,pct:true}
+ ],
+ multi:[
+  {k:'mN',      label:'Symmetry',      min:3,max:14,step:1,unit:'grid'},
+  {k:'mOffset', label:'Pattern offset',min:0,max:1,step:0.01,pct:true},
+  {k:'mDisorder',label:'Disorder',     min:0,max:100,step:1,unit:'%'},
+  {k:'seed',    label:'Seed',          min:1,max:999,step:1},
+  {k:'scale',   label:'Edge length',   min:14,max:120,step:1,unit:' px'},
+  {k:'rotation',label:'Rotation',      min:0,max:90,step:1,unit:'°'},
+  {k:'round',   label:'Sharp → round', min:0,max:1,step:0.01,pct:true}
+ ],
+ voro:[
+  {k:'vlayout',label:'Seed layout',type:'sel',opts:[
+    ['hex','Hexagonal repeat'],['grid','Square repeat'],['brick','Brick repeat'],
+    ['radial','Radial mandala'],['scatter','Random scatter']]},
+  {k:'vrepeat',label:'Repeats across', min:1,max:8,step:1,when:PERIODIC},
+  {k:'vcount', label:st=>PERIODIC(st)?'Seeds per repeat':'Seed count',
+               min:st=>PERIODIC(st)?4:12, max:st=>PERIODIC(st)?100:400, step:1},
+  {k:'vjitter',label:'Jitter',         min:0,max:100,step:1,unit:'%',when:PERIODIC},
+  {k:'vsym',   label:'Radial symmetry',min:1,max:16,step:1,unit:'fold',when:st=>st.vlayout==='radial'},
+  {k:'vmirror',label:'Mirror wedge',   type:'chk',when:st=>st.vlayout==='radial'},
+  {k:'vrelax', label:'Lloyd relaxation',min:0,max:8,step:1,unit:'passes'},
+  {k:'seed',   label:'Seed',           min:1,max:999,step:1},
+  {k:'round',  label:'Sharp → round',  min:0,max:1,step:0.01,pct:true}
+ ]
+};
+const COMMON=[
+  {k:'width',label:'Line / rib width',min:1,max:22,step:.5,unit:' px'},
+  {k:'frame',label:'Border frame',type:'chk'},
+  {k:'palMode',label:'Palette',type:'sel',opts:[['preset','Preset swatches'],['custom','Generated']]},
+  {k:'cHue',     label:'Base hue',   min:0,max:360,step:1,unit:'°',when:s=>s.palMode==='custom'},
+  {k:'cSpread',  label:'Hue spread', min:0,max:360,step:1,unit:'°',when:s=>s.palMode==='custom'},
+  {k:'cSat',     label:'Saturation', min:0,max:100,step:1,unit:'%',when:s=>s.palMode==='custom'},
+  {k:'cLight',   label:'Lightness',  min:5,max:95,step:1,unit:'%',when:s=>s.palMode==='custom'},
+  {k:'cContrast',label:'Contrast',   min:0,max:90,step:1,unit:'%',when:s=>s.palMode==='custom'},
+  {k:'cReverse', label:'Reverse ramp',type:'chk',when:s=>s.palMode==='custom'},
+  {k:'colourBy', label:'Colour by',type:'sel',opts:[
+    ['type','Tile type'],['area','Tile area'],['angle','Orientation'],
+    ['sides','Side count'],['position','Position']]}
+];
+
+/* ============================================================ build the scene */
+let W=1000,H=720;
+function fitViewBox(){
+  const r=document.querySelector('.canvas').getBoundingClientRect();
+  if(r.width<20||r.height<20) return;
+  const a=Math.max(0.45,Math.min(2.6,r.width/r.height));
+  const area=720000;
+  H=Math.round(Math.sqrt(area/a)); W=Math.round(H*a);
+  document.getElementById('svg').setAttribute('viewBox',`0 0 ${W} ${H}`);
+}
+let last={};
+function build(){
+  const P=paletteOf(st), rotr=st.rotation*Math.PI/180;
+  const shapes=[];      /* closed point arrays making the pattern */
+  const under=[];       /* underlying polygons, for construction + mosaic */
+  const rays=[],dots=[];
+  if(st.engine==='pic'||st.engine==='girih'){
+    /* the dual needs a wider margin: a vertex only yields a face when every
+       tile around it exists, so the outermost ring of tiles is sacrificial */
+    /* the dual is offered on the tiling engine only — girih must not inherit a
+       stale flag from a control it never shows */
+    const useDual=st.dual&&st.engine==='pic';
+    let tiles=tilePlane(st.tiling,st.scale,rotr,W,H,useDual?5:2.5);
+    if(useDual) tiles=dualTiling(tiles,W,H,st.scale*2.5,st.scale*0.02);
+    for(const t of tiles){
+      const r=picTile(t.pts,st.angle);
+      /* edge-midpoint keys identify which tiles share a crossing, for the interlace */
+      shapes.push({pts:r.path,c:t.c,n:t.n,keys:r.mids.map(m=>Math.round(m.x*2)+','+Math.round(m.y*2))});
+      under.push(t.pts);
+      if(st.mode==='construct'){rays.push(...r.rays);dots.push(...r.mids)}
+    }
+  } else if(st.engine==='star'){
+    const c=st.scell, cols=Math.ceil(W/c)+3, rows=Math.ceil(H/c)+3;
+    /* d must stay below n/2: at exactly n/2 every component is a digon and the
+       star collapses to nothing on screen */
+    const d=Math.max(2,Math.min(st.sd,Math.floor((st.sn-1)/2)));
+    for(let j=-1;j<rows;j++)for(let i=-1;i<cols;i++){
+      const p=rot(v(i*c-W/2,j*c-H/2),rotr), cx=p.x+W/2, cy=p.y+H/2;
+      if(cx<-c||cx>W+c||cy<-c||cy>H+c) continue;
+      under.push(regular(4,cx,cy,c*Math.SQRT1_2,Math.PI/4+rotr));
+      for(const comp of starPolys(st.sn,d,cx,cy,c*0.5,rotr)) shapes.push({pts:comp,c:v(cx,cy),n:st.sn});
+      if(st.ssec) for(const comp of starPolys(st.sn,d,cx+c/2*Math.cos(rotr)-c/2*Math.sin(rotr),cy+c/2*Math.sin(rotr)+c/2*Math.cos(rotr),c*0.22,rotr+Math.PI/st.sn))
+        shapes.push({pts:comp,c:v(cx,cy),n:st.sn});
+      if(st.mode==='construct'){dots.push(v(cx,cy));rays.push([v(cx-c/2,cy),v(cx+c/2,cy)])}
+    }
+  } else if(st.engine==='subst'){
+    const {tiles,parents}=substitution(st,W,H);
+    for(const t of tiles){const c=centroid(t.p);shapes.push({pts:t.p,c,n:t.p.length,cls:t.t})}
+    for(const t of parents) under.push(t.p);      /* the generation before, for the construction view */
+  } else if(st.engine==='multi'){
+    const M=multigrid(st,W,H);
+    for(const t of M.tiles){shapes.push(t);under.push(t.pts)}
+    if(st.mode==='construct') rays.push(...multigridLines(M,W,H));
+    last.M=M;
+  } else if(st.vlayout==='radial'||st.vlayout==='scatter'){
+    const sites=makeSites(st,W,H);
+    const cells=voronoi(sites,W,H,st.scale*0.15).filter(c=>c.length>=3);
+    for(const c of cells){shapes.push({pts:c,c:centroid(c),n:c.length});under.push(c)}
+    if(st.mode==='construct') dots.push(...sites);
+  } else {
+    const {ux,uy}=unitOf(st,W);
+    const cells=periodicCells(baseSeeds(st,W),ux,uy,st.vrelax);
+    const nx=Math.ceil(W/ux)+2, ny=Math.ceil(H/uy)+2;
+    for(let i=-1;i<nx;i++)for(let j=-1;j<ny;j++){
+      const off=v(i*ux,j*uy);
+      for(const cell of cells){
+        const pts=cell.map(p=>add(p,off)), ctr=centroid(pts);
+        if(ctr.x<-ux||ctr.x>W+ux||ctr.y<-uy||ctr.y>H+uy) continue;
+        shapes.push({pts,c:ctr,n:pts.length}); under.push(pts);
+        if(st.mode==='construct') dots.push(ctr);
+      }
+    }
+  }
+  last={shapes,under,rays,dots,P,M:last&&last.M};
+  return last;
+}
+
+/* ---------- interlace: crossing assignment -------------------------------
+   Every edge midpoint is a crossing of two strands. A strand does not belong to
+   one tile: it is one arm of tile T joined to one arm of its neighbour T'. So
+   over/under cannot be decided per tile — it has to be decided per crossing,
+   and it has to alternate as you travel along a strand. This walks each strand
+   and flips the assignment at every crossing it meets. Where a strand returns
+   to a crossing that is already decided, the existing decision stands and the
+   walk picks the parity up from there.                                      */
+function weave(shapes,w){
+  const byKey=new Map();
+  shapes.forEach((t,ti)=>{ if(!t.keys) return;
+    t.keys.forEach((k,i)=>{ if(!byKey.has(k)) byKey.set(k,[]); byKey.get(k).push({t:ti,i}) })});
+  const X=new Map([...byKey].filter(([,a])=>a.length===2));   /* interior crossings */
+  if(!X.size) return [];
+  const nMid=ti=>shapes[ti].keys.length;
+  const midPt=(ti,i)=>shapes[ti].pts[2*i];
+  const armPt=(ti,i,side)=>{const p=shapes[ti].pts,L=p.length;
+    return p[side==='next'?(2*i+1)%L:(2*i-1+L)%L]};
+  /* the arm of the neighbouring tile that continues straight on from this arm */
+  const partnerArm=(ti,i,side,tj,j)=>{
+    const m=midPt(ti,i), d=norm(sub(armPt(ti,i,side),m));
+    const dn=norm(sub(armPt(tj,j,'next'),m)), dp=norm(sub(armPt(tj,j,'prev'),m));
+    return (d.x*dn.x+d.y*dn.y)<(d.x*dp.x+d.y*dp.y)?'next':'prev';
+  };
+  const over=new Map(), seen=new Set();
+  for(let t0=0;t0<shapes.length;t0++){
+    if(!shapes[t0].keys) continue;
+    for(let i0=0;i0<nMid(t0);i0++) for(const s0 of ['prev','next']){
+      if(!X.has(shapes[t0].keys[i0])) continue;
+      if(seen.has(t0+':'+i0+':'+s0)) continue;
+      let t=t0,i=i0,s=s0,par=0,guard=0;
+      while(guard++<20000){
+        const id=t+':'+i+':'+s;
+        if(seen.has(id)) break; seen.add(id);
+        const k=shapes[t].keys[i], pr=X.get(k); if(!pr) break;
+        const o=(pr[0].t===t&&pr[0].i===i)?pr[1]:pr[0];
+        const s2=partnerArm(t,i,s,o.t,o.i);
+        if(over.has(k)){
+          const a=over.get(k);
+          par=(a.t===t&&a.side===s)?1:0;              /* pick the parity up */
+        }else{
+          par=1-par;
+          /* the other strand at this crossing uses the opposite arm of each tile */
+          const op=x=>x==='next'?'prev':'next';
+          over.set(k, par?{t,side:s,   t2:o.t,side2:s2}
+                        :{t,side:op(s),t2:o.t,side2:op(s2)});
+        }
+        seen.add(o.t+':'+o.i+':'+s2);
+        const n=nMid(o.t);
+        const ni=s2==='next'?(o.i+1)%n:(o.i-1+n)%n;
+        t=o.t; i=ni; s=(s2==='next')?'prev':'next';
+      }
+    }
+  }
+  /* a short piece of the over-strand through each crossing, to redraw on top */
+  const stubs=[];
+  for(const [k,a] of over){
+    const pr=X.get(k); if(!pr) continue;
+    const e1=pr.find(x=>x.t===a.t), e2=pr.find(x=>x.t===a.t2);
+    if(!e1||!e2) continue;
+    const m=midPt(e1.t,e1.i);
+    const A=armPt(e1.t,e1.i,a.side), B=armPt(e2.t,e2.i,a.side2);
+    const ta=Math.min(.48,(w*3.2)/Math.max(1,len(sub(A,m))));
+    const tb=Math.min(.48,(w*3.2)/Math.max(1,len(sub(B,m))));
+    stubs.push([lerp(m,A,ta),m,lerp(m,B,tb)]);
+  }
+  return stubs;
+}
+const openD=pts=>'M'+pts.map(p=>f(p.x)+' '+f(p.y)).join(' L');
+
+/* ============================================================ render */
+function render(){
+  fitViewBox();
+  const {shapes,under,rays,dots,P}=build();
+  setLref(shapes);
+  const w=st.width, r=st.round;
+  let measured=null;          /* exact open area, when the openings are real faces */
+  let s=`<rect width="${W}" height="${H}" fill="${st.mode==='jali'?P.open:(st.mode==='mosaic'?P.grout:P.bg)}"/>`;
+
+  if(st.mode==='construct'){
+    s+=`<g fill="none" stroke="${P.ink}" stroke-opacity=".38" stroke-width="1.4" stroke-dasharray="6 5">`;
+    for(const u of under) s+=`<path d="${pathD(u,0)}"/>`;
+    s+=`</g><g stroke="${P.acc}" stroke-opacity="${st.engine==='multi'?.55:.8}" stroke-width="${st.engine==='multi'?1.3:1}" stroke-dasharray="${st.engine==='multi'?'5 4':'3 3'}">`;
+    for(const [a,b] of rays) s+=`<line x1="${f(a.x)}" y1="${f(a.y)}" x2="${f(b.x)}" y2="${f(b.y)}"/>`;
+    s+=`</g><g fill="${P.acc}">`;
+    for(const d of dots) s+=`<circle cx="${f(d.x)}" cy="${f(d.y)}" r="2.6"/>`;
+    s+=`</g><g fill="none" stroke="${P.ink}" stroke-width="${w}" stroke-linejoin="round">`;
+    for(const sh of shapes) s+=`<path d="${pathD(sh.pts,r)}"/>`;
+    s+=`</g>`;
+  }
+  else if(st.mode==='line'){
+    s+=`<g fill="none" stroke="${P.ink}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round">`;
+    for(const sh of shapes) s+=`<path d="${pathD(sh.pts,r)}"/>`;
+    s+=`</g>`;
+  }
+  else if(st.mode==='interlace'){
+    const ds=shapes.map(sh=>pathD(sh.pts,r));
+    const cas=w*2.6;
+    s+=`<g fill="none" stroke="${P.bg}" stroke-width="${cas}" stroke-linejoin="round">`;
+    for(const d of ds) s+=`<path d="${d}"/>`;
+    s+=`</g><g fill="none" stroke="${P.ink}" stroke-width="${w}" stroke-linejoin="round">`;
+    for(const d of ds) s+=`<path d="${d}"/>`;
+    s+=`</g>`;
+    /* redraw the over-strand through each crossing, so it passes on top */
+    const stubs=weave(shapes,w);
+    if(stubs.length){
+      s+=`<g fill="none" stroke="${P.bg}" stroke-width="${cas}" stroke-linecap="butt" stroke-linejoin="round">`;
+      for(const p of stubs) s+=`<path d="${openD(p)}"/>`;
+      s+=`</g><g fill="none" stroke="${P.ink}" stroke-width="${w}" stroke-linecap="butt" stroke-linejoin="round">`;
+      for(const p of stubs) s+=`<path d="${openD(p)}"/>`;
+      s+=`</g>`;
+    }
+  }
+  else if(st.mode==='jali'){
+    if(st.engine==='voro'||st.engine==='multi'){
+      /* solid panel with the cells punched out as closed openings */
+      s=`<rect width="${W}" height="${H}" fill="${P.mat}"/><g fill="${P.open}">`;
+      let open=0;
+      for(const sh of shapes){
+        const o=insetConvex(sh.pts,w*1.1);
+        if(o.length<3) continue;
+        const inPanel=clipToPanel(roundedPoly(o,r));   /* only what the panel shows */
+        if(inPanel.length>=3) open+=Math.abs(polyArea(inPanel));
+        s+=`<path d="${pathD(o,r)}"/>`;
+      }
+      s+=`</g>`; measured=open/(W*H);
+    }else{
+      s+=`<g fill="none" stroke="${P.mat}" stroke-width="${w*2.2}" stroke-linejoin="round" stroke-linecap="round">`;
+      for(const sh of shapes) s+=`<path d="${pathD(sh.pts,r)}"/>`;
+      s+=`</g>`;
+    }
+  }
+  else { /* mosaic */
+    const nf=P.fills.length, pick=colourer(shapes,st.colourBy,nf);
+    if(st.engine==='voro'||st.engine==='multi'){
+      s+=`<g>`;
+      for(let i=0;i<shapes.length;i++){
+        const o=insetConvex(shapes[i].pts,Math.max(0.5,w*0.6));
+        if(o.length<3) continue;
+        s+=`<path d="${pathD(o,r)}" fill="${P.fills[pick(shapes[i],i)]}"/>`;
+      }
+      s+=`</g>`;
+    }else if(st.engine==='subst'){
+      s+=`<g stroke="${P.grout}" stroke-width="${Math.max(.6,w*0.5)}" stroke-linejoin="round">`;
+      for(let i=0;i<shapes.length;i++)
+        s+=`<path d="${pathD(shapes[i].pts,r)}" fill="${P.fills[pick(shapes[i],i)]}"/>`;
+      s+=`</g>`;
+    }else{
+      const upick=colourer(under.map(u=>({pts:u,c:centroid(u)})),st.colourBy,nf);
+      s+=`<g stroke="${P.grout}" stroke-width="${Math.max(1,w*0.6)}" stroke-linejoin="round">`;
+      for(let i=0;i<under.length;i++){
+        const u=under[i];
+        s+=`<path d="${pathD(u,r*0.6)}" fill="${P.fills[upick({pts:u,c:centroid(u)},i)]}"/>`;
+      }
+      for(let i=0;i<shapes.length;i++)
+        s+=`<path d="${pathD(shapes[i].pts,r)}" fill="${P.fills[(pick(shapes[i],i)+2)%nf]}"/>`;
+      s+=`</g>`;
+    }
+  }
+
+  if(st.frame){
+    const inset=Math.max(10,w*2);
+    s+=`<rect x="${inset}" y="${inset}" width="${W-2*inset}" height="${H-2*inset}" fill="none" stroke="${st.mode==='jali'?P.mat:P.acc}" stroke-width="${Math.max(6,w*2)}"/>`;
+  }
+  document.getElementById('svg').innerHTML=s;
+  updateInfo(shapes,measured);
+}
+
+function updateInfo(shapes,measured){
+  let L=0; for(const sh of shapes) L+=pathLen(sh.pts);
+  /* Voronoi cell boundaries are shared between neighbours, so they are counted twice */
+  if(st.engine==='voro') L/=2;
+  const cover=Math.min(0.96,(L*st.width*2.2)/(W*H));
+  const ap=Math.round((1-cover)*100);
+  const eng=ENGINES.find(e=>e.id===st.engine);
+  const bits=[];
+  if(st.engine==='pic'){const T=TILINGS[st.tiling];
+    bits.push(`<b>${T.label}</b> ${st.dual?'· dual (Laves)':T.vf}`,`contact ${st.angle}°`)}
+  if(st.engine==='girih'){const T=TILINGS[st.tiling];
+    bits.push(`<b>${T.label}</b>`,`strap ${st.angle}°${st.angle===54?' (girih)':''}`,
+      'single-tile field — decagon set not solved')}
+  if(st.engine==='star'){const d=Math.max(2,Math.min(st.sd,Math.floor((st.sn-1)/2)));bits.push(`<b>{${st.sn}/${d}}</b>`,`${(function g(a,b){return b?g(b,a%b):a})(st.sn,d)} component(s)`)}
+  if(st.engine==='subst'){
+    const R=SUBST[st.subRule]||SUBST.penrose;
+    bits.push(`<b>${R.name}</b>`,`depth ${st.subDepth}`,`${shapes.length} tiles`,`scale ${R.factor}`);
+    if(!R.areaExact) bits.push('<span class="warn">fractal — not area filling</span>');
+  }
+  if(st.engine==='multi'){
+    const N=Math.round(st.mN), shapesN=new Set(shapes.map(s=>s.cls)).size;
+    bits.push(`<b>${N}-grid → ${2*N}-fold</b>`,`${shapesN} rhombus shape${shapesN===1?'':'s'}`,
+      `${shapes.length} tiles`,'aperiodic — never repeats');
+  }
+  if(st.engine==='voro'){
+    bits.push(`<b>${shapes.length} cells</b>`);
+    bits.push(PERIODIC(st)?`${st.vrepeat}× repeat, ${st.vlayout}`
+      :(st.vlayout==='radial'?`radial, ${st.vsym}-fold`:'random scatter'));
+    bits.push(`${st.vrelax} relax`);
+  }
+  bits.push(`roundness ${Math.round(st.round*100)}%`);
+  if(st.mode==='jali') bits.push(measured!=null
+    ? `aperture <b>${Math.round(measured*100)}%</b> (measured)`
+    : `aperture ≈ <b>${ap}%</b>`);
+  if(st.mode==='jali'&&st.width<2) bits.push('<span class="warn">rib below min bridge</span>');
+  bits.push(eng.note||(eng.tag==='doc'?'Documented construction':'Contemporary — not a historic reconstruction'));
+  document.getElementById('info').innerHTML=bits.map(b=>`<span>${b}</span>`).join('');
+}
+
+/* ============================================================ UI */
+const $=id=>document.getElementById(id);
+function buildLists(){
+  $('engines').innerHTML=ENGINES.map(e=>
+    `<div class="item${e.id===st.engine?' on':''}" data-e="${e.id}"><span>${e.name}<br><small>${e.sub}</small></span><span class="tag ${e.tag}">${e.tagText||(e.tag==='doc'?'documented':'contemporary')}</span></div>`).join('');
+  $('engines').querySelectorAll('[data-e]').forEach(el=>el.onclick=()=>{
+    if(st.engine!==el.dataset.e){
+      st.engine=el.dataset.e;
+      /* each engine wants its own working scale and line weight — inheriting a
+         37 px edge and a 1 px line from the previous one just looks broken */
+      const d=(ENGINES.find(x=>x.id===st.engine)||{}).def;
+      if(d) Object.assign(st,d);
+      clampAll();
+    }
+    buildLists();buildParams();render();sync();
+  });
+  if(st.engine==='girih'&&!TILINGS[st.tiling].girih) st.tiling='girihHex';
+  if(st.engine==='pic'&&TILINGS[st.tiling].girih) st.tiling=DEF.tiling;
+  const showTil=st.engine==='pic';
+  $('h-tiling').style.display=showTil?'':'none';
+  $('tilings').style.display=showTil?'':'none';
+  /* grouped into families rather than one flat list, and rendered group by
+     group so the order never depends on how TILINGS happens to be written */
+  $('tilings').innerHTML=showTil?TILING_GROUPS.map(([gname,gnote])=>{
+    const rows=Object.entries(TILINGS).filter(([,t])=>!t.girih&&t.g===gname);
+    if(!rows.length) return '';
+    return `<div class="grp">${gname}<em>${gnote}</em></div>`+rows.map(([k,t])=>
+      `<div class="item${k===st.tiling?' on':''}" data-t="${k}"><span>${t.label}</span><small>${t.vf}</small></div>`).join('');
+  }).join('')+`<div class="card" style="margin-top:10px"><b>Dual (Laves)</b>Each of these can also be shown as its dual — 18 tessellations in all. Two of the eight Archimedean tilings, the snub square 3.3.4.3.4 and snub hexagonal 3.3.3.3.6, are not yet built.</div>`:'';
+  $('tilings').querySelectorAll('[data-t]').forEach(el=>el.onclick=()=>{st.tiling=el.dataset.t;buildLists();render();sync()});
+  const e=ENGINES.find(x=>x.id===st.engine);
+  $('srcCard').innerHTML=`<b>Source</b>${e.src}`;
+  $('modes').innerHTML=MODES.map(([k,n])=>`<button data-m="${k}" class="${k===st.mode?'on':''}">${n}</button>`).join('');
+  $('modes').querySelectorAll('button').forEach(b=>b.onclick=()=>{st.mode=b.dataset.m;buildLists();render();sync()});
+}
+function buildParams(){
+  const rows=visibleCtrls();
+  let h='<h3>Construction</h3>';
+  for(const c of rows){
+    if(c.k==='width') h+='<h3>Line &amp; frame</h3>';
+    if(c.k==='palMode') h+='<h3>Colour</h3>';
+    if(c.type==='sel'){
+      h+=`<div class="row"><div class="rlab"><span>${cv(c.label)}</span></div>
+        <select data-k="${c.k}">${c.opts.map(([val,lab])=>
+          `<option value="${val}"${st[c.k]===val?' selected':''}>${lab}</option>`).join('')}</select></div>`;
+    }else if(c.type==='chk'){
+      h+=`<label class="chk"><input type="checkbox" data-k="${c.k}" ${st[c.k]?'checked':''}> ${cv(c.label)}</label>`;
+    }else{
+      /* percentages are stored 0–1 but typed and shown as 0–100 */
+      const mn=cv(c.min), mx=cv(c.max), lbl=cv(c.label);
+      const lo=c.pct?0:mn, hi=c.pct?100:mx, sp=c.pct?1:c.step;
+      const unit=c.pct?'%':(c.unit||'').trim();
+      h+=`<div class="row"><div class="rlab"><span>${lbl}</span>
+        <span class="val"><input type="number" class="num" data-k="${c.k}" min="${lo}" max="${hi}" step="${sp}"
+          aria-label="${lbl}">${unit?`<u>${unit}</u>`:''}</span></div>
+      <input type="range" data-k="${c.k}" min="${mn}" max="${mx}" step="${c.step}" value="${st[c.k]}"></div>`;
+    }
+  }
+  h+='<div id="swWrap"><div class="sw" id="sw"></div></div>';
+  h+=`<div class="card"><b>Reading</b><span id="read"></span></div>`;
+  $('params').innerHTML=h;
+  $('params').querySelectorAll('input[type=range]').forEach(i=>{
+    i.oninput=()=>{st[i.dataset.k]=parseFloat(i.value);outs();render();sync()};
+  });
+  $('params').querySelectorAll('input.num').forEach(i=>{
+    const c=ctrlOf(i.dataset.k); if(!c) return;
+    /* Apply as they type, but never rewrite the box mid-edit: typing "400" into a
+       field whose minimum is 12 passes through "4", and snapping the text back
+       would make the rest of the number impossible to enter. The box is only
+       normalised once the edit is committed. */
+    const apply=commit=>{
+      const raw=parseFloat(i.value);
+      if(isFinite(raw)){
+        let x=c.pct?raw/100:raw;
+        st[c.k]=Math.min(cv(c.max),Math.max(cv(c.min),x));
+        const rg=$('params').querySelector(`input[type=range][data-k="${c.k}"]`);
+        if(rg) rg.value=st[c.k];
+        render(); sync();
+      }
+      if(commit) setNum(i,c);
+    };
+    i.oninput=()=>apply(false);
+    i.onchange=()=>apply(true);
+    i.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();i.blur()}};
+  });
+  $('params').querySelectorAll('input[type=checkbox]').forEach(i=>{
+    i.onchange=()=>{st[i.dataset.k]=i.checked;render();sync()};
+  });
+  $('params').querySelectorAll('select[data-k]').forEach(i=>{
+    i.onchange=()=>{st[i.dataset.k]=i.value;clampAll();buildParams();render();sync()};
+  });
+  if(st.palMode==='custom'){
+    const g=genPalette(st);
+    $('sw').innerHTML=g.fills.map(c=>`<i style="background:${c}" title="${c}"></i>`).join('');
+    $('sw').onclick=null;
+  }else{
+    $('sw').innerHTML=PALETTES.map((p,i)=>
+      `<i title="${p.name}" data-i="${i}" class="${i===st.pal?'on':''}" style="background:linear-gradient(135deg,${p.bg} 0 34%,${p.ink} 34% 67%,${p.acc} 67% 100%)"></i>`).join('');
+    $('sw').onclick=e=>{const i=e.target.dataset.i;if(i!==undefined){st.pal=+i;buildParams();render();sync()}};
+  }
+  outs();
+}
+const visibleCtrls=()=>[...(CTRL[st.engine]||[]),...COMMON].filter(c=>!c.when||c.when(st));
+const ctrlOf=k=>visibleCtrls().find(c=>c.k===k);
+/* switching layout can change a control's range (seeds per repeat is capped far
+   lower than a free scatter), so pull every value back inside its new bounds */
+function clampAll(){
+  for(const c of visibleCtrls()){
+    if(c.type==='chk'||c.type==='sel') continue;
+    st[c.k]=Math.min(cv(c.max),Math.max(cv(c.min),st[c.k]));
+  }
+}
+function setNum(i,c){ i.value=c.pct?Math.round(st[c.k]*100):+(+st[c.k]).toFixed(2) }
+function outs(){
+  for(const c of visibleCtrls()){
+    const i=$('params').querySelector(`input.num[data-k="${c.k}"]`);
+    if(i&&document.activeElement!==i) setNum(i,c);   /* don't fight the caret */
+  }
+  const R={construct:st.engine==='multi'
+      ?'The multigrid itself — the line families whose crossings generate the tiling — drawn over the dual they produce.'
+      :'Underlying polygons, edge midpoints and contact rays, with the resulting pattern over them.',
+    line:'The bare construction as single-weight line art.',
+    interlace:'Over and under decided per crossing by walking each strand and flipping as it goes.',
+    jali:(st.engine==='voro'||st.engine==='multi')
+      ?'Solid panel with each tile cut out as a closed opening. Rib width sets the material left between them, and the aperture is measured from the shapes on screen.'
+      :'Lines read as physical ribs; everything between them is an opening.',
+    mosaic:'Closed pieces filled from the palette and separated by grout.'}[st.mode];
+  const el=$('read'); if(el) el.textContent=R;
+}
+
+/* URL state */
+function sync(){
+  const q=Object.entries(st).map(([k,v])=>k+'='+(typeof v==='boolean'?(v?1:0):v)).join('&');
+  history.replaceState(null,'','#'+q);
+}
+function load(){
+  if(!location.hash) return;
+  for(const p of location.hash.slice(1).split('&')){
+    const [k,val]=p.split('='); if(!(k in DEF)) continue;
+    st[k]=typeof DEF[k]==='boolean'?val==='1':(typeof DEF[k]==='number'?parseFloat(val):val);
+  }
+  if(!TILINGS[st.tiling]) st.tiling=DEF.tiling;
+  if(!ENGINES.some(e=>e.id===st.engine)) st.engine=DEF.engine;
+}
+
+/* ============================================================ vector export
+   Three real vector formats, no raster anywhere:
+   · SVG — opens in Illustrator, Inkscape, Affinity, browsers.
+   · PDF — a .ai file IS a PDF internally, so this is the Illustrator route.
+     Written by hand: one content stream of path operators, with a correct
+     cross-reference table.
+   · DXF — the documented interchange format AutoCAD reads natively. DWG itself
+     is proprietary and undocumented, so DXF is what can honestly be written;
+     AutoCAD opens it directly, and any converter will turn it into DWG.
+   Curves are flattened for DXF because R12 has no Bezier entity, which is also
+   what a cutter wants. */
+function exportShapes(){
+  const {shapes,P}=last, r=st.round, out=[];
+  for(const sh of shapes){
+    let pts=sh.pts;
+    if(st.mode==='jali'&&(st.engine==='voro'||st.engine==='multi')){
+      pts=insetConvex(pts,st.width*1.1); if(pts.length<3) continue;
+    }
+    out.push(roundedPoly(pts,r));
+  }
+  return out;
+}
+function download(blob,name){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download=name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+const baseName=()=>`pattern-${st.engine}-${st.engine==='pic'?st.tiling:st.mode}`;
+
+function exportDXF(){
+  const polys=exportShapes(), L=[];
+  const put=(c,v)=>{L.push(String(c),String(v))};
+  put(0,'SECTION'); put(2,'ENTITIES');
+  const emit=(pts,layer)=>{
+    put(0,'POLYLINE'); put(8,layer); put(66,1); put(70,1);
+    for(const p of pts){ put(0,'VERTEX'); put(8,layer);
+      put(10,(+p.x).toFixed(4)); put(20,(H-p.y).toFixed(4)); put(30,'0.0'); }
+    put(0,'SEQEND'); put(8,layer);
+  };
+  for(const p of polys) emit(p,'PATTERN');
+  if(st.frame){
+    const i=Math.max(10,st.width*2);
+    emit([v(i,i),v(W-i,i),v(W-i,H-i),v(i,H-i)],'FRAME');
+  }
+  put(0,'ENDSEC'); put(0,'EOF');
+  return L.join('\r\n')+'\r\n';
+}
+
+function exportPDF(){
+  const polys=exportShapes(), P=paletteOf(st);
+  const hex=c=>{const n=parseInt(c.slice(1),16);
+    return [((n>>16)&255)/255,((n>>8)&255)/255,(n&255)/255].map(x=>x.toFixed(3)).join(' ')};
+  const y=v=>(H-v).toFixed(2);
+  let s='';
+  const solid=(st.mode==='jali'||st.mode==='mosaic');
+  s+=`${hex(st.mode==='jali'?P.mat:P.bg)} rg 0 0 ${W.toFixed(2)} ${H.toFixed(2)} re f\n`;
+  const nf=P.fills.length, pick=colourer(last.shapes,st.colourBy,nf);
+  s+=`${st.width.toFixed(2)} w 1 J 1 j\n`;
+  polys.forEach((pts,i)=>{
+    if(!pts.length) return;
+    s+=`${pts[0].x.toFixed(2)} ${y(pts[0].y)} m\n`;
+    for(let k=1;k<pts.length;k++) s+=`${pts[k].x.toFixed(2)} ${y(pts[k].y)} l\n`;
+    s+='h\n';
+    if(st.mode==='jali')       s+=`${hex(P.open)} rg f\n`;
+    else if(st.mode==='mosaic')s+=`${hex(P.fills[pick(last.shapes[i]||{pts,c:centroid(pts)},i)])} rg f\n`;
+    else                       s+=`${hex(P.ink)} RG S\n`;
+  });
+  const objs=[
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W.toFixed(2)} ${H.toFixed(2)}] /Contents 4 0 R /Resources << >> >>`,
+    `<< /Length ${s.length} >>\nstream\n${s}endstream`
+  ];
+  let pdf='%PDF-1.4\n', offs=[];
+  objs.forEach((o,i)=>{ offs.push(pdf.length); pdf+=`${i+1} 0 obj\n${o}\nendobj\n` });
+  const xref=pdf.length;
+  pdf+=`xref\n0 ${objs.length+1}\n0000000000 65535 f \n`;
+  for(const o of offs) pdf+=String(o).padStart(10,'0')+' 00000 n \n';
+  pdf+=`trailer\n<< /Size ${objs.length+1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+  return pdf;
+}
+
+/* actions */
+$('expDxf').onclick=()=>download(new Blob([exportDXF()],{type:'image/vnd.dxf'}),baseName()+'.dxf');
+$('expPdf').onclick=()=>download(new Blob([exportPDF()],{type:'application/pdf'}),baseName()+'.pdf');
+$('exp').onclick=()=>{
+  const svg=$('svg').cloneNode(true);
+  svg.setAttribute('xmlns','http://www.w3.org/2000/svg');
+  svg.setAttribute('width',W);svg.setAttribute('height',H);
+  const blob=new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n'+new XMLSerializer().serializeToString(svg)],{type:'image/svg+xml'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`pattern-${st.engine}-${st.engine==='pic'?st.tiling:st.mode}.svg`;
+  a.click();URL.revokeObjectURL(a.href);
+};
+$('copy').onclick=async()=>{
+  try{await navigator.clipboard.writeText(location.href);$('copy').textContent='Copied';
+    setTimeout(()=>$('copy').textContent='Copy link',1200)}catch(e){}
+};
+$('reset').onclick=()=>{const e=st.engine,t=st.tiling;st=Object.assign({},DEF,{engine:e,tiling:t});buildLists();buildParams();render();sync()};
+$('rnd').onclick=()=>{
+  const R=Math.random;
+  if(st.engine==='pic'){
+    const ks=Object.keys(TILINGS).filter(k=>!TILINGS[k].girih);
+    st.tiling=ks[Math.floor(R()*ks.length)];st.angle=20+Math.floor(R()*55);st.dual=R()<0.35}
+  else if(st.engine==='girih'){
+    st.tiling=['girihHex','girihBow','girihRhomb'][Math.floor(R()*3)];
+    st.angle=R()<0.5?54:25+Math.floor(R()*45);st.scale=50+Math.floor(R()*110)}
+  else if(st.engine==='star'){st.sn=6+Math.floor(R()*16);st.sd=2+Math.floor(R()*(Math.floor(st.sn/2)-1))}
+  else if(st.engine==='multi'){
+    st.mN=[4,5,5,7,8,9,11,12][Math.floor(R()*8)];
+    st.mOffset=Math.round(R()*100)/100; st.mDisorder=R()<0.6?0:Math.floor(R()*60);
+    st.seed=1+Math.floor(R()*999); st.scale=24+Math.floor(R()*60); clampAll();
+  }
+  else{
+    st.vlayout=['hex','grid','brick','hex','radial'][Math.floor(R()*5)];
+    st.seed=1+Math.floor(R()*999);
+    if(PERIODIC(st)){st.vrepeat=1+Math.floor(R()*4);st.vcount=4+Math.floor(R()*40);st.vjitter=Math.floor(R()*100)}
+    else{st.vsym=[1,4,5,6,8,10,12][Math.floor(R()*7)];st.vcount=40+Math.floor(R()*200)}
+    clampAll();
+  }
+  st.round=Math.round(R()*100)/100;
+  buildLists();buildParams();render();sync();
+};
+$('zi').onclick=()=>{st.scale=Math.min(220,st.scale*1.2);st.scell=Math.min(300,st.scell*1.2);buildParams();render();sync()};
+$('zo').onclick=()=>{st.scale=Math.max(40,st.scale/1.2);st.scell=Math.max(70,st.scell/1.2);buildParams();render();sync()};
+
+/* nav */
+$('nav').querySelectorAll('a').forEach(a=>a.onclick=()=>{
+  $('nav').querySelectorAll('a').forEach(x=>x.classList.remove('on'));
+  a.classList.add('on');
+  const p=a.dataset.p;
+  $('p-designer').style.display=p==='designer'?'':'none';
+  ['constructions','sources','about'].forEach(k=>$('p-'+k).classList.toggle('on',k===p));
+});
+
+/* sources tables */
+const SRC_MAIN=[
+ ['[3] E. H. Hankin, <i>Drawing of Geometric Patterns in Saracenic Art</i> (1925)','Free scan','Polygons-in-contact construction — implemented'],
+ ['[7] Craig Kaplan, <i>Islamic Star Patterns from Polygons in Contact</i> (2005)','Free paper','Computational form of the above — implemented'],
+ ['[1] Met, <i>Islamic Art and Geometric Design</i>','Free museum PDF','Compass and star-polygon exercises — implemented'],
+ ['[4] Lu &amp; Steinhardt, girih paper (2007)','Free author PDF','Girih tile set and strapwork — planned'],
+ ['[5] Jay Bonner, <i>Islamic Geometric Patterns</i> (2017)','Publisher page','Historical polygonal systems and classification'],
+ ['[25] Gülru Necipoğlu, <i>The Topkapi Scroll</i> (1995)','Free Getty PDF','Historical construction documents and context'],
+ ['[20] Bridges archive, <i>Random Zellij Compositions</i>','Free paper','Controlled variation — context for the Voronoi engine'],
+ ['[26] N. G. de Bruijn, <i>Algebraic theory of Penrose\'s non-periodic tilings of the plane</i> (1981)','Published paper','The multigrid method — implemented'],
+ ['[27] Aatish Bhatia &amp; Henry Reich, <i>Pattern Collider</i> (MIT licence)','Open source tool','Prompted the multigrid engine; method taken from de Bruijn, code written here'],
+ ['[28] David Austin, <i>Penrose Tilings Tied up in Ribbons</i>','AMS Feature Column','Accessible account of the multigrid / de Bruijn duality'],
+ ['[29] Robert Fathauer, <i>Tessellations: Mathematics, Art, and Recreation</i> (A K Peters/CRC, 2021, 464 pp)','Publisher page','Ch.2 geometric tilings and duals, ch.6 polyforms and rep-tiles, ch.8 substitution tilings, ch.9 fractal tilings — implemented']
+];
+const SRC_ALL=[
+ '[1] The Metropolitan Museum of Art, Islamic Art and Geometric Design, Activities for Learning',
+ '[2] The Metropolitan Museum of Art, Unit Three, Geometric Design in Islamic Art',
+ '[3] E. H. Hankin, Drawing of Geometric Patterns in Saracenic Art, scan',
+ '[4] Peter J. Lu and Paul J. Steinhardt, Decagonal and Quasi Crystalline Tilings',
+ '[5] Jay Bonner, Islamic Geometric Patterns, Springer',
+ '[6] The Metropolitan Museum of Art, Pierced Window Screen (Jali), 1993.67.2',
+ '[7] Craig Kaplan, Islamic Star Patterns from Polygons in Contact',
+ '[8] Victoria and Albert Museum, Design and Make Your Own Islamic Tile',
+ '[9] The Metropolitan Museum of Art, Sidi Said Mosque Screen Photograph',
+ '[10] ACR Editions, Jean Marc Castéra, Arabesques',
+ '[11] The Metropolitan Museum of Art, Geometric Design Unit, zellij discussion',
+ '[12] The Metropolitan Museum of Art, Nasrid Textile Fragment',
+ '[13] The Metropolitan Museum of Art, Iznik Border Tiles with Saz Leaf',
+ '[14] Victoria and Albert Museum, The Gothic Style, an Introduction',
+ '[15] Isabella Stewart Gardner Museum, Wheel Window',
+ '[16] Cooper Hewitt, Hector Guimard, Art Nouveau to Modernism',
+ '[17] Thames and Hudson, Alastair Duncan, Art Deco Complete',
+ '[18] Cooper Hewitt, A Timeless Portal, Chanin Building Gates',
+ '[19] Wolfram MathWorld, Wallpaper Groups',
+ '[20] Bridges Conference Archive, Random Zellij Compositions',
+ '[21] Victoria and Albert Museum, Owen Jones and the Grammar of Ornament',
+ '[22] Thames and Hudson, Eric Broug, Islamic Geometric Design',
+ '[23] Thames and Hudson, Eric Broug, Islamic Geometric Patterns',
+ '[24] Google Books, Daud Sutton, Islamic Design',
+ '[25] Getty Research Institute, Gülru Necipoğlu, The Topkapi Scroll, full PDF',
+ '[26] N. G. de Bruijn, Algebraic theory of Penrose\'s non-periodic tilings of the plane (1981)',
+ '[27] Aatish Bhatia and Henry Reich, Pattern Collider, github.com/aatishb/patterncollider (MIT)',
+ '[28] David Austin, Penrose Tilings Tied up in Ribbons, AMS Feature Column',
+ '[29] Robert Fathauer, Tessellations: Mathematics, Art, and Recreation, A K Peters/CRC Press 2021'
+];
+$('srcMain').innerHTML='<tr><th>Reference</th><th>Access verified</th><th>Use here</th></tr>'+
+  SRC_MAIN.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');
+$('srcAll').innerHTML=SRC_ALL.map(r=>`<tr><td>${r}</td><td>Open source</td></tr>`).join('');
+
+/* go */
+load();buildLists();buildParams();render();sync();
+let rt; addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(render,120)});
+</script>
+</body>
+</html>

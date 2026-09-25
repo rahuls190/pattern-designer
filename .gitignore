@@ -1,0 +1,9 @@
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+desktop.ini
+*~
+
+# OneDrive conflict copies
+*-Copy*.html
+*conflicted*
