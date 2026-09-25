@@ -101,6 +101,8 @@ code{font:12.5px ui-monospace,Consolas,monospace;background:var(--panel);padding
 <!-- ================= DESIGNER ================= -->
 <main id="p-designer">
   <aside class="l">
+    <h3>Starting points</h3>
+    <div id="presets"></div>
     <h3>Construction engine</h3>
     <div id="engines"></div>
     <h3 id="h-tiling">Underlying tiling</h3>
@@ -950,6 +952,28 @@ const ENGINES=[
 ];
 const MODES=[['construct','Construction'],['line','Line'],['interlace','Interlace'],['jali','Solid / void'],['mosaic','Mosaic']];
 
+/* ============================================================ starting points
+   One-click looks. Each is only a set of engine settings, so everything can be
+   adjusted afterwards. The note says which construction produces it, because a
+   look is not a claim about any historic object. */
+const PRESETS=[
+  {name:'Interlaced 12-fold stars',note:'Polygons in contact on 4.6.12, woven',
+   s:{engine:'pic',tiling:'trunctrihex',angle:38,scale:58,width:4,mode:'interlace',pal:1,frame:false}},
+  {name:'Thin-line 8-point stars',note:'Polygons in contact on 4.8.8, fine line',
+   s:{engine:'pic',tiling:'octasq',angle:45,scale:64,width:1.5,mode:'line',pal:1,frame:false}},
+  {name:'Zellige-style mosaic',note:'4.8.8 with coloured pieces and grout',
+   s:{engine:'pic',tiling:'octasq',angle:50,scale:76,width:3,mode:'mosaic',pal:2,frame:false}},
+  {name:'16-point star lattice',note:'Compass stars {16/6}. Not a full rosette medallion',
+   s:{engine:'star',sn:16,sd:6,scell:230,width:2,mode:'line',pal:1,ssec:true,frame:false}},
+  {name:'Ten-fold Penrose stars',note:'Star motif over the Penrose tiling',
+   s:{engine:'multi',mN:5,mOffset:0,scale:58,mMotif:true,angle:54,width:3,mode:'line',
+      palMode:'custom',cHue:42,cSpread:60,cSat:55,cLight:55,cContrast:40,colourBy:'type',frame:true}},
+  {name:'Girih hexagon strapwork',note:'Girih tile, straps at 54 degrees',
+   s:{engine:'girih',tiling:'girihHex',angle:54,scale:95,width:5,mode:'line',pal:0,frame:true}},
+  {name:'Repeating jali panel',note:'Voronoi hex repeat, cut out and rounded',
+   s:{engine:'voro',vlayout:'hex',vrepeat:2,vcount:12,vjitter:40,vrelax:3,round:0.7,width:6,mode:'jali',pal:1,frame:true}}
+];
+
 /* ============================================================ state */
 const DEF={engine:'pic',tiling:'octasq',mode:'line',
   angle:50,scale:76,rotation:0,round:0,width:4,frame:true,dual:false,
@@ -1334,7 +1358,16 @@ function updateInfo(shapes,measured){
 
 /* ============================================================ UI */
 const $=id=>document.getElementById(id);
+function applyPreset(i){
+  const p=PRESETS[i]; if(!p) return;
+  st=Object.assign({},DEF,p.s);      /* start from defaults so nothing stale leaks in */
+  clampAll();
+  buildLists();buildParams();render();sync();
+}
 function buildLists(){
+  $('presets').innerHTML=PRESETS.map((p,i)=>
+    `<div class="item" data-pre="${i}"><span>${p.name}<br><small>${p.note}</small></span></div>`).join('');
+  $('presets').querySelectorAll('[data-pre]').forEach(el=>el.onclick=()=>applyPreset(+el.dataset.pre));
   $('engines').innerHTML=ENGINES.map(e=>
     `<div class="item${e.id===st.engine?' on':''}" data-e="${e.id}"><span>${e.name}<br><small>${e.sub}</small></span><span class="tag ${e.tag}">${e.tagText||(e.tag==='doc'?'documented':'contemporary')}</span></div>`).join('');
   $('engines').querySelectorAll('[data-e]').forEach(el=>el.onclick=()=>{
