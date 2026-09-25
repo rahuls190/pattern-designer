@@ -180,7 +180,11 @@ code{font:12.5px ui-monospace,Consolas,monospace;background:var(--panel);padding
   <p>Two details decide whether the result looks even. First, clipping leaves duplicate and collinear vertices wherever a bisector passes close to an existing corner; those have a zero-length edge, nothing to cut back, and would stay hard while everything around them softened — so they are removed before rounding. Second, the cut is sized from <i>one radius shared by the whole pattern</i>, capped at half an edge wherever the edge is too short to give it, rather than from a fixed fraction of each corner's own edges. A fraction would give a corner between two short edges a small radius and its neighbour a large one. Sizing the cut from the edge length and one global value also means two cells sharing an edge always round it identically, so their outlines stay exactly on top of one another. Where a cell has a very short edge the radius is still limited by that edge — at that point the corner is cut right back to the edge midpoint, which is as round as it can geometrically be.</p>
   <p>This is contemporary work, not a historic reconstruction, and it is labelled that way in the app.</p>
 
-  <h2>8 · Render modes</h2>
+  <h2>8 · Mosaic regions</h2>
+  <p>A real mosaic is filled by <i>region</i>, not by tile, so on the polygons-in-contact engine Mosaic mode finds the regions the lines cut out. There are two kinds. Inside each tile the motif closes on itself and gives the <b>star</b>. Around each tile <i>vertex</i> the neighbouring motifs leave a gap bounded by the star points and edge midpoints of every tile meeting there, giving the kites, pentagons and hexagons around a star. The two kinds together tile the plane exactly, which is checked by sampling.</p>
+  <p><b>Colour by rings</b> then measures each region's distance from the centre of the nearest largest tile, so pieces are coloured in bands around each star, the way a mosaic tile is usually laid out. On 4.8.8 at a contact angle near 67° the octagons carry navy 8-point stars, ringed by gold pieces with small stars in the gaps.</p>
+
+  <h2>9 · Render modes</h2>
   <ul>
     <li><b>Construction</b> — shows the underlying polygons, edge midpoints and contact rays that produced the pattern.</li>
     <li><b>Line</b> — the bare pattern as single-weight line art.</li>
@@ -438,6 +442,35 @@ function picTile(pts,angleDeg){
     rays.push([mids[i],lerp(mids[i],p,1.45)],[mids[j],lerp(mids[j],p,1.45)]);
   }
   return {path,mids,rays};
+}
+
+/* ---------- regions of a polygons-in-contact pattern --------------------
+   A real mosaic fills the regions the lines cut out, not the tiles they were
+   drawn on. There are two kinds. Inside each tile the motif closes on itself,
+   giving the star. Around each tile VERTEX the neighbouring tiles' motifs leave
+   a gap bounded by the star points and edge midpoints of every tile meeting
+   there, which is where the kites and hexagons around a star come from. The
+   vertex faces are found by gathering those points and ordering them around the
+   vertex. Together the stars and vertex faces tile the plane. */
+function makeFaces(pt,W,H,eps,pad){
+  const idx=pointIndex(eps), out=[];
+  for(const t of pt){
+    const n=t.pts.length;
+    for(let i=0;i<n;i++){
+      const j=(i+1)%n, V=t.pts[j];
+      let e=idx.get(V); if(!e) e=idx.add(V,[]);
+      e.v.push(t.path[2*i],t.path[2*i+1],t.path[2*j]);
+    }
+    out.push({pts:t.path,c:t.c,cls:100+t.n,kind:'star',src:t});
+  }
+  for(const {p:V,v:arr} of idx.all()){
+    if(V.x<-pad||V.x>W+pad||V.y<-pad||V.y>H+pad) continue;
+    const u=[]; for(const q of arr) if(!u.some(w=>len(sub(w,q))<eps)) u.push(q);
+    if(u.length<6) continue;
+    u.sort((a,b)=>Math.atan2(a.y-V.y,a.x-V.x)-Math.atan2(b.y-V.y,b.x-V.x));
+    out.push({pts:u,c:centroid(u),cls:u.length/2,kind:'vertex'});
+  }
+  return out;
 }
 
 /* ============================================================ star polygons {n/d} */
@@ -911,8 +944,16 @@ function strokeColours(shapes,P){
   return shapes.map((sh,i)=>strokeSafe(P.fills[pick(sh,i)]));
 }
 
+/* star-centre positions for "Colour by ring", set when faces are built */
+const RING={centres:[],R:1};
 /* which palette entry a shape takes */
 function colourer(shapes,mode,n){
+  if(mode==='ring'&&RING.centres.length){
+    return sh=>{
+      let d=1e9; for(const c of RING.centres) d=Math.min(d,len(sub(sh.c,c)));
+      return Math.min(n-1,Math.floor(d/RING.R*n/1.7));
+    };
+  }
   if(mode==='area'){
     const a=shapes.map(s=>Math.abs(polyArea(s.pts)));
     const lo=Math.min(...a), hi=Math.max(...a)||1;
@@ -961,8 +1002,8 @@ const PRESETS=[
    s:{engine:'pic',tiling:'trunctrihex',angle:38,scale:58,width:4,mode:'interlace',pal:1,frame:false}},
   {name:'Thin-line 8-point stars',note:'Polygons in contact on 4.8.8, fine line',
    s:{engine:'pic',tiling:'octasq',angle:45,scale:64,width:1.5,mode:'line',pal:1,frame:false}},
-  {name:'Zellige-style mosaic',note:'4.8.8 with coloured pieces and grout',
-   s:{engine:'pic',tiling:'octasq',angle:50,scale:76,width:3,mode:'mosaic',pal:2,frame:false}},
+  {name:'8-point star mosaic',note:'4.8.8 filled by region, coloured in rings around each star',
+   s:{engine:'pic',tiling:'octasq',angle:67,scale:96,width:6,mode:'mosaic',pal:1,colourBy:'ring',frame:false}},
   {name:'16-point star lattice',note:'Compass stars {16/6}. Not a full rosette medallion',
    s:{engine:'star',sn:16,sd:6,scell:230,width:2,mode:'line',pal:1,ssec:true,frame:false}},
   {name:'Ten-fold Penrose stars',note:'Star motif over the Penrose tiling',
@@ -1057,7 +1098,7 @@ const COMMON=[
   {k:'cContrast',label:'Contrast',   min:0,max:90,step:1,unit:'%',when:s=>s.palMode==='custom'},
   {k:'cReverse', label:'Reverse ramp',type:'chk',when:s=>s.palMode==='custom'},
   {k:'colourBy', label:'Colour by',type:'sel',opts:[
-    ['type','Tile type'],['area','Tile area'],['angle','Orientation'],
+    ['type','Tile type'],['ring','Rings around stars'],['area','Tile area'],['angle','Orientation'],
     ['sides','Side count'],['position','Position']]}
 ];
 
@@ -1077,20 +1118,31 @@ function build(){
   const shapes=[];      /* closed point arrays making the pattern */
   const under=[];       /* underlying polygons, for construction + mosaic */
   const rays=[],dots=[];
+  let faces=null;
   if(st.engine==='pic'||st.engine==='girih'){
     /* the dual needs a wider margin: a vertex only yields a face when every
        tile around it exists, so the outermost ring of tiles is sacrificial */
     /* the dual is offered on the tiling engine only — girih must not inherit a
        stale flag from a control it never shows */
     const useDual=st.dual&&st.engine==='pic';
+    const ptiles=[];
     let tiles=tilePlane(st.tiling,st.scale,rotr,W,H,useDual?5:2.5);
     if(useDual) tiles=dualTiling(tiles,W,H,st.scale*2.5,st.scale*0.02);
     for(const t of tiles){
       const r=picTile(t.pts,st.angle);
+      ptiles.push({pts:t.pts,path:r.path,c:t.c,n:t.n});
       /* edge-midpoint keys identify which tiles share a crossing, for the interlace */
       shapes.push({pts:r.path,c:t.c,n:t.n,cls:t.n,keys:r.mids.map(m=>Math.round(m.x*2)+','+Math.round(m.y*2))});
       under.push(t.pts);
       if(st.mode==='construct'){rays.push(...r.rays);dots.push(...r.mids)}
+    }
+    if(st.mode==='mosaic'&&!useDual){
+      faces=makeFaces(ptiles,W,H,st.scale*0.02,st.scale*1.2);
+      /* the largest tiles are the star centres that "Colour by ring" measures from */
+      const big=Math.max(...ptiles.map(t=>t.n));
+      const cs=ptiles.filter(t=>t.n===big);
+      let R=0; if(cs.length){for(const q of cs[0].pts) R=Math.max(R,len(sub(q,cs[0].c)))}
+      RING.centres=cs.map(t=>t.c); RING.R=R||st.scale;
     }
   } else if(st.engine==='star'){
     const c=st.scell, cols=Math.ceil(W/c)+3, rows=Math.ceil(H/c)+3;
@@ -1143,7 +1195,7 @@ function build(){
       }
     }
   }
-  last={shapes,under,rays,dots,P,M:last&&last.M};
+  last={shapes,under,rays,dots,P,faces,M:last&&last.M};
   return last;
 }
 
@@ -1297,6 +1349,19 @@ function render(){
         s+=`<path d="${pathD(shapes[i].pts,r)}" fill="${P.fills[pick(shapes[i],i)]}"/>`;
       s+=`</g>`;
     }else{
+      if(last.faces&&last.faces.length){
+        /* fill the regions the lines cut out: stars, and the gaps between them */
+        const fp=colourer(last.faces,st.colourBy,nf);
+        const ck=[...new Set(last.faces.map(f=>f.cls))].sort((a,b)=>a-b);
+        const byType=st.colourBy==='type';
+        last.faceCols=last.faces.map((f,i)=>{
+          const k=byType?Math.round(ck.indexOf(f.cls)/Math.max(1,ck.length-1)*(nf-1)):fp(f,i);
+          return P.fills[k%nf];
+        });
+        s+=`<g stroke="${P.grout}" stroke-width="${Math.max(1,w*0.7)}" stroke-linejoin="round">`;
+        last.faces.forEach((f,i)=>{s+=`<path d="${pathD(f.pts,r)}" fill="${last.faceCols[i]}"/>`});
+        s+=`</g>`;
+      }else{
       const upick=colourer(under.map(u=>({pts:u,c:centroid(u)})),st.colourBy,nf);
       s+=`<g stroke="${P.grout}" stroke-width="${Math.max(1,w*0.6)}" stroke-linejoin="round">`;
       for(let i=0;i<under.length;i++){
@@ -1306,6 +1371,7 @@ function render(){
       for(let i=0;i<shapes.length;i++)
         s+=`<path d="${pathD(shapes[i].pts,r)}" fill="${P.fills[(pick(shapes[i],i)+2)%nf]}"/>`;
       s+=`</g>`;
+      }
     }
   }
 
@@ -1523,6 +1589,7 @@ function load(){
    what a cutter wants. */
 function exportShapes(){
   const {shapes,P}=last, r=st.round, out=[];
+  if(st.mode==='mosaic'&&last.faces&&last.faces.length) return last.faces.map(f=>roundedPoly(f.pts,r));
   for(const sh of shapes){
     let pts=sh.pts;
     if(st.mode==='jali'&&(st.engine==='voro'||st.engine==='multi')){
@@ -1575,7 +1642,7 @@ function exportPDF(){
     for(let k=1;k<pts.length;k++) s+=`${pts[k].x.toFixed(2)} ${y(pts[k].y)} l\n`;
     s+='h\n';
     if(st.mode==='jali')       s+=`${hex(P.open)} rg f\n`;
-    else if(st.mode==='mosaic')s+=`${hex(P.fills[pick(last.shapes[i]||{pts,c:centroid(pts)},i)])} rg f\n`;
+    else if(st.mode==='mosaic')s+=`${hex(last.faces&&last.faceCols?last.faceCols[i]:P.fills[pick(last.shapes[i]||{pts,c:centroid(pts)},i)])} rg f\n`;
     else                       s+=`${hex(spdf[i]||P.ink)} RG S\n`;
   });
   const objs=[
