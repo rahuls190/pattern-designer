@@ -943,7 +943,7 @@ const ENGINES=[
    src:'The five girih tiles built from their edge directions — unit edges, angles in multiples of 36°. Strapwork crosses each edge midpoint at <b>54°</b>, so it is polygons-in-contact at that angle [4]. The rhombus, hexagon and bowtie are centrally symmetric and tile on their own, which is verified here. The <b>decagon-and-bowtie field is not solved</b>: its area works out to exactly one bowtie per cell, but no edge-to-edge placement was found, so it is not offered rather than shown wrong.'},
   {id:'subst',name:'Self-similar subdivision', sub:'rep-tiles · substitution', tag:'doc', tagText:'documented', def:{subDepth:4,width:3,round:0},
    src:'Robert Fathauer, <i>Tessellations: Mathematics, Art, and Recreation</i>, A K Peters/CRC Press 2021 [29] — ch.6 polyforms and rep-tiles, ch.8 substitution tilings, ch.9 fractal tilings. Answers item 07 of the research catalogue: subdivide a tile configuration at a smaller scale by a stored rule, to a finite depth.'},
-  {id:'multi',name:'Quasiperiodic multigrid', sub:'de Bruijn · Penrose', tag:'doc', tagText:'documented', def:{mN:5,mOffset:0.2,scale:40,width:3,round:0},
+  {id:'multi',name:'Quasiperiodic multigrid', sub:'de Bruijn · Penrose', tag:'doc', tagText:'documented', def:{mN:5,mOffset:0.2,scale:40,width:3,round:0,mMotif:false},
    src:'N. G. de Bruijn, <i>Algebraic theory of Penrose\'s non-periodic tilings</i> (1981) [26]; method implemented from the mathematics. Prompted by Bhatia &amp; Reich, <i>Pattern Collider</i> [27]. Relates to the decagonal geometry discussed by Lu &amp; Steinhardt [4] — but this is a mathematical construction, <b>not</b> a claim about historical method.'},
   {id:'voro', name:'Voronoi — sharp to round', sub:'contemporary', tag:'pl', def:{vlayout:'hex',vrepeat:2,vcount:12,vjitter:55,vrelax:2,width:5,round:0.5},
    src:'Contemporary construction, not a historic reconstruction. Related to controlled-variation work such as <i>Random Zellij Compositions</i>, Bridges archive [20].'}
@@ -954,7 +954,7 @@ const MODES=[['construct','Construction'],['line','Line'],['interlace','Interlac
 const DEF={engine:'pic',tiling:'octasq',mode:'line',
   angle:50,scale:76,rotation:0,round:0,width:4,frame:true,dual:false,
   sn:12,sd:5,scell:150,ssec:true,
-  mN:5,mOffset:0.2,mDisorder:0,
+  mN:5,mOffset:0.2,mDisorder:0,mMotif:false,
   subRule:'penrose',subDepth:4,
   vlayout:'hex',vrepeat:3,vjitter:55,vcount:24,vsym:8,vmirror:true,vrelax:2,seed:7,
   pal:0,palMode:'preset',colourBy:'type',
@@ -997,6 +997,8 @@ const CTRL={
   {k:'round',   label:'Sharp → round', min:0,max:1,step:0.01,pct:true}
  ],
  multi:[
+  {k:'mMotif',  label:'Islamic star motif on the tiling', type:'chk'},
+  {k:'angle',   label:'Contact angle', min:15,max:80,step:1,unit:'°',when:s=>s.mMotif},
   {k:'mN',      label:'Symmetry',      min:3,max:14,step:1,unit:'grid'},
   {k:'mOffset', label:'Pattern offset',min:0,max:1,step:0.01,pct:true},
   {k:'mDisorder',label:'Disorder',     min:0,max:100,step:1,unit:'%'},
@@ -1086,7 +1088,16 @@ function build(){
     for(const t of parents) under.push(t.p);      /* the generation before, for the construction view */
   } else if(st.engine==='multi'){
     const M=multigrid(st,W,H);
-    for(const t of M.tiles){shapes.push(t);under.push(t.pts)}
+    for(const t of M.tiles){
+      under.push(t.pts);
+      if(st.mMotif){
+        /* Kaplan's polygons in contact works on any polygonal tiling, and on a
+           Penrose or Ammann-Beenker tiling it gives the ten- and eight-fold
+           Islamic star patterns that no periodic tiling can */
+        const r=picTile(t.pts,st.angle);
+        shapes.push({pts:r.path,c:t.c,n:t.n,cls:t.cls,keys:r.mids.map(m=>Math.round(m.x*2)+','+Math.round(m.y*2))});
+      }else shapes.push(t);
+    }
     if(st.mode==='construct') rays.push(...multigridLines(M,W,H));
     last.M=M;
   } else if(st.vlayout==='radial'||st.vlayout==='scatter'){
