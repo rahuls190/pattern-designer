@@ -879,17 +879,35 @@ function genPalette(s){
                        s.cLight+s.cContrast*(t-0.5)));
   }
   if(s.cReverse) fills.reverse();
-  const dark=s.cLight<50;
-  const bg  =hsl2hex(s.cHue+180, Math.min(30,s.cSat*0.35), dark?92:12);
-  const ink =hsl2hex(s.cHue,     Math.min(60,s.cSat),      dark?90:16);
-  const grout=hsl2hex(s.cHue+180,Math.min(18,s.cSat*0.25), dark?96:8);
+  /* The ground is always dark and the ink always light, both tinted by the base
+     hue, so lines are legible whatever the ramp does. (This used to key off the
+     ramp's own lightness, and at 50% picked dark ink on a dark ground.) */
+  const bg   =hsl2hex(s.cHue, Math.min(32,s.cSat*0.4), 11);
+  const ink  =hsl2hex(s.cHue, Math.min(70,s.cSat),     88);
+  const grout=hsl2hex(s.cHue, Math.min(24,s.cSat*0.3),  8);
   return {id:'custom',name:'Generated',bg,ink,
-    /* the accent frames the panel, so keep it inside the ramp's own hue range
-       rather than at its far end, where it reads as an unrelated colour */
-    acc:hsl2hex(s.cHue+s.cSpread*0.15,Math.min(70,s.cSat+10),dark?68:38),
+    acc:hsl2hex(s.cHue+s.cSpread*0.2,Math.min(80,s.cSat+10),62),
     mat:ink, open:bg, grout, fills};
 }
 const paletteOf=s=>s.palMode==='custom'?genPalette(s):PALETTES[s.pal];
+/* In a generated palette the line-based modes take each stroke from the ramp,
+   using the same Colour-by rule as mosaic. Preset swatches keep their single ink. */
+function hex2hsl(h){
+  const n=parseInt(h.slice(1),16), r=(n>>16&255)/255, g=(n>>8&255)/255, b=(n&255)/255;
+  const mx=Math.max(r,g,b), mn=Math.min(r,g,b), l=(mx+mn)/2, d=mx-mn;
+  let hh=0, ss=0;
+  if(d){ ss=d/(1-Math.abs(2*l-1));
+    hh=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4; hh*=60; }
+  return [hh,ss*100,l*100];
+}
+/* a stroke must stay visible on the dark ground, so the ramp's darkest steps
+   are lifted to a readable lightness for line work (fills keep the full ramp) */
+const strokeSafe=c=>{const [h,s,l]=hex2hsl(c);return l>=62?c:hsl2hex(h,s,62)};
+function strokeColours(shapes,P){
+  if(st.palMode!=='custom') return shapes.map(()=>P.ink);
+  const pick=colourer(shapes,st.colourBy,P.fills.length);
+  return shapes.map((sh,i)=>strokeSafe(P.fills[pick(sh,i)]));
+}
 
 /* which palette entry a shape takes */
 function colourer(shapes,mode,n){
@@ -1044,7 +1062,7 @@ function build(){
     for(const t of tiles){
       const r=picTile(t.pts,st.angle);
       /* edge-midpoint keys identify which tiles share a crossing, for the interlace */
-      shapes.push({pts:r.path,c:t.c,n:t.n,keys:r.mids.map(m=>Math.round(m.x*2)+','+Math.round(m.y*2))});
+      shapes.push({pts:r.path,c:t.c,n:t.n,cls:t.n,keys:r.mids.map(m=>Math.round(m.x*2)+','+Math.round(m.y*2))});
       under.push(t.pts);
       if(st.mode==='construct'){rays.push(...r.rays);dots.push(...r.mids)}
     }
@@ -1158,7 +1176,7 @@ function weave(shapes,w){
     const A=armPt(e1.t,e1.i,a.side), B=armPt(e2.t,e2.i,a.side2);
     const ta=Math.min(.48,(w*3.2)/Math.max(1,len(sub(A,m))));
     const tb=Math.min(.48,(w*3.2)/Math.max(1,len(sub(B,m))));
-    stubs.push([lerp(m,A,ta),m,lerp(m,B,tb)]);
+    const stub=[lerp(m,A,ta),m,lerp(m,B,tb)]; stub.t=a.t; stubs.push(stub);
   }
   return stubs;
 }
@@ -1180,30 +1198,32 @@ function render(){
     for(const [a,b] of rays) s+=`<line x1="${f(a.x)}" y1="${f(a.y)}" x2="${f(b.x)}" y2="${f(b.y)}"/>`;
     s+=`</g><g fill="${P.acc}">`;
     for(const d of dots) s+=`<circle cx="${f(d.x)}" cy="${f(d.y)}" r="2.6"/>`;
-    s+=`</g><g fill="none" stroke="${P.ink}" stroke-width="${w}" stroke-linejoin="round">`;
-    for(const sh of shapes) s+=`<path d="${pathD(sh.pts,r)}"/>`;
+    const sc0=strokeColours(shapes,P);
+    s+=`</g><g fill="none" stroke-width="${w}" stroke-linejoin="round">`;
+    shapes.forEach((sh,i)=>{s+=`<path d="${pathD(sh.pts,r)}" stroke="${sc0[i]}"/>`});
     s+=`</g>`;
   }
   else if(st.mode==='line'){
-    s+=`<g fill="none" stroke="${P.ink}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round">`;
-    for(const sh of shapes) s+=`<path d="${pathD(sh.pts,r)}"/>`;
+    const sc=strokeColours(shapes,P);
+    s+=`<g fill="none" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round">`;
+    shapes.forEach((sh,i)=>{s+=`<path d="${pathD(sh.pts,r)}" stroke="${sc[i]}"/>`});
     s+=`</g>`;
   }
   else if(st.mode==='interlace'){
     const ds=shapes.map(sh=>pathD(sh.pts,r));
-    const cas=w*2.6;
+    const cas=w*2.6, sci=strokeColours(shapes,P);
     s+=`<g fill="none" stroke="${P.bg}" stroke-width="${cas}" stroke-linejoin="round">`;
     for(const d of ds) s+=`<path d="${d}"/>`;
-    s+=`</g><g fill="none" stroke="${P.ink}" stroke-width="${w}" stroke-linejoin="round">`;
-    for(const d of ds) s+=`<path d="${d}"/>`;
+    s+=`</g><g fill="none" stroke-width="${w}" stroke-linejoin="round">`;
+    ds.forEach((d,i)=>{s+=`<path d="${d}" stroke="${sci[i]}"/>`});
     s+=`</g>`;
     /* redraw the over-strand through each crossing, so it passes on top */
     const stubs=weave(shapes,w);
     if(stubs.length){
       s+=`<g fill="none" stroke="${P.bg}" stroke-width="${cas}" stroke-linecap="butt" stroke-linejoin="round">`;
       for(const p of stubs) s+=`<path d="${openD(p)}"/>`;
-      s+=`</g><g fill="none" stroke="${P.ink}" stroke-width="${w}" stroke-linecap="butt" stroke-linejoin="round">`;
-      for(const p of stubs) s+=`<path d="${openD(p)}"/>`;
+      s+=`</g><g fill="none" stroke-width="${w}" stroke-linecap="butt" stroke-linejoin="round">`;
+      for(const p of stubs) s+=`<path d="${openD(p)}" stroke="${sci[p.t]||P.ink}"/>`;
       s+=`</g>`;
     }
   }
@@ -1503,6 +1523,7 @@ function exportPDF(){
   const solid=(st.mode==='jali'||st.mode==='mosaic');
   s+=`${hex(st.mode==='jali'?P.mat:P.bg)} rg 0 0 ${W.toFixed(2)} ${H.toFixed(2)} re f\n`;
   const nf=P.fills.length, pick=colourer(last.shapes,st.colourBy,nf);
+  const spdf=strokeColours(last.shapes,P);
   s+=`${st.width.toFixed(2)} w 1 J 1 j\n`;
   polys.forEach((pts,i)=>{
     if(!pts.length) return;
@@ -1511,7 +1532,7 @@ function exportPDF(){
     s+='h\n';
     if(st.mode==='jali')       s+=`${hex(P.open)} rg f\n`;
     else if(st.mode==='mosaic')s+=`${hex(P.fills[pick(last.shapes[i]||{pts,c:centroid(pts)},i)])} rg f\n`;
-    else                       s+=`${hex(P.ink)} RG S\n`;
+    else                       s+=`${hex(spdf[i]||P.ink)} RG S\n`;
   });
   const objs=[
     '<< /Type /Catalog /Pages 2 0 R >>',
