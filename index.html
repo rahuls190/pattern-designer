@@ -1333,7 +1333,7 @@ const openD=pts=>'M'+pts.map(p=>f(p.x)+' '+f(p.y)).join(' L');
    The repeat cell is W x H squares. Symmetry is applied while drawing: each line
    is stored together with its images, so what is stored is already symmetric and
    the pattern is just that set repeated by the two cell vectors. */
-const GP={start:null,mid:null,hover:null,hist:[]};
+const GP={start:null,mid:null,hover:null,hist:[],lib:null};
 const S3G=Math.sqrt(3)/2;
 
 function gParse(str){return str?str.split(';').filter(Boolean).map(t=>t.split(',').map(Number)):[]}
@@ -2002,6 +2002,7 @@ function applyPreset(i){
 /* grid library: grouped by the book and the page a pattern comes from */
 function loadGridPattern(i){
   const e=GRID_LIB[i]; if(!e) return;
+  GP.lib=i;
   st=Object.assign({},DEF,ENGINES.find(x=>x.id==='gridp').def,{engine:'gridp'},e.s);
   GP.start=null; GP.hist=[];
   clampAll(); buildLists(); buildParams(); render(); sync();
@@ -2009,14 +2010,25 @@ function loadGridPattern(i){
 function buildGridLib(){
   const on=st.engine==='gridp';
   $('h-glib').style.display=on?'':'none';
-  if(!on||!GRID_LIB.length){$('glib').innerHTML=on?'<div class="card">No patterns loaded yet.</div>':'';return}
-  let html='', cur='';
+  if(!on){$('glib').innerHTML='';return}
+  if(!GRID_LIB.length){$('glib').innerHTML='<div class="card">No patterns loaded yet.</div>';return}
+  /* one dropdown, grouped by where the pattern comes from, instead of a long list */
+  const size=e=>e.s.gType==='iso'?`triangle ${e.s.gW}`:`${e.s.gW}×${e.s.gH}`;
+  let opts=`<option value="">Choose a pattern (${GRID_LIB.length})…</option>`, cur='', open=false;
   GRID_LIB.forEach((e,i)=>{
-    if(e.group!==cur){cur=e.group;html+=`<div class="grp">${cur}</div>`}
-    html+=`<div class="item" data-gl="${i}"><span>${e.name}<br><small>${e.note||''}</small></span></div>`;
+    if(e.group!==cur){ if(open) opts+='</optgroup>'; cur=e.group; opts+=`<optgroup label="${cur}">`; open=true }
+    opts+=`<option value="${i}"${i===GP.lib?' selected':''}>${e.name} · ${size(e)}</option>`;
   });
-  $('glib').innerHTML=html;
-  $('glib').querySelectorAll('[data-gl]').forEach(el=>el.onclick=()=>loadGridPattern(+el.dataset.gl));
+  if(open) opts+='</optgroup>';
+  $('glib').innerHTML=`<select id="glibSel" aria-label="Patterns from the books">${opts}</select>
+    <div style="display:flex;gap:6px;margin-top:8px">
+      <button class="btn" id="glibPrev" style="flex:1">‹ Previous</button>
+      <button class="btn" id="glibNext" style="flex:1">Next ›</button></div>
+    <div class="card" style="margin-top:8px">Open the <a href="#" data-go="guide">guide</a> to see every pattern as a picture.</div>`;
+  $('glibSel').onchange=e=>{ if(e.target.value!=='') loadGridPattern(+e.target.value) };
+  const step=d=>{ const n=GRID_LIB.length; loadGridPattern(GP.lib===undefined||GP.lib===null?(d>0?0:n-1):(GP.lib+d+n)%n) };
+  $('glibPrev').onclick=()=>step(-1); $('glibNext').onclick=()=>step(1);
+  $('glib').querySelectorAll('[data-go]').forEach(a=>a.onclick=ev=>{ev.preventDefault();document.querySelector('#nav [data-p='+a.dataset.go+']').click()});
 }
 function buildLists(){
   buildGridLib();
