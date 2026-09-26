@@ -12,9 +12,9 @@ Built from the research catalogue *Geometric Pattern Research and Book Catalogue
 |---|---|---|
 | **Polygons in contact** | Hankin's method in Kaplan's computational form, over 9 tilings × their duals = 18 tessellations | documented |
 | **Star polygons {n/d}** | Compass construction (Met activity pack) | documented |
-| **Girih strapwork** | The five girih tiles; straps cross each edge midpoint at 54° | partial |
 | **Self-similar subdivision** | Penrose deflation, triangle rep-4, chair rep-4, Sierpinski | documented |
 | **Quasiperiodic multigrid** | de Bruijn's multigrid — N=5 is Penrose, N=4 is Ammann–Beenker. An optional *Islamic star motif* runs Kaplan's polygons-in-contact over the tiles, giving 8-, 10-, 12- and 16-fold star patterns that no periodic tiling can | documented |
+| **Draw on a grid** | Field's method: straight lines, arcs, 3-point arcs, circles and filled squares on a square or triangle grid, with symmetry and a repeat cell, drawn by hand | documented |
 | **Voronoi — sharp to round** | Repeating or radial seeds, Lloyd relaxation, corner rounding | contemporary |
 
 **Tessellations:** 3 regular, 3 truncated, 3 other semi-regular, each with a dual (Laves) toggle.
@@ -40,7 +40,7 @@ Geometry is checked by measurement, not by eye:
 ## Honest gaps
 
 - The **preset catalogue** is not built. Sections 5–6 of the research document call for named regional presets carrying source object, location, date, material, photo rights and a per-preset confidence label. Confidence is currently labelled *per engine* only. This is the largest gap against the brief.
-- **Girih decagon-and-bowtie field** is unsolved. Its area works out to exactly one bowtie per lattice cell, but no edge-to-edge placement was found across all rotations and anchor points tried, so it is withheld rather than shown wrong.
+- **Girih tiles are not built.** An earlier attempt at girih strapwork was removed because it did not work; the decagon-and-bowtie field in particular was never solved.
 - **Snub square 3.3.4.3.4** and **snub hexagonal 3.3.3.3.6** — 2 of the 11 uniform tilings — are not built.
 - **DWG** is not written; the format is proprietary. DXF is provided, which AutoCAD opens directly.
 - **PDF and DXF have not been opened in Illustrator or AutoCAD.** They are validated structurally (xref offsets resolve, group codes are integers, POLYLINE/SEQEND balance) — which is not the same as those applications accepting them.

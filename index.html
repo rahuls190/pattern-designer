@@ -55,6 +55,7 @@ h3:first-child{margin-top:0}
 .val input:hover{border-color:var(--line)}
 .val input:focus{border-color:var(--accent);background:var(--bg);color:var(--ink);outline:none}
 .val u{font-size:11.5px;text-decoration:none}
+.numbox{width:100%;padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:13px system-ui,sans-serif}
 input[type=range]{width:100%;accent-color:var(--accent);margin:0}
 select{width:100%;padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:13px system-ui,sans-serif}
 .chk{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12.5px;cursor:pointer}
@@ -182,11 +183,18 @@ code{font:12.5px ui-monospace,Consolas,monospace;background:var(--panel);padding
   <p>Two details decide whether the result looks even. First, clipping leaves duplicate and collinear vertices wherever a bisector passes close to an existing corner; those have a zero-length edge, nothing to cut back, and would stay hard while everything around them softened — so they are removed before rounding. Second, the cut is sized from <i>one radius shared by the whole pattern</i>, capped at half an edge wherever the edge is too short to give it, rather than from a fixed fraction of each corner's own edges. A fraction would give a corner between two short edges a small radius and its neighbour a large one. Sizing the cut from the edge length and one global value also means two cells sharing an edge always round it identically, so their outlines stay exactly on top of one another. Where a cell has a very short edge the radius is still limited by that edge — at that point the corner is cut right back to the edge midpoint, which is as round as it can geometrically be.</p>
   <p>This is contemporary work, not a historic reconstruction, and it is labelled that way in the app.</p>
 
-  <h2>8 · Mosaic regions</h2>
+  <h2>8 · Drawing on a grid (Field, Critchlow)</h2>
+  <p>Robert Field's book [30] makes every pattern the same way: straight lines between the points of a <b>square grid</b> or a <b>triangle (isometric) grid</b>, repeated across the plane. Blocks and brickwork are filled squares of the same grid. Eight-pointed stars, octagon designs, single-tile tilings, interlaced bands, circle designs and six-pointed stars are all lines and circles on a grid. Keith Critchlow's book [31] analyses specimen patterns on circle, square, hexagon and pentagon grids in the same spirit. So the way to let anyone make any of them is not a generator for each, but the drawing tool the books use.</p>
+  <p><b>Repeat cell.</b> The pattern is one cell of W by H grid squares, repeated by translation. Whatever is drawn is stored once and tiled, so the same drawing fills the panel and exports as one cell.</p>
+  <p><b>Symmetry while you draw.</b> Each line is stored together with its images under the chosen symmetry: mirrors, 2-fold, 4-fold rotation and 4-fold with mirrors on the square grid; mirror, 2-, 3- and 6-fold rotation and their mirror groups on the triangle grid. Four-fold symmetry needs a square cell. The mirror axes are drawn on the cell so the symmetry is visible.</p>
+  <p><b>Tools.</b> Line: click two grid points, and keep clicking to chain. Arc: click the centre, the start, then the end, and tick the box for the long way round. 3-point arc: click the start, a point the arc must pass through, and the end; the arc is the circle through those three points, and three points in a line are refused. Circle: centre, then a point on it. Fill: toggles a square, for block patterns. Erase removes a line, arc or circle together with its symmetric partners. Undo restores the previous drawing, and the pattern is saved in the link.</p>
+  <p><b>Points per square</b> puts extra grid points inside each square, so a line can start or end at a half or a third of a square. <b>Outlined band</b> draws every line as a strap, a wide stroke of the ink colour with a narrower stroke of the ground colour on top.</p>
+
+  <h2>9 · Mosaic regions</h2>
   <p>A real mosaic is filled by <i>region</i>, not by tile, so on the polygons-in-contact engine Mosaic mode finds the regions the lines cut out. There are two kinds. Inside each tile the motif closes on itself and gives the <b>star</b>. Around each tile <i>vertex</i> the neighbouring motifs leave a gap bounded by the star points and edge midpoints of every tile meeting there, giving the kites, pentagons and hexagons around a star. The two kinds together tile the plane exactly, which is checked by sampling.</p>
   <p><b>Colour by rings</b> then measures each region's distance from the centre of the nearest largest tile, so pieces are coloured in bands around each star, the way a mosaic tile is usually laid out. On 4.8.8 at a contact angle near 67° the octagons carry navy 8-point stars, ringed by gold pieces with small stars in the gaps.</p>
 
-  <h2>9 · Render modes</h2>
+  <h2>10 · Render modes</h2>
   <ul>
     <li><b>Construction</b> — shows the underlying polygons, edge midpoints and contact rays that produced the pattern.</li>
     <li><b>Line</b> — the bare pattern as single-weight line art.</li>
@@ -214,7 +222,7 @@ code{font:12.5px ui-monospace,Consolas,monospace;background:var(--panel);padding
   <p class="lead">An interactive designer for geometric ornament, built on documented construction methods rather than style filters.</p>
   <h2>Why the families are kept apart</h2>
   <p>A family label alone cannot generate faithful geometry. The same star may arise from different grids, and the same region may contain geometric, vegetal, calligraphic and architectural ornament. So the tool exposes <i>construction engines</i>, and a named regional preset is only ever a stored parameter set pointing at a specific object.</p>
-  <p>Three star engines in particular are kept separate because they are genuinely different methods: compass-based star construction, polygons in contact, and girih tiles. A ten-fold local star can sit inside a field that repeats periodically; the tool does not promise a periodic ten-fold translation lattice.</p>
+  <p>Star engines are kept separate because they are genuinely different methods: compass-based star construction and polygons in contact, with girih tiles (a third method) not built. A ten-fold local star can sit inside a field that repeats periodically; the tool does not promise a periodic ten-fold translation lattice.</p>
   <h2>Confidence labels</h2>
   <p>Every preset carries one of three labels, and the label shown to the user reflects the real evidence:</p>
   <ul>
@@ -292,42 +300,10 @@ const TILINGS={
       [v(0,1),v(1,1),v(.5,1+h)],                     /* up */
       [v(.5,1+h),v(1.5,1+h),v(1,1)]],                /* down */
       t1:v(1,0),t2:v(.5,1+h)}}},
-  girihRhomb:{label:'Rhombus (torange)',girih:true,vf:'72°/108°',build(){return girihTiling('girihRhomb')}},
-  girihHex:{label:'Hexagon (shesh band)',girih:true,vf:'72°·144°',build(){return girihTiling('girihHex')}},
-  girihBow:{label:'Bowtie (sormeh dan)',girih:true,vf:'72°·216°',build(){return girihTiling('girihBow')}},
   trunchex:{label:'Truncated hexagonal',g:'Truncated',vf:'3.12.12',build(){
     const d=regular(12,0,0,R12,Math.PI/12),k=2*A12;
     return{protos:[d,...outward(d,'tri',i=>i%2===0)],t1:v(k,0),t2:v(k*.5,k*S3/2)}}}
 };
-
-/* ---------- girih tiles -------------------------------------------------
-   The five girih shapes all have unit edges and angles that are multiples of
-   36 degrees, so each is built by walking its edge directions. Three of them —
-   rhombus, elongated hexagon and bowtie — are centrally symmetric, and a
-   centrally symmetric polygon tiles the plane by translation on the lattice
-   generated by the sums of consecutive edge vectors. Those three therefore
-   give exact girih fields on their own.
-
-   The strapwork is not a separate construction: girih lines cross each edge at
-   its midpoint at 54 degrees, which is polygons-in-contact with a contact
-   angle of 54. So the same engine draws it. Lu & Steinhardt [4]. */
-const ev=d=>v(Math.cos(d*Math.PI/180),Math.sin(d*Math.PI/180));
-function fromEdges(deg){
-  let p=v(0,0); const o=[p];
-  for(let i=0;i<deg.length-1;i++){p=add(p,ev(deg[i]));o.push(p)}
-  return o;
-}
-const GIRIH_EDGES={
-  girihRhomb:[0,108,180,288],
-  girihHex:[36,0,-36,216,180,144],
-  girihBow:[0,108,216,180,288,36]
-};
-function girihTiling(key){
-  const d=GIRIH_EDGES[key], pts=fromEdges(d);
-  const t1=add(ev(d[0]),ev(d[1])), t2=add(ev(d[1]),ev(d[2]));
-  /* a parallelogram's lattice is simply its two edge vectors */
-  return d.length===4?{protos:[pts],t1:ev(d[0]),t2:ev(d[1])}:{protos:[pts],t1,t2};
-}
 
 /* families shown in the tiling list, in this order */
 const TILING_GROUPS=[
@@ -988,8 +964,6 @@ const ENGINES=[
    def:{gType:'square',gW:4,gH:4,gSub:1,gSize:56,gSym:'d4',gTool:'line',gChain:true,gShowGrid:true,gShowCell:true,
         gBand:false,gBandW:8,width:2,round:0,frame:false,gData:'',gCirc:'',gFill:'',gArcs:'',gArcLong:false,pal:1},
    src:'Robert Field, <i>Geometric Patterns from Islamic Art and Architecture</i> (Tarquin, 2000) [30]: every pattern is straight lines between points of a square or triangle grid, repeated across the plane. Keith Critchlow, <i>Islamic Patterns</i> (Thames and Hudson, 1976) [31] analyses specimen patterns on the same grids. Click two grid points to draw a line; symmetry is applied as you draw, and the repeat cell tiles the panel.'},
-  {id:'girih',name:'Girih strapwork', sub:'Lu &amp; Steinhardt · 54°', tag:'pl', tagText:'partial', def:{angle:54,scale:95,width:5,round:0,rotation:0}, note:'Documented tiles — single-tile fields only',
-   src:'The five girih tiles built from their edge directions — unit edges, angles in multiples of 36°. Strapwork crosses each edge midpoint at <b>54°</b>, so it is polygons-in-contact at that angle [4]. The rhombus, hexagon and bowtie are centrally symmetric and tile on their own, which is verified here. The <b>decagon-and-bowtie field is not solved</b>: its area works out to exactly one bowtie per cell, but no edge-to-edge placement was found, so it is not offered rather than shown wrong.'},
   {id:'subst',name:'Self-similar subdivision', sub:'rep-tiles · substitution', tag:'doc', tagText:'documented', def:{subDepth:4,width:3,round:0},
    src:'Robert Fathauer, <i>Tessellations: Mathematics, Art, and Recreation</i>, A K Peters/CRC Press 2021 [29] — ch.6 polyforms and rep-tiles, ch.8 substitution tilings, ch.9 fractal tilings. Answers item 07 of the research catalogue: subdivide a tile configuration at a smaller scale by a stored rule, to a finite depth.'},
   {id:'multi',name:'Quasiperiodic multigrid', sub:'de Bruijn · Penrose', tag:'doc', tagText:'documented', def:{mN:5,mOffset:0.2,scale:40,width:3,round:0,mMotif:false},
@@ -1015,8 +989,6 @@ const PRESETS=[
   {name:'Ten-fold Penrose stars',note:'Star motif over the Penrose tiling',
    s:{engine:'multi',mN:5,mOffset:0,scale:58,mMotif:true,angle:54,width:3,mode:'line',
       palMode:'custom',cHue:42,cSpread:60,cSat:55,cLight:55,cContrast:40,colourBy:'type',frame:true}},
-  {name:'Girih hexagon strapwork',note:'Girih tile, straps at 54 degrees',
-   s:{engine:'girih',tiling:'girihHex',angle:54,scale:95,width:5,mode:'line',pal:0,frame:true}},
   {name:'Repeating jali panel',note:'Voronoi hex repeat, cut out and rounded',
    s:{engine:'voro',vlayout:'hex',vrepeat:2,vcount:12,vjitter:40,vrelax:3,round:0.7,width:6,mode:'jali',pal:1,frame:true}}
 ];
@@ -1030,6 +1002,7 @@ const DEF={engine:'pic',tiling:'octasq',mode:'line',
   vlayout:'hex',vrepeat:3,vjitter:55,vcount:24,vsym:8,vmirror:true,vrelax:2,seed:7,
   gType:'square',gW:4,gH:4,gSub:1,gSize:56,gSym:'d4',gTool:'line',gChain:true,gShowGrid:true,gShowCell:true,
   gBand:false,gBandW:8,gData:'',gCirc:'',gFill:'',gArcs:'',gArcLong:false,
+  units:'mm',artW:297,artH:210,
   pal:0,palMode:'preset',colourBy:'type',
   cHue:210,cSpread:120,cSat:55,cLight:48,cContrast:55,cReverse:false};
 let st=Object.assign({},DEF);
@@ -1041,14 +1014,14 @@ const CTRL={
  pic:[
   {k:'dual',     label:'Dual (Laves) tiling', type:'chk'},
   {k:'angle',    label:'Contact angle', min:15,max:80,step:1,unit:'°'},
-  {k:'scale',    label:'Edge length',   min:40,max:220,step:1,unit:' px'},
+  {k:'scale',    label:'Edge length',   min:40,max:220,step:1,unit:' px',len:true},
   {k:'rotation', label:'Rotation',      min:0,max:90,step:1,unit:'°',deg:true},
   {k:'round',    label:'Sharp → round', min:0,max:1,step:0.01,pct:true}
  ],
  star:[
   {k:'sn',   label:'Divisions n',    min:5,max:24,step:1},
   {k:'sd',   label:'Step d',         min:2,max:11,step:1},
-  {k:'scell',label:'Spacing',        min:70,max:300,step:1,unit:' px'},
+  {k:'scell',label:'Spacing',        min:70,max:300,step:1,unit:' px',len:true},
   {k:'rotation',label:'Rotation',    min:0,max:90,step:1,unit:'°',deg:true},
   {k:'round',label:'Sharp → round',  min:0,max:1,step:0.01,pct:true},
   {k:'ssec', label:'Secondary stars',type:'chk'}
@@ -1063,19 +1036,11 @@ const CTRL={
   {k:'gH',label:'Repeat height (squares)',min:1,max:12,step:1,when:s=>s.gType!=='iso'},
   {k:'gSub',label:'Points per square',min:1,max:4,step:1},
   {k:'gSym',label:'Symmetry',type:'sel',opts:s=>gSymOpts()},
-  {k:'gSize',label:'Grid spacing',min:20,max:120,step:1,unit:' px'},
+  {k:'gSize',label:'Grid spacing',min:20,max:120,step:1,unit:' px',len:true},
   {k:'gShowGrid',label:'Show grid points',type:'chk'},
   {k:'gShowCell',label:'Show repeat cell',type:'chk'},
   {k:'gBand',label:'Draw as an outlined band',type:'chk'},
-  {k:'gBandW',label:'Band width',min:3,max:24,step:1,unit:' px',when:s=>s.gBand}
- ],
- girih:[
-  {k:'tiling',label:'Girih tile',type:'sel',opts:[
-    ['girihHex','Hexagon — shesh band'],['girihBow','Bowtie — sormeh dan'],['girihRhomb','Rhombus — torange']]},
-  {k:'angle',   label:'Strap angle',   min:15,max:80,step:1,unit:'°'},
-  {k:'scale',   label:'Edge length',   min:30,max:220,step:1,unit:' px'},
-  {k:'rotation',label:'Rotation',      min:0,max:90,step:1,unit:'°'},
-  {k:'round',   label:'Sharp → round', min:0,max:1,step:0.01,pct:true}
+  {k:'gBandW',label:'Band width',min:3,max:24,step:1,unit:' px',len:true,when:s=>s.gBand}
  ],
  subst:[
   {k:'subRule', label:'Substitution rule',type:'sel',opts:[
@@ -1092,7 +1057,7 @@ const CTRL={
   {k:'mOffset', label:'Pattern offset',min:0,max:1,step:0.01,pct:true},
   {k:'mDisorder',label:'Disorder',     min:0,max:100,step:1,unit:'%'},
   {k:'seed',    label:'Seed',          min:1,max:999,step:1},
-  {k:'scale',   label:'Edge length',   min:14,max:120,step:1,unit:' px'},
+  {k:'scale',   label:'Edge length',   min:14,max:120,step:1,unit:' px',len:true},
   {k:'rotation',label:'Rotation',      min:0,max:90,step:1,unit:'°'},
   {k:'round',   label:'Sharp → round', min:0,max:1,step:0.01,pct:true}
  ],
@@ -1112,7 +1077,7 @@ const CTRL={
  ]
 };
 const COMMON=[
-  {k:'width',label:'Line / rib width',min:1,max:22,step:.5,unit:' px'},
+  {k:'width',label:'Line / rib width',min:1,max:22,step:.5,unit:' px',len:true},
   {k:'frame',label:'Border frame',type:'chk'},
   {k:'palMode',label:'Palette',type:'sel',opts:[['preset','Preset swatches'],['custom','Generated']]},
   {k:'cHue',     label:'Base hue',   min:0,max:360,step:1,unit:'°',when:s=>s.palMode==='custom'},
@@ -1128,13 +1093,58 @@ const COMMON=[
 
 /* ============================================================ build the scene */
 let W=1000,H=720;
+/* Real-world size. The canvas always stands for the whole artwork, whatever its
+   shape, so one canvas pixel is artW/W of a unit. Lengths (edge length, line width,
+   grid spacing) are stored in canvas pixels and shown in the chosen unit. */
+const UNITS={
+  mm:{name:'Millimetres (mm)',mm:1,pt:72/25.4,svg:'mm',f:1,dxf:4},
+  cm:{name:'Centimetres (cm)',mm:10,pt:72/2.54,svg:'cm',f:1,dxf:5},
+  m :{name:'Metres (m)',mm:1000,pt:72/0.0254,svg:'mm',f:1000,dxf:6},
+  in:{name:'Inches (in)',mm:25.4,pt:72,svg:'in',f:1,dxf:1},
+  ft:{name:'Feet (ft)',mm:304.8,pt:864,svg:'in',f:12,dxf:2},
+  px:{name:'Pixels (px)',mm:25.4/96,pt:0.75,svg:'px',f:1,dxf:0}
+};
+const SIZES=[
+  ['A4l','A4 landscape',297,210,'mm'],['A4p','A4 portrait',210,297,'mm'],['A3','A3 landscape',420,297,'mm'],
+  ['A2','A2 landscape',594,420,'mm'],['A1','A1 landscape',841,594,'mm'],['A0','A0 landscape',1189,841,'mm'],
+  ['let','Letter landscape',11,8.5,'in'],['tab','Tabloid landscape',17,11,'in'],
+  ['p600','Panel 600 × 600 mm',600,600,'mm'],['p1000','Panel 1000 × 1000 mm',1000,1000,'mm'],
+  ['d900','Door panel 900 × 2100 mm',900,2100,'mm']
+];
+const LENKEYS=['scale','scell','width','gSize','gBandW'];
+/* no length may shrink below a drawable size, whatever the artwork */
+const LENMIN={scale:8,scell:16,width:0.3,gSize:6,gBandW:1};
 function fitViewBox(){
-  const r=document.querySelector('.canvas').getBoundingClientRect();
-  if(r.width<20||r.height<20) return;
-  const a=Math.max(0.45,Math.min(2.6,r.width/r.height));
+  /* the canvas takes the artwork's own proportions */
+  const a=Math.max(0.2,Math.min(5,st.artW/st.artH));
   const area=720000;
-  H=Math.round(Math.sqrt(area/a)); W=Math.round(H*a);
-  document.getElementById('svg').setAttribute('viewBox',`0 0 ${W} ${H}`);
+  H=Math.sqrt(area/a); W=H*a;
+  const svg=document.getElementById('svg');
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svg.setAttribute('preserveAspectRatio','xMidYMid meet');
+}
+const Kpx=()=>W/st.artW;                                   /* canvas pixels per unit */
+const fmtU=px=>{const x=px/Kpx();return +x.toPrecision(4)};
+const numOf=x=>{const n=parseFloat(x);return isFinite(n)?n:NaN};
+/* change the artwork; keep every length at the same real size */
+function setArtwork(u,w,h){
+  if(!(w>0)||!(h>0)||!UNITS[u]) return;
+  /* compare pixels per REAL length (per mm), not per unit: the unit itself may change */
+  const Kold=Kpx()/UNITS[st.units].mm;
+  st.units=u; st.artW=+(+w).toPrecision(9); st.artH=+(+h).toPrecision(9);
+  fitViewBox();
+  const r=(Kpx()/UNITS[u].mm)/Kold;
+  if(isFinite(r)&&r>0) for(const k of LENKEYS) if(typeof st[k]==='number') st[k]=Math.max(LENMIN[k]||0.3,st[k]*r);
+  buildParams(); render(); sync();
+}
+/* change only the unit: the physical size stays put, so the numbers change */
+function setUnits(u){
+  if(!UNITS[u]||u===st.units) return;
+  const mmOld=UNITS[st.units].mm, mmNew=UNITS[u].mm;
+  st.artW=+(st.artW*mmOld/mmNew).toPrecision(9);
+  st.artH=+(st.artH*mmOld/mmNew).toPrecision(9);
+  st.units=u;
+  buildParams(); render(); sync();
 }
 let last={};
 function build(){
@@ -1143,11 +1153,9 @@ function build(){
   const under=[];       /* underlying polygons, for construction + mosaic */
   const rays=[],dots=[];
   let faces=null;
-  if(st.engine==='pic'||st.engine==='girih'){
+  if(st.engine==='pic'){
     /* the dual needs a wider margin: a vertex only yields a face when every
        tile around it exists, so the outermost ring of tiles is sacrificial */
-    /* the dual is offered on the tiling engine only — girih must not inherit a
-       stale flag from a control it never shows */
     const useDual=st.dual&&st.engine==='pic';
     const ptiles=[];
     let tiles=tilePlane(st.tiling,st.scale,rotr,W,H,useDual?5:2.5);
@@ -1558,7 +1566,7 @@ function renderGrid(){
   last={shapes:[],under:[],rays:[],dots:[],P,faces:null,gexport:ex};
   const symBad=(!iso&&(st.gSym==='r4'||st.gSym==='d4')&&FW!==FH);
   document.getElementById('info').innerHTML=[
-    `<b>${iso?'Triangle grid':'Square grid'}</b>`,`repeat ${st.gW}${iso?'':' × '+st.gH}`,
+    `<b>${iso?'Triangle grid':'Square grid'}</b>`,`repeat ${st.gW}${iso?'':' × '+st.gH}`,`square ${fmtU(st.gSize)} ${st.units}`,artBit(),
     `${segs.length} lines`,arcs.length?`${arcs.length} arcs`:'',circ.length?`${circ.length} circles`:'',
     symBad?'<span class="warn">4-fold symmetry needs equal width and height</span>':'',
     `tool: ${({line:'draw line',arc:'draw arc',arc3:'draw arc through 3 points',circle:'draw circle',fill:'fill square',erase:'erase'})[st.gTool]}`
@@ -1664,7 +1672,11 @@ const GACT={undo:gUndo,clear:gClear,random:gRandom};
 
 /* the drawing is saved into the link as text, and library entries are just this text */
 /*LIB-START*/
-const GRID_LIB=[];
+const GRID_LIB=[
+  {"group":"Field: blocks, borders and brickwork (pp.6-19)","name":"Page 6, pattern 1","note":"square grid, repeat 32 × 36","s":{"gType":"square","gW":32,"gH":36,"gSub":1,"gSize":18,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gData":"0,14,2,14;24,18,44,18;24,23,44,23;0,27,4,27;1,13,2,13;3,13,4,13;4,22,5,22;8,0,28,0;8,5,28,5;8,9,12,9;8,27,12,27;9,32,12,32;10,14,11,14;16,9,20,9;16,32,18,32;17,31,18,31;19,31,20,31;20,4,21,4;24,9,28,9;24,27,28,27;25,14,28,14;26,32,27,32;0,27,0,50;1,13,1,14;2,22,2,23;3,22,3,23;4,27,4,49;4,22,4,23;5,22,5,23;6,22,6,23;7,22,7,23;8,0,8,5;8,9,8,13;8,22,8,23;8,27,8,31;9,22,9,23;10,13,10,14;10,22,10,23;10,31,10,32;11,13,11,14;11,22,11,23;11,31,11,32;12,9,12,13;12,18,12,22;12,27,12,32;16,9,16,32;17,31,17,32;18,4,18,5;19,4,19,5;20,4,20,5;20,9,20,31;21,4,21,5;22,4,22,5;23,4,23,5;24,4,24,5;24,9,24,13;24,18,24,23;24,27,24,31;25,4,25,5;26,4,26,5;26,13,26,14;26,31,26,32;27,4,27,5;27,13,27,14;27,31,27,32;28,0,28,4;28,9,28,14;28,27,28,31;0,13,1,14;1,13,2,14;1,22,2,23;3,22,4,23;3,27,4,28;4,22,5,23;5,22,6,23;6,22,7,23;7,22,8,23;8,4,9,5;8,22,9,23;8,31,9,32;9,13,10,14;9,22,10,23;9,31,10,32;10,13,11,14;10,22,11,23;10,31,11,32;11,9,12,10;11,18,12,19;11,22,12,23;11,27,12,28;16,31,17,32;17,4,18,5;17,31,18,32;19,4,20,5;19,9,20,10;20,4,21,5;21,4,22,5;22,4,23,5;23,4,24,5;24,4,25,5;24,13,25,14;24,22,25,23;25,4,26,5;25,13,26,14;25,31,26,32;26,4,27,5;26,13,27,14;26,31,27,32;27,0,28,1;27,4,28,5;27,9,28,10;27,27,28,28;0,14,1,13;1,14,2,13;2,23,3,22;3,14,4,13;3,23,4,22;4,23,5,22;5,23,6,22;6,23,7,22;7,23,8,22;8,23,9,22;9,14,10,13;9,23,10,22;10,14,11,13;10,23,11,22;10,32,11,31;11,14,12,13;11,23,12,22;11,32,12,31;16,32,17,31;17,32,18,31;18,5,19,4;19,5,20,4;19,32,20,31;20,5,21,4;21,5,22,4;22,5,23,4;23,5,24,4;24,5,25,4;25,5,26,4;25,32,26,31;26,5,27,4;26,14,27,13;26,32,27,31;27,5,28,4;27,14,28,13;27,32,28,31;0,13,2,14;1,13,3,14;2,22,4,23;3,22,5,23;4,22,6,23;5,22,7,23;6,22,8,23;7,22,9,23;8,13,10,14;8,22,10,23;8,31,10,32;9,13,11,14;9,22,11,23;9,31,11,32;10,13,12,14;10,22,12,23;16,31,18,32;17,31,19,32;18,4,20,5;19,4,21,5;20,4,22,5;21,4,23,5;22,4,24,5;23,4,25,5;24,4,26,5;24,13,26,14;24,31,26,32;25,4,27,5;25,13,27,14;25,31,27,32;26,4,28,5;26,31,28,32;2,14,4,13;2,23,4,22;3,23,5,22;4,23,6,22;5,23,7,22;6,23,8,22;7,23,9,22;8,14,10,13;8,23,10,22;9,14,11,13;9,23,11,22;10,14,12,13;10,23,12,22;10,32,12,31;18,5,20,4;18,32,20,31;19,5,21,4;20,5,22,4;21,5,23,4;22,5,24,4;23,5,25,4;24,5,26,4;24,32,26,31;25,5,27,4;25,32,27,31;26,5,28,4;26,14,28,13;26,32,28,31;3,14,4,12;11,14,12,12;11,23,12,21;11,32,12,30;19,32,20,30;27,5,28,3;27,14,28,12;27,32,28,30"}},
+  {"group":"Field: blocks, borders and brickwork (pp.6-19)","name":"Page 8, pattern 1","note":"square grid, repeat 13 × 9","s":{"gType":"square","gW":13,"gH":9,"gSub":1,"gSize":35,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gData":"1,4,4,4;1,5,4,5;1,8,4,8;5,4,13,4;5,5,13,5;5,8,13,8;11,1,12,1;0,5,0,13;1,5,1,13;4,5,4,13;5,8,5,13;5,5,5,7;5,7,6,8;5,8,8,11;7,0,9,2;9,7,11,9;10,7,13,10;12,1,13,2;7,0,9,-2;7,4,8,3;7,8,10,5;8,4,11,1;9,2,10,1"}},
+  {"group":"Field: eight-pointed stars and grids (pp.20-27)","name":"Page 23, pattern 1","note":"square grid, repeat 16 × 16","s":{"gType":"square","gW":16,"gH":16,"gSub":1,"gSize":28,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gData":"2,4,6,4;2,12,6,12;10,4,14,4;10,12,14,12;4,2,4,6;4,10,4,14;12,2,12,6;12,10,12,14;0,10,2,12;2,8,4,10;4,14,6,16;6,12,8,14;8,2,10,4;10,0,12,2;12,6,14,8;14,4,16,6;0,6,2,4;2,8,4,6;4,2,6,0;6,4,8,2;8,14,10,12;10,0,12,-2;12,10,14,8;14,12,16,10"}},
+];
 /*LIB-END*/
 
 /* ============================================================ render */
@@ -1782,6 +1794,7 @@ function render(){
   updateInfo(shapes,measured);
 }
 
+const artBit=()=>`${st.artW} × ${st.artH} ${st.units}`;
 function updateInfo(shapes,measured){
   let L=0; for(const sh of shapes) L+=pathLen(sh.pts);
   /* Voronoi cell boundaries are shared between neighbours, so they are counted twice */
@@ -1792,9 +1805,6 @@ function updateInfo(shapes,measured){
   const bits=[];
   if(st.engine==='pic'){const T=TILINGS[st.tiling];
     bits.push(`<b>${T.label}</b> ${st.dual?'· dual (Laves)':T.vf}`,`contact ${st.angle}°`)}
-  if(st.engine==='girih'){const T=TILINGS[st.tiling];
-    bits.push(`<b>${T.label}</b>`,`strap ${st.angle}°${st.angle===54?' (girih)':''}`,
-      'single-tile field — decagon set not solved')}
   if(st.engine==='star'){const d=Math.max(2,Math.min(st.sd,Math.floor((st.sn-1)/2)));bits.push(`<b>{${st.sn}/${d}}</b>`,`${(function g(a,b){return b?g(b,a%b):a})(st.sn,d)} component(s)`)}
   if(st.engine==='subst'){
     const R=SUBST[st.subRule]||SUBST.penrose;
@@ -1817,6 +1827,7 @@ function updateInfo(shapes,measured){
     ? `aperture <b>${Math.round(measured*100)}%</b> (measured)`
     : `aperture ≈ <b>${ap}%</b>`);
   if(st.mode==='jali'&&st.width<2) bits.push('<span class="warn">rib below min bridge</span>');
+  bits.push(artBit());
   bits.push(eng.note||(eng.tag==='doc'?'Documented construction':'Contemporary — not a historic reconstruction'));
   document.getElementById('info').innerHTML=bits.map(b=>`<span>${b}</span>`).join('');
 }
@@ -1866,15 +1877,13 @@ function buildLists(){
     }
     buildLists();buildParams();render();sync();
   });
-  if(st.engine==='girih'&&!TILINGS[st.tiling].girih) st.tiling='girihHex';
-  if(st.engine==='pic'&&TILINGS[st.tiling].girih) st.tiling=DEF.tiling;
   const showTil=st.engine==='pic';
   $('h-tiling').style.display=showTil?'':'none';
   $('tilings').style.display=showTil?'':'none';
   /* grouped into families rather than one flat list, and rendered group by
      group so the order never depends on how TILINGS happens to be written */
   $('tilings').innerHTML=showTil?TILING_GROUPS.map(([gname,gnote])=>{
-    const rows=Object.entries(TILINGS).filter(([,t])=>!t.girih&&t.g===gname);
+    const rows=Object.entries(TILINGS).filter(([,t])=>t.g===gname);
     if(!rows.length) return '';
     return `<div class="grp">${gname}<em>${gnote}</em></div>`+rows.map(([k,t])=>
       `<div class="item${k===st.tiling?' on':''}" data-t="${k}"><span>${t.label}</span><small>${t.vf}</small></div>`).join('');
@@ -1886,9 +1895,27 @@ function buildLists(){
   $('modes').innerHTML=MODES.map(([k,n])=>`<button data-m="${k}" class="${k===st.mode?'on':''}">${n}</button>`).join('');
   $('modes').querySelectorAll('button').forEach(b=>b.onclick=()=>{st.mode=b.dataset.m;buildLists();render();sync()});
 }
+function sizeBlock(){
+  const cur=SIZES.find(z=>z[4]===st.units&&Math.abs(z[2]-st.artW)<1e-6&&Math.abs(z[3]-st.artH)<1e-6);
+  const u=st.units;
+  return `<h3>Artwork size</h3>
+    <div class="row"><div class="rlab"><span>Size</span></div>
+      <select id="artPre"><option value="custom"${cur?'':' selected'}>Custom</option>${SIZES.map(z=>
+        `<option value="${z[0]}"${cur&&cur[0]===z[0]?' selected':''}>${z[1]}</option>`).join('')}</select></div>
+    <div class="row"><div class="rlab"><span>Units</span></div>
+      <select id="artUnits">${Object.entries(UNITS).map(([k,x])=>
+        `<option value="${k}"${k===u?' selected':''}>${x.name}</option>`).join('')}</select></div>
+    <div class="row" style="display:flex;gap:8px">
+      <div style="flex:1"><div class="rlab"><span>Width</span><span class="val"><u>${u}</u></span></div>
+        <input class="numbox" id="artW" type="number" step="any" min="0.001" value="${st.artW}" aria-label="Artwork width"></div>
+      <div style="flex:1"><div class="rlab"><span>Height</span><span class="val"><u>${u}</u></span></div>
+        <input class="numbox" id="artH" type="number" step="any" min="0.001" value="${st.artH}" aria-label="Artwork height"></div>
+    </div>`;
+}
 function buildParams(){
+  fitViewBox();
   const rows=visibleCtrls();
-  let h='<h3>Construction</h3>';
+  let h=sizeBlock()+'<h3>Construction</h3>';
   for(const c of rows){
     if(c.k==='width') h+='<h3>Line &amp; frame</h3>';
     if(c.k==='palMode') h+='<h3>Colour</h3>';
@@ -1906,8 +1933,9 @@ function buildParams(){
     }else{
       /* percentages are stored 0–1 but typed and shown as 0–100 */
       const mn=cv(c.min), mx=cv(c.max), lbl=cv(c.label);
-      const lo=c.pct?0:mn, hi=c.pct?100:mx, sp=c.pct?1:c.step;
-      const unit=c.pct?'%':(c.unit||'').trim();
+      const K=Kpx();
+      const lo=c.pct?0:(c.len?+(mn/K).toPrecision(3):mn), hi=c.pct?100:(c.len?+(mx*8/K).toPrecision(3):mx), sp=c.pct?1:(c.len?'any':c.step);
+      const unit=c.pct?'%':(c.len?st.units:(c.unit||'').trim());
       h+=`<div class="row"><div class="rlab"><span>${lbl}</span>
         <span class="val"><input type="number" class="num" data-k="${c.k}" min="${lo}" max="${hi}" step="${sp}"
           aria-label="${lbl}">${unit?`<u>${unit}</u>`:''}</span></div>
@@ -1929,8 +1957,9 @@ function buildParams(){
     const apply=commit=>{
       const raw=parseFloat(i.value);
       if(isFinite(raw)){
-        let x=c.pct?raw/100:raw;
-        st[c.k]=Math.min(cv(c.max),Math.max(cv(c.min),x));
+        let x=c.pct?raw/100:(c.len?raw*Kpx():raw);
+        /* a typed length may go well past the slider, so any real size can be entered */
+        st[c.k]=Math.min(cv(c.max)*(c.len?8:1),Math.max(c.len?Math.min(cv(c.min),0.2):cv(c.min),x));
         const rg=$('params').querySelector(`input[type=range][data-k="${c.k}"]`);
         if(rg) rg.value=st[c.k];
         render(); sync();
@@ -1944,6 +1973,12 @@ function buildParams(){
   $('params').querySelectorAll('input[type=checkbox]').forEach(i=>{
     i.onchange=()=>{st[i.dataset.k]=i.checked;render();sync()};
   });
+  $('artPre').onchange=e=>{const z=SIZES.find(q=>q[0]===e.target.value); if(z) setArtwork(z[4],z[2],z[3])};
+  $('artUnits').onchange=e=>setUnits(e.target.value);
+  const aw=$('artW'), ah=$('artH');
+  const sizeChange=()=>{const w=numOf(aw.value),hh=numOf(ah.value); if(w>0&&hh>0) setArtwork(st.units,w,hh)};
+  aw.onchange=sizeChange; ah.onchange=sizeChange;
+  aw.onkeydown=ah.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();e.target.blur()}};
   $('params').querySelectorAll('button[data-seg]').forEach(b=>b.onclick=()=>{
     st[b.dataset.seg]=b.dataset.v; GP.start=null; GP.mid=null; buildParams(); render(); sync();
   });
@@ -1975,7 +2010,7 @@ function clampAll(){
     st[c.k]=Math.min(cv(c.max),Math.max(cv(c.min),st[c.k]));
   }
 }
-function setNum(i,c){ i.value=c.pct?Math.round(st[c.k]*100):+(+st[c.k]).toFixed(2) }
+function setNum(i,c){ i.value=c.pct?Math.round(st[c.k]*100):(c.len?fmtU(st[c.k]):+(+st[c.k]).toFixed(2)) }
 function outs(){
   for(const c of visibleCtrls()){
     if(!c.k||c.type) continue;
@@ -2020,7 +2055,45 @@ function load(){
      AutoCAD opens it directly, and any converter will turn it into DWG.
    Curves are flattened for DXF because R12 has no Bezier entity, which is also
    what a cutter wants. */
+/* Line art is clipped segment by segment, so a shape that crosses the edge becomes open
+   lines that stop at the edge instead of growing a border along it. Filled shapes are
+   clipped as polygons, where an edge along the border is correct. */
+function clipSeg(a,b){
+  let t0=0,t1=1; const dx=b.x-a.x, dy=b.y-a.y;
+  const pp=[-dx,dx,-dy,dy], qq=[a.x,W-a.x,a.y,H-a.y];
+  for(let i=0;i<4;i++){
+    if(Math.abs(pp[i])<1e-12){ if(qq[i]<0) return null; }
+    else{const r=qq[i]/pp[i];
+      if(pp[i]<0){ if(r>t1) return null; if(r>t0) t0=r; } else { if(r<t0) return null; if(r<t1) t1=r; }}
+  }
+  return [v(a.x+t0*dx,a.y+t0*dy), v(a.x+t1*dx,a.y+t1*dy)];
+}
+function clipPolyline(pts,closed){
+  const n=pts.length, runs=[]; let cur=null;
+  const count=closed?n:n-1;
+  for(let i=0;i<count;i++){
+    const c=clipSeg(pts[i],pts[(i+1)%n]);
+    if(!c){ if(cur&&cur.length>1) runs.push(cur); cur=null; continue; }
+    if(cur&&Math.hypot(cur[cur.length-1].x-c[0].x,cur[cur.length-1].y-c[0].y)<1e-6) cur.push(c[1]);
+    else{ if(cur&&cur.length>1) runs.push(cur); cur=[c[0],c[1]]; }
+  }
+  if(cur&&cur.length>1) runs.push(cur);
+  return runs;
+}
 function exportShapes(){
+  const raw=exportShapesRaw(), out=[];
+  const fill=(st.mode==='jali'||st.mode==='mosaic')&&st.engine!=='gridp';
+  const eps=1e-6, inside=q=>q.every(p=>p.x>=-eps&&p.x<=W+eps&&p.y>=-eps&&p.y<=H+eps);
+  raw.forEach((pts,si)=>{
+    if(!pts.length) return;
+    if(inside(pts)){ pts.src=si; out.push(pts); return }
+    if(pts.open){ for(const r of clipPolyline(pts,false)){ r.open=true; r.src=si; out.push(r) } }
+    else if(fill){ const c=clipToPanel(pts); if(c.length>=3){ c.src=si; out.push(c) } }
+    else{ for(const r of clipPolyline(pts,true)){ r.open=true; r.src=si; out.push(r) } }
+  });
+  return out;
+}
+function exportShapesRaw(){
   if(last.gexport) return last.gexport;
   const {shapes,P}=last, r=st.round, out=[];
   if(st.mode==='mosaic'&&last.faces&&last.faces.length) return last.faces.map(f=>roundedPoly(f.pts,r));
@@ -2041,13 +2114,16 @@ function download(blob,name){
 const baseName=()=>`pattern-${st.engine}-${st.engine==='pic'?st.tiling:st.mode}`;
 
 function exportDXF(){
-  const polys=exportShapes(), L=[];
+  const polys=exportShapes(), L=[], U=UNITS[st.units], k=1/Kpx();   /* canvas px -> drawing units */
   const put=(c,v)=>{L.push(String(c),String(v))};
+  /* the header tells CAD what one drawing unit is, so the file opens at true size */
+  put(0,'SECTION'); put(2,'HEADER'); put(9,'$ACADVER'); put(1,'AC1009');
+  put(9,'$INSUNITS'); put(70,U.dxf); put(0,'ENDSEC');
   put(0,'SECTION'); put(2,'ENTITIES');
   const emit=(pts,layer)=>{
     put(0,'POLYLINE'); put(8,layer); put(66,1); put(70,pts.open?0:1);
     for(const p of pts){ put(0,'VERTEX'); put(8,layer);
-      put(10,(+p.x).toFixed(4)); put(20,(H-p.y).toFixed(4)); put(30,'0.0'); }
+      put(10,(p.x*k).toFixed(4)); put(20,((H-p.y)*k).toFixed(4)); put(30,'0.0'); }
     put(0,'SEQEND'); put(8,layer);
   };
   for(const p of polys) emit(p,'PATTERN');
@@ -2064,14 +2140,17 @@ function exportPDF(){
   const hex=c=>{const n=parseInt(c.slice(1),16);
     return [((n>>16)&255)/255,((n>>8)&255)/255,(n&255)/255].map(x=>x.toFixed(3)).join(' ')};
   const y=v=>(H-v).toFixed(2);
-  let s='';
+  /* scale the whole page so it is the real size: PDF units are points */
+  const wpt=st.artW*UNITS[st.units].pt, sc=wpt/W, hpt=H*sc;
+  let s=`${sc.toFixed(8)} 0 0 ${sc.toFixed(8)} 0 0 cm\n`;
   const solid=(st.mode==='jali'||st.mode==='mosaic');
   s+=`${hex(st.mode==='jali'?P.mat:P.bg)} rg 0 0 ${W.toFixed(2)} ${H.toFixed(2)} re f\n`;
   const nf=P.fills.length, pick=colourer(last.shapes,st.colourBy,nf);
   const spdf=strokeColours(last.shapes,P);
   s+=`${st.width.toFixed(2)} w 1 J 1 j\n`;
-  polys.forEach((pts,i)=>{
+  polys.forEach((pts,pi)=>{
     if(!pts.length) return;
+    const i=pts.src!==undefined?pts.src:pi;
     s+=`${pts[0].x.toFixed(2)} ${y(pts[0].y)} m\n`;
     for(let k=1;k<pts.length;k++) s+=`${pts[k].x.toFixed(2)} ${y(pts[k].y)} l\n`;
     if(!pts.open) s+='h\n';
@@ -2082,7 +2161,7 @@ function exportPDF(){
   const objs=[
     '<< /Type /Catalog /Pages 2 0 R >>',
     '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
-    `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W.toFixed(2)} ${H.toFixed(2)}] /Contents 4 0 R /Resources << >> >>`,
+    `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${wpt.toFixed(2)} ${hpt.toFixed(2)}] /Contents 4 0 R /Resources << >> >>`,
     `<< /Length ${s.length} >>\nstream\n${s}endstream`
   ];
   let pdf='%PDF-1.4\n', offs=[];
@@ -2101,7 +2180,14 @@ $('exp').onclick=()=>{
   const svg=$('svg').cloneNode(true);
   const ov=svg.querySelector('#ov'); if(ov) ov.remove();
   svg.setAttribute('xmlns','http://www.w3.org/2000/svg');
-  svg.setAttribute('width',W);svg.setAttribute('height',H);
+  /* trim to the artwork: everything sits inside a group clipped to the page */
+  const wrap=document.createElementNS('http://www.w3.org/2000/svg','g'); wrap.setAttribute('clip-path','url(#artclip)');
+  while(svg.firstChild) wrap.appendChild(svg.firstChild);
+  const defs=document.createElementNS('http://www.w3.org/2000/svg','defs');
+  defs.innerHTML=`<clipPath id="artclip"><rect x="0" y="0" width="${W}" height="${H}"/></clipPath>`;
+  svg.appendChild(defs); svg.appendChild(wrap);
+  const U=UNITS[st.units];
+  svg.setAttribute('width',+(st.artW*U.f).toPrecision(8)+U.svg); svg.setAttribute('height',+(st.artH*U.f).toPrecision(8)+U.svg);
   const blob=new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n'+new XMLSerializer().serializeToString(svg)],{type:'image/svg+xml'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
@@ -2116,11 +2202,8 @@ $('reset').onclick=()=>{const e=st.engine,t=st.tiling;st=Object.assign({},DEF,{e
 $('rnd').onclick=()=>{
   const R=Math.random;
   if(st.engine==='pic'){
-    const ks=Object.keys(TILINGS).filter(k=>!TILINGS[k].girih);
+    const ks=Object.keys(TILINGS);
     st.tiling=ks[Math.floor(R()*ks.length)];st.angle=20+Math.floor(R()*55);st.dual=R()<0.35}
-  else if(st.engine==='girih'){
-    st.tiling=['girihHex','girihBow','girihRhomb'][Math.floor(R()*3)];
-    st.angle=R()<0.5?54:25+Math.floor(R()*45);st.scale=50+Math.floor(R()*110)}
   else if(st.engine==='star'){st.sn=6+Math.floor(R()*16);st.sd=2+Math.floor(R()*(Math.floor(st.sn/2)-1))}
   else if(st.engine==='multi'){
     st.mN=[4,5,5,7,8,9,11,12][Math.floor(R()*8)];
@@ -2154,7 +2237,7 @@ const SRC_MAIN=[
  ['[3] E. H. Hankin, <i>Drawing of Geometric Patterns in Saracenic Art</i> (1925)','Free scan','Polygons-in-contact construction — implemented'],
  ['[7] Craig Kaplan, <i>Islamic Star Patterns from Polygons in Contact</i> (2005)','Free paper','Computational form of the above — implemented'],
  ['[1] Met, <i>Islamic Art and Geometric Design</i>','Free museum PDF','Compass and star-polygon exercises — implemented'],
- ['[4] Lu &amp; Steinhardt, girih paper (2007)','Free author PDF','Girih tile set and strapwork — planned'],
+ ['[4] Lu &amp; Steinhardt, girih paper (2007)','Free author PDF','Girih tile set and strapwork — not built'],
  ['[5] Jay Bonner, <i>Islamic Geometric Patterns</i> (2017)','Publisher page','Historical polygonal systems and classification'],
  ['[25] Gülru Necipoğlu, <i>The Topkapi Scroll</i> (1995)','Free Getty PDF','Historical construction documents and context'],
  ['[20] Bridges archive, <i>Random Zellij Compositions</i>','Free paper','Controlled variation — context for the Voronoi engine'],
