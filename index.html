@@ -107,6 +107,8 @@ code{font:12.5px ui-monospace,Consolas,monospace;background:var(--panel);padding
     <div id="engines"></div>
     <h3 id="h-tiling">Underlying tiling</h3>
     <div id="tilings"></div>
+    <h3 id="h-glib" style="display:none">Patterns from the books</h3>
+    <div id="glib"></div>
     <div class="card" id="srcCard"></div>
   </aside>
 
@@ -982,6 +984,10 @@ const ENGINES=[
    src:'Hankin, <i>Drawing of Geometric Patterns in Saracenic Art</i> (1925) [3]; Kaplan, <i>Islamic Star Patterns from Polygons in Contact</i> (2005) [7]. Documented construction, implemented directly.'},
   {id:'star', name:'Star polygons {n/d}', sub:'compass construction', tag:'doc', def:{scell:150,width:3,round:0},
    src:'The Metropolitan Museum of Art, <i>Islamic Art and Geometric Design</i> activity pack [1]. Documented construction.'},
+  {id:'gridp',name:'Draw on a grid',sub:'Field · Critchlow method',tag:'doc',tagText:'documented',
+   def:{gType:'square',gW:4,gH:4,gSub:1,gSize:56,gSym:'d4',gTool:'line',gChain:true,gShowGrid:true,gShowCell:true,
+        gBand:false,gBandW:8,width:2,round:0,frame:false,gData:'',gCirc:'',gFill:'',gArcs:'',gArcLong:false,pal:1},
+   src:'Robert Field, <i>Geometric Patterns from Islamic Art and Architecture</i> (Tarquin, 2000) [30]: every pattern is straight lines between points of a square or triangle grid, repeated across the plane. Keith Critchlow, <i>Islamic Patterns</i> (Thames and Hudson, 1976) [31] analyses specimen patterns on the same grids. Click two grid points to draw a line; symmetry is applied as you draw, and the repeat cell tiles the panel.'},
   {id:'girih',name:'Girih strapwork', sub:'Lu &amp; Steinhardt · 54°', tag:'pl', tagText:'partial', def:{angle:54,scale:95,width:5,round:0,rotation:0}, note:'Documented tiles — single-tile fields only',
    src:'The five girih tiles built from their edge directions — unit edges, angles in multiples of 36°. Strapwork crosses each edge midpoint at <b>54°</b>, so it is polygons-in-contact at that angle [4]. The rhombus, hexagon and bowtie are centrally symmetric and tile on their own, which is verified here. The <b>decagon-and-bowtie field is not solved</b>: its area works out to exactly one bowtie per cell, but no edge-to-edge placement was found, so it is not offered rather than shown wrong.'},
   {id:'subst',name:'Self-similar subdivision', sub:'rep-tiles · substitution', tag:'doc', tagText:'documented', def:{subDepth:4,width:3,round:0},
@@ -1022,6 +1028,8 @@ const DEF={engine:'pic',tiling:'octasq',mode:'line',
   mN:5,mOffset:0.2,mDisorder:0,mMotif:false,
   subRule:'penrose',subDepth:4,
   vlayout:'hex',vrepeat:3,vjitter:55,vcount:24,vsym:8,vmirror:true,vrelax:2,seed:7,
+  gType:'square',gW:4,gH:4,gSub:1,gSize:56,gSym:'d4',gTool:'line',gChain:true,gShowGrid:true,gShowCell:true,
+  gBand:false,gBandW:8,gData:'',gCirc:'',gFill:'',gArcs:'',gArcLong:false,
   pal:0,palMode:'preset',colourBy:'type',
   cHue:210,cSpread:120,cSat:55,cLight:48,cContrast:55,cReverse:false};
 let st=Object.assign({},DEF);
@@ -1044,6 +1052,22 @@ const CTRL={
   {k:'rotation',label:'Rotation',    min:0,max:90,step:1,unit:'°',deg:true},
   {k:'round',label:'Sharp → round',  min:0,max:1,step:0.01,pct:true},
   {k:'ssec', label:'Secondary stars',type:'chk'}
+ ],
+ gridp:[
+  {k:'gTool',label:'Tool',type:'seg',opts:[['line','Line'],['arc','Arc'],['circle','Circle'],['fill','Fill'],['erase','Erase']]},
+  {k:'gArcLong',label:'Arc: take the long way round',type:'chk',when:s=>s.gTool==='arc'},
+  {k:'gChain',label:'Keep drawing from the last point',type:'chk'},
+  {type:'acts',acts:[['undo','Undo'],['clear','Clear'],['random','Random']]},
+  {k:'gType',label:'Grid',type:'sel',opts:[['square','Square grid'],['iso','Triangle (isometric) grid']]},
+  {k:'gW',label:s=>s.gType==='iso'?'Repeat size (grid steps)':'Repeat width (squares)',min:1,max:12,step:1},
+  {k:'gH',label:'Repeat height (squares)',min:1,max:12,step:1,when:s=>s.gType!=='iso'},
+  {k:'gSub',label:'Points per square',min:1,max:4,step:1},
+  {k:'gSym',label:'Symmetry',type:'sel',opts:s=>gSymOpts()},
+  {k:'gSize',label:'Grid spacing',min:20,max:120,step:1,unit:' px'},
+  {k:'gShowGrid',label:'Show grid points',type:'chk'},
+  {k:'gShowCell',label:'Show repeat cell',type:'chk'},
+  {k:'gBand',label:'Draw as an outlined band',type:'chk'},
+  {k:'gBandW',label:'Band width',min:3,max:24,step:1,unit:' px',when:s=>s.gBand}
  ],
  girih:[
   {k:'tiling',label:'Girih tile',type:'sel',opts:[
@@ -1269,9 +1293,362 @@ function weave(shapes,w){
 }
 const openD=pts=>'M'+pts.map(p=>f(p.x)+' '+f(p.y)).join(' L');
 
+/* ============================================================ grid designer
+   Robert Field's method [30]: a pattern is straight lines between points of a
+   square grid or a triangle (isometric) grid, repeated across the plane, and
+   Critchlow [31] analyses specimen patterns on the same grids. Every pattern in
+   both books can therefore be made by placing lines on a grid.
+
+   Points are integer (i,j) positions on a grid finer than the visible squares
+   (Subdivisions), so a line can start or end at a half or a third of a square.
+   The repeat cell is W x H squares. Symmetry is applied while drawing: each line
+   is stored together with its images, so what is stored is already symmetric and
+   the pattern is just that set repeated by the two cell vectors. */
+const GP={start:null,mid:null,hover:null,hist:[]};
+const S3G=Math.sqrt(3)/2;
+
+function gParse(str){return str?str.split(';').filter(Boolean).map(t=>t.split(',').map(Number)):[]}
+function gStr(a){return a.map(t=>t.join(',')).join(';')}
+const gCanon=t=>((t[0]<t[2])||(t[0]===t[2]&&t[1]<=t[3]))?t:[t[2],t[3],t[0],t[1]];
+
+function gGeom(){
+  const iso=st.gType==='iso', sub=Math.max(1,Math.round(st.gSub));
+  const FW=Math.max(1,Math.round(st.gW))*sub;
+  const FH=iso?FW:Math.max(1,Math.round(st.gH))*sub;
+  const step=st.gSize/sub;
+  let ox,oy;
+  if(iso){ox=W/2;oy=H/2}
+  else{ox=W/2-FW*step/2;oy=H/2-FH*step/2}
+  const P=(i,j)=>iso?v(ox+step*(i+j/2),oy+step*j*S3G):v(ox+i*step,oy+j*step);
+  const Tx=v(FW*step,0), Ty=iso?v(FH*step/2,FH*step*S3G):v(0,FH*step);
+  const inv=(x,y)=>{
+    if(!iso) return [Math.round((x-ox)/step),Math.round((y-oy)/step)];
+    const j0=Math.round((y-oy)/(step*S3G)), i0=Math.round((x-ox)/step-j0/2);
+    let best=[i0,j0],bd=1e18;
+    for(const [di,dj] of [[0,0],[1,0],[-1,0],[0,1],[0,-1],[-1,1],[1,-1]]){
+      const p=P(i0+di,j0+dj), d=(p.x-x)**2+(p.y-y)**2;
+      if(d<bd){bd=d;best=[i0+di,j0+dj]}
+    }
+    return best;
+  };
+  return {iso,sub,FW,FH,step,ox,oy,P,Tx,Ty,inv};
+}
+
+/* the symmetry group as a list of point maps, identity first */
+function gMaps(G){
+  const {FW,FH,iso}=G, id=(x,y)=>[x,y], g=st.gSym;
+  if(!iso){
+    const mx=(x,y)=>[FW-x,y], my=(x,y)=>[x,FH-y];
+    const r1=(x,y)=>[FW-y,x], r2=(x,y)=>[FW-x,FW-y], r3=(x,y)=>[y,FW-x];
+    if(g==='mx') return [id,mx];
+    if(g==='my') return [id,my];
+    if(g==='mxy') return [id,mx,my,(x,y)=>[FW-x,FH-y]];
+    if(g==='r2') return [id,(x,y)=>[FW-x,FH-y]];
+    if(FW!==FH) return [id];                        /* 4-fold needs a square cell */
+    if(g==='r4') return [id,r1,r2,r3];
+    if(g==='d4') return [id,r1,r2,r3,mx,(x,y)=>mx(...r1(x,y)),(x,y)=>mx(...r2(x,y)),(x,y)=>mx(...r3(x,y))];
+    return [id];
+  }
+  const R1=(i,j)=>[-j,i+j], R2=(i,j)=>[-i-j,i], R3=(i,j)=>[-i,-j], R4=(i,j)=>[j,-i-j], R5=(i,j)=>[i+j,-i];
+  const M=(i,j)=>[i+j,-j];
+  if(g==='r2') return [id,R3];
+  if(g==='r3') return [id,R2,R4];
+  if(g==='r6') return [id,R1,R2,R3,R4,R5];
+  if(g==='r3m') return [id,R2,R4,M,(i,j)=>M(...R2(i,j)),(i,j)=>M(...R4(i,j))];
+  if(g==='d6') return [id,R1,R2,R3,R4,R5,M,(i,j)=>M(...R1(i,j)),(i,j)=>M(...R2(i,j)),(i,j)=>M(...R3(i,j)),(i,j)=>M(...R4(i,j)),(i,j)=>M(...R5(i,j))];
+  if(g==='m') return [id,M];
+  return [id];
+}
+const gSymOpts=()=>st.gType==='iso'
+  ?[['none','None'],['m','Mirror'],['r2','2-fold rotation'],['r3','3-fold rotation'],['r6','6-fold rotation'],['r3m','3-fold + mirrors'],['d6','6-fold + mirrors']]
+  :[['none','None'],['mx','Mirror left–right'],['my','Mirror up–down'],['mxy','Both mirrors'],['r2','2-fold rotation'],['r4','4-fold rotation'],['d4','4-fold + mirrors']];
+
+function gSnap(){GP.hist.push({d:st.gData,c:st.gCirc,f:st.gFill,a:st.gArcs});if(GP.hist.length>80)GP.hist.shift()}
+function gUndo(){const h=GP.hist.pop();if(!h)return;st.gData=h.d;st.gCirc=h.c;st.gFill=h.f;st.gArcs=h.a||'';GP.start=null;GP.mid=null;render();sync()}
+function gClear(){gSnap();st.gData='';st.gCirc='';st.gFill='';st.gArcs='';GP.start=null;GP.mid=null;render();sync()}
+
+function gAddSeg(a,b){
+  const G=gGeom(), maps=gMaps(G), segs=gParse(st.gData), seen=new Set(segs.map(t=>gCanon(t).join()));
+  for(const f of maps){
+    const p=f(a[0],a[1]), q=f(b[0],b[1]);
+    if(p[0]===q[0]&&p[1]===q[1]) continue;
+    const c=gCanon([p[0],p[1],q[0],q[1]]);
+    if(!seen.has(c.join())){seen.add(c.join());segs.push(c)}
+  }
+  st.gData=gStr(segs);
+}
+function gAddCircle(c,r){
+  const G=gGeom(), maps=gMaps(G), circ=gParse(st.gCirc), seen=new Set(circ.map(t=>t.join()));
+  for(const f of maps){
+    const p=f(c[0],c[1]), key=[p[0],p[1],r];
+    if(!seen.has(key.join())){seen.add(key.join());circ.push(key)}
+  }
+  st.gCirc=gStr(circ);
+}
+function gToggleCell(i,j){
+  const G=gGeom(), maps=gMaps(G), cells=new Set(st.gFill?st.gFill.split(';'):[]);
+  const first=[i,j].join(), turnOn=!cells.has(first);
+  for(const f of maps){
+    const p=f(i+0.5,j+0.5), key=[Math.floor(p[0]),Math.floor(p[1])].join();
+    if(turnOn) cells.add(key); else cells.delete(key);
+  }
+  st.gFill=[...cells].join(';');
+}
+function gErase(x,y){
+  const G=gGeom(), maps=gMaps(G), {step,P}=G;
+  let best=null, bd=step*0.55;
+  const segs=gParse(st.gData);
+  for(const t of segs){
+    const A=P(t[0],t[1]), B=P(t[2],t[3]), ab=sub(B,A), L2=ab.x*ab.x+ab.y*ab.y||1;
+    let u=((x-A.x)*ab.x+(y-A.y)*ab.y)/L2; u=Math.max(0,Math.min(1,u));
+    const d=Math.hypot(A.x+u*ab.x-x,A.y+u*ab.y-y);
+    if(d<bd){bd=d;best={kind:'seg',t}}
+  }
+  for(const c of gParse(st.gCirc)){
+    const C=P(c[0],c[1]), d=Math.abs(Math.hypot(x-C.x,y-C.y)-c[2]*step);
+    if(d<bd){bd=d;best={kind:'circ',c}}
+  }
+  for(const a of gParse(st.gArcs)){
+    const g=gArcGeom(G,a,v(0,0)); if(!g) continue;
+    for(const q of gArcPoints(g,48)){const d=Math.hypot(q.x-x,q.y-y);if(d<bd){bd=d;best={kind:'arc',a}}}
+  }
+  if(!best) return false;
+  gSnap();
+  if(best.kind==='seg'){
+    const drop=new Set(maps.map(f=>{const p=f(best.t[0],best.t[1]),q=f(best.t[2],best.t[3]);return gCanon([p[0],p[1],q[0],q[1]]).join()}));
+    st.gData=gStr(segs.filter(t=>!drop.has(gCanon(t).join())));
+  }else if(best.kind==='arc'){
+    const A=best.a, drop=new Set(maps.map(f=>{const c=f(A[0],A[1]),a=f(A[2],A[3]),b=f(A[4],A[5]);return [c[0],c[1],a[0],a[1],b[0],b[1],A[6]].join()}));
+    st.gArcs=gStr(gParse(st.gArcs).filter(t=>!drop.has(t.join())));
+  }else{
+    const drop=new Set(maps.map(f=>{const p=f(best.c[0],best.c[1]);return [p[0],p[1],best.c[2]].join()}));
+    st.gCirc=gStr(gParse(st.gCirc).filter(c=>!drop.has(c.join())));
+  }
+  return true;
+}
+
+/* An arc is stored as three grid points, its centre C, its start A and a point B on the
+   ray towards its end, plus a flag for the long way round. The radius is |CA|. Which way
+   round is decided by the shorter (or longer) sweep, not by orientation, so a mirrored
+   copy is the mirror of the arc. */
+function gArcGeom(G,a,off){
+  const C=G.P(a[0],a[1]), A=G.P(a[2],a[3]), B=G.P(a[4],a[5]);
+  const r=Math.hypot(A.x-C.x,A.y-C.y); if(r<1e-6) return null;
+  const a0=Math.atan2(A.y-C.y,A.x-C.x), b0=Math.atan2(B.y-C.y,B.x-C.x);
+  let d=b0-a0; while(d>Math.PI) d-=TAU; while(d<=-Math.PI) d+=TAU;
+  const long=a[6]===1;
+  const sweep=long?(d>0?0:1):(d>0?1:0);
+  const cx=C.x+off.x, cy=C.y+off.y;
+  const ex=cx+r*Math.cos(b0), ey=cy+r*Math.sin(b0);
+  return {cx,cy,r,a0,b0,d,long,sweep,sx:cx+r*Math.cos(a0),sy:cy+r*Math.sin(a0),ex,ey};
+}
+function gArcPath(g){
+  return `M${f(g.sx)} ${f(g.sy)}A${f(g.r)} ${f(g.r)} 0 ${g.long?1:0} ${g.sweep} ${f(g.ex)} ${f(g.ey)}`;
+}
+function gArcPoints(g,n){
+  /* the same arc as points, for export and for finding the nearest one when erasing */
+  let sweepAngle=g.d;
+  if(g.long) sweepAngle=g.d>0?g.d-TAU:g.d+TAU;
+  const pts=[]; for(let k=0;k<=n;k++){const t=g.a0+sweepAngle*k/n;pts.push(v(g.cx+g.r*Math.cos(t),g.cy+g.r*Math.sin(t)))}
+  return pts;
+}
+function gAddArc(C,A,B){
+  const G=gGeom(), maps=gMaps(G), arcs=gParse(st.gArcs), seen=new Set(arcs.map(t=>t.join()));
+  const long=st.gArcLong?1:0;
+  for(const f of maps){
+    const c=f(C[0],C[1]), a=f(A[0],A[1]), b=f(B[0],B[1]);
+    const key=[c[0],c[1],a[0],a[1],b[0],b[1],long];
+    if(!seen.has(key.join())){seen.add(key.join());arcs.push(key)}
+  }
+  st.gArcs=gStr(arcs);
+}
+
+/* the picture: the stored set repeated by the two cell vectors */
+function renderGrid(){
+  const G=gGeom(), P=paletteOf(st), {P:node,step,Tx,Ty,FW,FH,iso}=G, w=st.width;
+  const segs=gParse(st.gData), circ=gParse(st.gCirc), arcs=gParse(st.gArcs);
+  const cells=st.gFill?st.gFill.split(';').map(t=>t.split(',').map(Number)):[];
+  /* which copies of the cell reach the panel */
+  const cen=node(FW/2,FH/2), diag=Math.hypot(FW*step,FH*step)*1.3+step*4;
+  const offs=[]; const K=Math.min(60,Math.ceil(Math.hypot(W,H)/Math.max(8,Math.min(len(Tx),len(Ty))))+2);
+  for(let a=-K;a<=K;a++)for(let b=-K;b<=K;b++){
+    const o=v(a*Tx.x+b*Ty.x,a*Tx.y+b*Ty.y), c=add(cen,o);
+    if(c.x<-diag||c.x>W+diag||c.y<-diag||c.y>H+diag) continue;
+    offs.push(o);
+  }
+  let s=`<rect width="${W}" height="${H}" fill="${P.bg}"/>`;
+  if(cells.length&&!iso){
+    let d=''; for(const o of offs)for(const [i,j] of cells){const p=node(i,j);d+=`M${f(p.x+o.x)} ${f(p.y+o.y)}h${f(step)}v${f(step)}h${f(-step)}z`}
+    s+=`<path d="${d}" fill="${P.ink}"/>`;
+  }
+  let dl='';
+  for(const o of offs)for(const t of segs){
+    const A=node(t[0],t[1]),B=node(t[2],t[3]);
+    dl+=`M${f(A.x+o.x)} ${f(A.y+o.y)}L${f(B.x+o.x)} ${f(B.y+o.y)}`;
+  }
+  let dc='';
+  for(const o of offs)for(const c of circ){
+    const C=node(c[0],c[1]), r=c[2]*step, cx=C.x+o.x, cy=C.y+o.y;
+    dc+=`M${f(cx-r)} ${f(cy)}A${f(r)} ${f(r)} 0 1 0 ${f(cx+r)} ${f(cy)}A${f(r)} ${f(r)} 0 1 0 ${f(cx-r)} ${f(cy)}`;
+  }
+  let da='';
+  for(const o of offs)for(const a of arcs){const g=gArcGeom(G,a,o); if(g) da+=gArcPath(g)}
+  const both=dl+dc+da;
+  if(both){
+    if(st.gBand){
+      /* an outlined strap: a wide ink stroke with a narrower ground-coloured one inside */
+      s+=`<path d="${both}" fill="none" stroke="${P.ink}" stroke-width="${st.gBandW+2*w}" stroke-linecap="butt" stroke-linejoin="miter"/>`;
+      s+=`<path d="${both}" fill="none" stroke="${P.bg}" stroke-width="${st.gBandW}" stroke-linecap="butt" stroke-linejoin="miter"/>`;
+    }else{
+      s+=`<path d="${both}" fill="none" stroke="${P.ink}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
+    }
+  }
+  if(st.frame){const i0=Math.max(10,w*2);
+    s+=`<rect x="${i0}" y="${i0}" width="${W-2*i0}" height="${H-2*i0}" fill="none" stroke="${P.acc}" stroke-width="${Math.max(6,w*2)}"/>`}
+  /* editing layer: kept in one group so an export can leave it out */
+  s+=`<g id="ov" pointer-events="none">`;
+  if(st.gShowCell){
+    const c0=node(0,0),c1=node(FW,0),c2=node(FW,FH),c3=node(0,FH);
+    s+=`<path d="M${f(c0.x)} ${f(c0.y)}L${f(c1.x)} ${f(c1.y)}L${f(c2.x)} ${f(c2.y)}L${f(c3.x)} ${f(c3.y)}Z" fill="${P.acc}" fill-opacity=".07" stroke="${P.acc}" stroke-width="1.5" stroke-dasharray="6 5"/>`;
+    /* mirror axes, so it is clear where the symmetry sits */
+    if(!iso&&(st.gSym==='mx'||st.gSym==='mxy'||st.gSym==='d4')){const a=node(FW/2,0),b=node(FW/2,FH);s+=`<line x1="${f(a.x)}" y1="${f(a.y)}" x2="${f(b.x)}" y2="${f(b.y)}" stroke="${P.acc}" stroke-width="1" stroke-dasharray="2 4"/>`}
+    if(!iso&&(st.gSym==='my'||st.gSym==='mxy'||st.gSym==='d4')){const a=node(0,FH/2),b=node(FW,FH/2);s+=`<line x1="${f(a.x)}" y1="${f(a.y)}" x2="${f(b.x)}" y2="${f(b.y)}" stroke="${P.acc}" stroke-width="1" stroke-dasharray="2 4"/>`}
+  }
+  if(st.gShowGrid){
+    const M=Math.ceil(FW/2)+1; let dd='', n=0;
+    const lo=iso?-FW:-M, hiX=iso?FW:FW+M, hiY=iso?FW:FH+M;
+    for(let j=lo;j<=hiY;j++)for(let i=lo;i<=hiX;i++){
+      const p=node(i,j);
+      if(iso&&Math.hypot(p.x-W/2,p.y-H/2)>FW*step*0.95) continue;
+      if(p.x<-4||p.x>W+4||p.y<-4||p.y>H+4) continue;
+      dd+=`M${f(p.x)} ${f(p.y)}h0`; if(++n>9000) break;
+    }
+    s+=`<path d="${dd}" stroke="${P.acc}" stroke-opacity=".55" stroke-width="3.2" stroke-linecap="round"/>`;
+  }
+  s+=`<line id="gp-prev" stroke="${P.acc}" stroke-width="2" stroke-dasharray="4 4" x1="0" y1="0" x2="0" y2="0" visibility="hidden"/>`;
+  s+=`<path id="gp-arc" fill="none" stroke="${P.acc}" stroke-width="2" stroke-dasharray="4 4" d="M0 0" visibility="hidden"/>`;
+  s+=`<circle id="gp-start" r="7" fill="none" stroke="${P.acc}" stroke-width="2.5" visibility="hidden"/>`;
+  s+=`<circle id="gp-hover" r="6" fill="${P.acc}" fill-opacity=".85" visibility="hidden"/>`;
+  s+=`</g>`;
+  document.getElementById('svg').innerHTML=s;
+  gShowStart();
+  /* what an export contains: the stored set once, as open lines and circles */
+  const ex=[];
+  for(const t of segs){const A=node(t[0],t[1]),B=node(t[2],t[3]);const pl=[A,B];pl.open=true;ex.push(pl)}
+  for(const a of arcs){const g=gArcGeom(G,a,v(0,0)); if(g){const pl=gArcPoints(g,36);pl.open=true;ex.push(pl)}}
+  for(const c of circ){const C=node(c[0],c[1]),r=c[2]*step,pl=[];
+    for(let k=0;k<72;k++){const a=k*TAU/72;pl.push(v(C.x+r*Math.cos(a),C.y+r*Math.sin(a)))}ex.push(pl)}
+  last={shapes:[],under:[],rays:[],dots:[],P,faces:null,gexport:ex};
+  const symBad=(!iso&&(st.gSym==='r4'||st.gSym==='d4')&&FW!==FH);
+  document.getElementById('info').innerHTML=[
+    `<b>${iso?'Triangle grid':'Square grid'}</b>`,`repeat ${st.gW}${iso?'':' × '+st.gH}`,
+    `${segs.length} lines`,arcs.length?`${arcs.length} arcs`:'',circ.length?`${circ.length} circles`:'',
+    symBad?'<span class="warn">4-fold symmetry needs equal width and height</span>':'',
+    `tool: ${({line:'draw line',arc:'draw arc',circle:'draw circle',fill:'fill square',erase:'erase'})[st.gTool]}`
+  ].filter(Boolean).map(b=>`<span>${b}</span>`).join('');
+}
+function gShowStart(){
+  const G=gGeom(), s=document.getElementById('gp-start'); if(!s) return;
+  if(GP.start){const p=G.P(GP.start[0],GP.start[1]);s.setAttribute('cx',p.x);s.setAttribute('cy',p.y);s.setAttribute('visibility','visible')}
+  else s.setAttribute('visibility','hidden');
+}
+
+/* pointer input: click two grid points for a line */
+function gEvt(e){
+  const svg=document.getElementById('svg'), pt=svg.createSVGPoint(); pt.x=e.clientX;pt.y=e.clientY;
+  const m=svg.getScreenCTM(); if(!m) return null;
+  const q=pt.matrixTransform(m.inverse()); return v(q.x,q.y);
+}
+function gZone(G,ij){   /* only the editing region accepts clicks */
+  const M=Math.ceil(G.FW/2)+1;
+  if(G.iso){const p=G.P(ij[0],ij[1]);return Math.hypot(p.x-W/2,p.y-H/2)<=G.FW*G.step*0.95}
+  return ij[0]>=-M&&ij[0]<=G.FW+M&&ij[1]>=-M&&ij[1]<=G.FH+M;
+}
+function gMove(e){
+  if(st.engine!=='gridp') return;
+  const q=gEvt(e); if(!q) return; const G=gGeom(), ij=G.inv(q.x,q.y);
+  const h=document.getElementById('gp-hover'), pv=document.getElementById('gp-prev'); if(!h) return;
+  if(!gZone(G,ij)){h.setAttribute('visibility','hidden');pv.setAttribute('visibility','hidden');return}
+  const p=G.P(ij[0],ij[1]); h.setAttribute('cx',p.x);h.setAttribute('cy',p.y);h.setAttribute('visibility','visible');
+  const ap=document.getElementById('gp-arc'); if(ap) ap.setAttribute('visibility','hidden');
+  if(GP.start&&GP.mid&&st.gTool==='arc'){
+    /* third click pending: show the arc that would be drawn */
+    const g=gArcGeom(G,[GP.start[0],GP.start[1],GP.mid[0],GP.mid[1],ij[0],ij[1],st.gArcLong?1:0],v(0,0));
+    if(g&&ap){ap.setAttribute('d',gArcPath(g));ap.setAttribute('visibility','visible')}
+    pv.setAttribute('visibility','hidden');
+  }else if(GP.start&&(st.gTool==='line'||st.gTool==='circle'||st.gTool==='arc')){
+    const a=G.P(GP.start[0],GP.start[1]);
+    pv.setAttribute('x1',a.x);pv.setAttribute('y1',a.y);pv.setAttribute('x2',p.x);pv.setAttribute('y2',p.y);pv.setAttribute('visibility','visible');
+  }else pv.setAttribute('visibility','hidden');
+}
+function gDown(e){
+  if(st.engine!=='gridp'||e.button>0) return;
+  const q=gEvt(e); if(!q) return; const G=gGeom(), ij=G.inv(q.x,q.y);
+  const tool=st.gTool;
+  if(tool==='erase'){ if(gErase(q.x,q.y)){render();sync()} return }
+  if(!gZone(G,ij)) return;
+  if(tool==='fill'){
+    if(G.iso) return;
+    const i=Math.floor((q.x-G.ox)/G.step), j=Math.floor((q.y-G.oy)/G.step);
+    gSnap(); gToggleCell(i,j); render(); sync(); return;
+  }
+  if(tool==='arc'){
+    if(!GP.start){GP.start=ij;GP.mid=null;gShowStart();return}
+    if(!GP.mid){
+      if(GP.start[0]===ij[0]&&GP.start[1]===ij[1]) return;     /* the start cannot sit on the centre */
+      GP.mid=ij;return;
+    }
+    if((ij[0]===GP.start[0]&&ij[1]===GP.start[1])) return;
+    gSnap(); gAddArc(GP.start,GP.mid,ij); GP.start=null; GP.mid=null; gShowStart(); render(); sync(); return;
+  }
+  if(!GP.start){GP.start=ij;gShowStart();return}
+  if(GP.start[0]===ij[0]&&GP.start[1]===ij[1]){GP.start=null;gShowStart();return}
+  gSnap();
+  if(tool==='circle'){
+    const a=G.P(GP.start[0],GP.start[1]), b=G.P(ij[0],ij[1]);
+    gAddCircle(GP.start,Math.round(Math.hypot(a.x-b.x,a.y-b.y)/G.step*1000)/1000);
+    GP.start=null;
+  }else{
+    gAddSeg(GP.start,ij);
+    GP.start=st.gChain?ij:null;
+  }
+  render();sync();
+}
+(function(){
+  const svg=document.getElementById('svg');
+  svg.addEventListener('pointermove',gMove);
+  svg.addEventListener('pointerdown',gDown);
+  svg.addEventListener('contextmenu',e=>{if(st.engine==='gridp'){e.preventDefault();GP.start=null;GP.mid=null;gShowStart()}});
+  document.addEventListener('keydown',e=>{
+    if(st.engine!=='gridp') return;
+    if(e.key==='Escape'){GP.start=null;GP.mid=null;gShowStart()}
+    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();gUndo()}
+  });
+})();
+
+/* a random symmetric drawing, for a quick start */
+function gRandom(){
+  const G=gGeom(), R=rng(Math.floor(Math.random()*1e6)+1), n=4+Math.floor(R()*6);
+  gSnap(); st.gData=''; st.gCirc=''; st.gFill='';
+  const pick=()=>{
+    if(G.iso){const s=Math.floor(G.FW*0.8);return [Math.floor(R()*(2*s+1))-s,Math.floor(R()*(s+1))]}
+    return [Math.floor(R()*(G.FW+1)),Math.floor(R()*(G.FH+1))];
+  };
+  let cur=pick();
+  for(let k=0;k<n;k++){const nx=pick(); if(nx[0]!==cur[0]||nx[1]!==cur[1]) gAddSeg(cur,nx); cur=R()<0.5?nx:pick()}
+  GP.start=null; render(); sync();
+}
+const GACT={undo:gUndo,clear:gClear,random:gRandom};
+
+/* the drawing is saved into the link as text, and library entries are just this text */
+/*LIB-START*/
+const GRID_LIB=[];
+/*LIB-END*/
+
 /* ============================================================ render */
 function render(){
   fitViewBox();
+  if(st.engine==='gridp'){renderGrid();return}
   const {shapes,under,rays,dots,P}=build();
   setLref(shapes);
   const w=st.width, r=st.round;
@@ -1430,7 +1807,27 @@ function applyPreset(i){
   clampAll();
   buildLists();buildParams();render();sync();
 }
+/* grid library: grouped by the book and the page a pattern comes from */
+function loadGridPattern(i){
+  const e=GRID_LIB[i]; if(!e) return;
+  st=Object.assign({},DEF,ENGINES.find(x=>x.id==='gridp').def,{engine:'gridp'},e.s);
+  GP.start=null; GP.hist=[];
+  clampAll(); buildLists(); buildParams(); render(); sync();
+}
+function buildGridLib(){
+  const on=st.engine==='gridp';
+  $('h-glib').style.display=on?'':'none';
+  if(!on||!GRID_LIB.length){$('glib').innerHTML=on?'<div class="card">No patterns loaded yet.</div>':'';return}
+  let html='', cur='';
+  GRID_LIB.forEach((e,i)=>{
+    if(e.group!==cur){cur=e.group;html+=`<div class="grp">${cur}</div>`}
+    html+=`<div class="item" data-gl="${i}"><span>${e.name}<br><small>${e.note||''}</small></span></div>`;
+  });
+  $('glib').innerHTML=html;
+  $('glib').querySelectorAll('[data-gl]').forEach(el=>el.onclick=()=>loadGridPattern(+el.dataset.gl));
+}
 function buildLists(){
+  buildGridLib();
   $('presets').innerHTML=PRESETS.map((p,i)=>
     `<div class="item" data-pre="${i}"><span>${p.name}<br><small>${p.note}</small></span></div>`).join('');
   $('presets').querySelectorAll('[data-pre]').forEach(el=>el.onclick=()=>applyPreset(+el.dataset.pre));
@@ -1463,6 +1860,7 @@ function buildLists(){
   $('tilings').querySelectorAll('[data-t]').forEach(el=>el.onclick=()=>{st.tiling=el.dataset.t;buildLists();render();sync()});
   const e=ENGINES.find(x=>x.id===st.engine);
   $('srcCard').innerHTML=`<b>Source</b>${e.src}`;
+  $('modes').style.display=(st.engine==='gridp')?'none':'';
   $('modes').innerHTML=MODES.map(([k,n])=>`<button data-m="${k}" class="${k===st.mode?'on':''}">${n}</button>`).join('');
   $('modes').querySelectorAll('button').forEach(b=>b.onclick=()=>{st.mode=b.dataset.m;buildLists();render();sync()});
 }
@@ -1472,9 +1870,14 @@ function buildParams(){
   for(const c of rows){
     if(c.k==='width') h+='<h3>Line &amp; frame</h3>';
     if(c.k==='palMode') h+='<h3>Colour</h3>';
-    if(c.type==='sel'){
+    if(c.type==='seg'){
+      h+=`<div class="row"><div class="rlab"><span>${cv(c.label)}</span></div><div class="seg" style="width:100%">`+
+        c.opts.map(([val,lab])=>`<button data-seg="${c.k}" data-v="${val}" class="${st[c.k]===val?'on':''}" style="flex:1">${lab}</button>`).join('')+`</div></div>`;
+    }else if(c.type==='acts'){
+      h+=`<div class="row" style="display:flex;gap:6px">`+c.acts.map(([id,lab])=>`<button class="btn" data-act="${id}" style="flex:1">${lab}</button>`).join('')+`</div>`;
+    }else if(c.type==='sel'){
       h+=`<div class="row"><div class="rlab"><span>${cv(c.label)}</span></div>
-        <select data-k="${c.k}">${c.opts.map(([val,lab])=>
+        <select data-k="${c.k}">${cv(c.opts).map(([val,lab])=>
           `<option value="${val}"${st[c.k]===val?' selected':''}>${lab}</option>`).join('')}</select></div>`;
     }else if(c.type==='chk'){
       h+=`<label class="chk"><input type="checkbox" data-k="${c.k}" ${st[c.k]?'checked':''}> ${cv(c.label)}</label>`;
@@ -1519,8 +1922,14 @@ function buildParams(){
   $('params').querySelectorAll('input[type=checkbox]').forEach(i=>{
     i.onchange=()=>{st[i.dataset.k]=i.checked;render();sync()};
   });
+  $('params').querySelectorAll('button[data-seg]').forEach(b=>b.onclick=()=>{
+    st[b.dataset.seg]=b.dataset.v; GP.start=null; GP.mid=null; buildParams(); render(); sync();
+  });
+  $('params').querySelectorAll('button[data-act]').forEach(b=>b.onclick=()=>{const f=GACT[b.dataset.act];if(f)f()});
   $('params').querySelectorAll('select[data-k]').forEach(i=>{
-    i.onchange=()=>{st[i.dataset.k]=i.value;clampAll();buildParams();render();sync()};
+    i.onchange=()=>{st[i.dataset.k]=i.value;
+      if(i.dataset.k==='gType'){st.gSym='none';st.gW=Math.min(st.gW,8)}
+      GP.start=null;clampAll();buildParams();render();sync()};
   });
   if(st.palMode==='custom'){
     const g=genPalette(st);
@@ -1535,17 +1944,19 @@ function buildParams(){
 }
 const visibleCtrls=()=>[...(CTRL[st.engine]||[]),...COMMON].filter(c=>!c.when||c.when(st));
 const ctrlOf=k=>visibleCtrls().find(c=>c.k===k);
+GP.hist=[];
 /* switching layout can change a control's range (seeds per repeat is capped far
    lower than a free scatter), so pull every value back inside its new bounds */
 function clampAll(){
   for(const c of visibleCtrls()){
-    if(c.type==='chk'||c.type==='sel') continue;
+    if(c.type==='chk'||c.type==='sel'||c.type==='seg'||c.type==='acts'||!c.k) continue;
     st[c.k]=Math.min(cv(c.max),Math.max(cv(c.min),st[c.k]));
   }
 }
 function setNum(i,c){ i.value=c.pct?Math.round(st[c.k]*100):+(+st[c.k]).toFixed(2) }
 function outs(){
   for(const c of visibleCtrls()){
+    if(!c.k||c.type) continue;
     const i=$('params').querySelector(`input.num[data-k="${c.k}"]`);
     if(i&&document.activeElement!==i) setNum(i,c);   /* don't fight the caret */
   }
@@ -1588,6 +1999,7 @@ function load(){
    Curves are flattened for DXF because R12 has no Bezier entity, which is also
    what a cutter wants. */
 function exportShapes(){
+  if(last.gexport) return last.gexport;
   const {shapes,P}=last, r=st.round, out=[];
   if(st.mode==='mosaic'&&last.faces&&last.faces.length) return last.faces.map(f=>roundedPoly(f.pts,r));
   for(const sh of shapes){
@@ -1611,7 +2023,7 @@ function exportDXF(){
   const put=(c,v)=>{L.push(String(c),String(v))};
   put(0,'SECTION'); put(2,'ENTITIES');
   const emit=(pts,layer)=>{
-    put(0,'POLYLINE'); put(8,layer); put(66,1); put(70,1);
+    put(0,'POLYLINE'); put(8,layer); put(66,1); put(70,pts.open?0:1);
     for(const p of pts){ put(0,'VERTEX'); put(8,layer);
       put(10,(+p.x).toFixed(4)); put(20,(H-p.y).toFixed(4)); put(30,'0.0'); }
     put(0,'SEQEND'); put(8,layer);
@@ -1640,7 +2052,7 @@ function exportPDF(){
     if(!pts.length) return;
     s+=`${pts[0].x.toFixed(2)} ${y(pts[0].y)} m\n`;
     for(let k=1;k<pts.length;k++) s+=`${pts[k].x.toFixed(2)} ${y(pts[k].y)} l\n`;
-    s+='h\n';
+    if(!pts.open) s+='h\n';
     if(st.mode==='jali')       s+=`${hex(P.open)} rg f\n`;
     else if(st.mode==='mosaic')s+=`${hex(last.faces&&last.faceCols?last.faceCols[i]:P.fills[pick(last.shapes[i]||{pts,c:centroid(pts)},i)])} rg f\n`;
     else                       s+=`${hex(spdf[i]||P.ink)} RG S\n`;
@@ -1665,6 +2077,7 @@ $('expDxf').onclick=()=>download(new Blob([exportDXF()],{type:'image/vnd.dxf'}),
 $('expPdf').onclick=()=>download(new Blob([exportPDF()],{type:'application/pdf'}),baseName()+'.pdf');
 $('exp').onclick=()=>{
   const svg=$('svg').cloneNode(true);
+  const ov=svg.querySelector('#ov'); if(ov) ov.remove();
   svg.setAttribute('xmlns','http://www.w3.org/2000/svg');
   svg.setAttribute('width',W);svg.setAttribute('height',H);
   const blob=new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n'+new XMLSerializer().serializeToString(svg)],{type:'image/svg+xml'});
@@ -1726,6 +2139,8 @@ const SRC_MAIN=[
  ['[26] N. G. de Bruijn, <i>Algebraic theory of Penrose\'s non-periodic tilings of the plane</i> (1981)','Published paper','The multigrid method — implemented'],
  ['[27] Aatish Bhatia &amp; Henry Reich, <i>Pattern Collider</i> (MIT licence)','Open source tool','Prompted the multigrid engine; method taken from de Bruijn, code written here'],
  ['[28] David Austin, <i>Penrose Tilings Tied up in Ribbons</i>','AMS Feature Column','Accessible account of the multigrid / de Bruijn duality'],
+ ['[30] Robert Field, <i>Geometric Patterns from Islamic Art and Architecture</i> (Tarquin, 2000)','Scanned copy','The grid method: lines between points of a square or triangle grid, repeated. Basis of the grid drawing tool'],
+ ['[31] Keith Critchlow, <i>Islamic Patterns: An Analytical and Cosmological Approach</i> (Thames and Hudson, 1976)','Scanned copy','Patterns analysed on circle, square, hexagon and pentagon grids'],
  ['[29] Robert Fathauer, <i>Tessellations: Mathematics, Art, and Recreation</i> (A K Peters/CRC, 2021, 464 pp)','Publisher page','Ch.2 geometric tilings and duals, ch.6 polyforms and rep-tiles, ch.8 substitution tilings, ch.9 fractal tilings — implemented']
 ];
 const SRC_ALL=[
@@ -1757,7 +2172,9 @@ const SRC_ALL=[
  '[26] N. G. de Bruijn, Algebraic theory of Penrose\'s non-periodic tilings of the plane (1981)',
  '[27] Aatish Bhatia and Henry Reich, Pattern Collider, github.com/aatishb/patterncollider (MIT)',
  '[28] David Austin, Penrose Tilings Tied up in Ribbons, AMS Feature Column',
- '[29] Robert Fathauer, Tessellations: Mathematics, Art, and Recreation, A K Peters/CRC Press 2021'
+ '[29] Robert Fathauer, Tessellations: Mathematics, Art, and Recreation, A K Peters/CRC Press 2021',
+ '[30] Robert Field, Geometric Patterns from Islamic Art and Architecture, Tarquin Publications 2000',
+ '[31] Keith Critchlow, Islamic Patterns: An Analytical and Cosmological Approach, Thames and Hudson 1976'
 ];
 $('srcMain').innerHTML='<tr><th>Reference</th><th>Access verified</th><th>Use here</th></tr>'+
   SRC_MAIN.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');
