@@ -1054,7 +1054,7 @@ const CTRL={
   {k:'ssec', label:'Secondary stars',type:'chk'}
  ],
  gridp:[
-  {k:'gTool',label:'Tool',type:'seg',opts:[['line','Line'],['arc','Arc'],['circle','Circle'],['fill','Fill'],['erase','Erase']]},
+  {k:'gTool',label:'Tool',type:'seg',opts:[['line','Line'],['arc','Arc'],['arc3','3-point arc'],['circle','Circle'],['fill','Fill'],['erase','Erase']]},
   {k:'gArcLong',label:'Arc: take the long way round',type:'chk',when:s=>s.gTool==='arc'},
   {k:'gChain',label:'Keep drawing from the last point',type:'chk'},
   {type:'acts',acts:[['undo','Undo'],['clear','Clear'],['random','Random']]},
@@ -1432,29 +1432,46 @@ function gErase(x,y){
    round is decided by the shorter (or longer) sweep, not by orientation, so a mirrored
    copy is the mirror of the arc. */
 function gArcGeom(G,a,off){
-  const C=G.P(a[0],a[1]), A=G.P(a[2],a[3]), B=G.P(a[4],a[5]);
-  const r=Math.hypot(A.x-C.x,A.y-C.y); if(r<1e-6) return null;
-  const a0=Math.atan2(A.y-C.y,A.x-C.x), b0=Math.atan2(B.y-C.y,B.x-C.x);
-  let d=b0-a0; while(d>Math.PI) d-=TAU; while(d<=-Math.PI) d+=TAU;
-  const long=a[6]===1;
-  const sweep=long?(d>0?0:1):(d>0?1:0);
-  const cx=C.x+off.x, cy=C.y+off.y;
-  const ex=cx+r*Math.cos(b0), ey=cy+r*Math.sin(b0);
-  return {cx,cy,r,a0,b0,d,long,sweep,sx:cx+r*Math.cos(a0),sy:cy+r*Math.sin(a0),ex,ey};
+  const nrm=x=>{while(x<0)x+=TAU;while(x>=TAU)x-=TAU;return x};
+  let cx,cy,r,a0,b0,sweepAngle;
+  if(a[6]===2){
+    /* through three points: the circle that passes through all of them. The arc runs
+       from the first to the last point, on the side that contains the middle one. */
+    const S=G.P(a[0],a[1]), M=G.P(a[2],a[3]), E=G.P(a[4],a[5]);
+    const d=2*(S.x*(M.y-E.y)+M.x*(E.y-S.y)+E.x*(S.y-M.y));
+    if(Math.abs(d)<1e-6) return null;                 /* in a straight line: no circle */
+    const s2=S.x*S.x+S.y*S.y, m2=M.x*M.x+M.y*M.y, e2=E.x*E.x+E.y*E.y;
+    const ux=(s2*(M.y-E.y)+m2*(E.y-S.y)+e2*(S.y-M.y))/d;
+    const uy=(s2*(E.x-M.x)+m2*(S.x-E.x)+e2*(M.x-S.x))/d;
+    r=Math.hypot(S.x-ux,S.y-uy);
+    a0=Math.atan2(S.y-uy,S.x-ux); b0=Math.atan2(E.y-uy,E.x-ux);
+    const m0=Math.atan2(M.y-uy,M.x-ux);
+    const pos=nrm(b0-a0), posM=nrm(m0-a0);
+    sweepAngle=posM<pos?pos:pos-TAU;
+    cx=ux+off.x; cy=uy+off.y;
+  }else{
+    const C=G.P(a[0],a[1]), A=G.P(a[2],a[3]), B=G.P(a[4],a[5]);
+    r=Math.hypot(A.x-C.x,A.y-C.y); if(r<1e-6) return null;
+    a0=Math.atan2(A.y-C.y,A.x-C.x); b0=Math.atan2(B.y-C.y,B.x-C.x);
+    let d=b0-a0; while(d>Math.PI) d-=TAU; while(d<=-Math.PI) d+=TAU;
+    sweepAngle=a[6]===1?(d>0?d-TAU:d+TAU):d;
+    cx=C.x+off.x; cy=C.y+off.y;
+  }
+  const long=Math.abs(sweepAngle)>Math.PI, sweep=sweepAngle>0?1:0;
+  return {cx,cy,r,a0,b0,sweepAngle,long,sweep,
+          sx:cx+r*Math.cos(a0),sy:cy+r*Math.sin(a0),ex:cx+r*Math.cos(b0),ey:cy+r*Math.sin(b0)};
 }
 function gArcPath(g){
   return `M${f(g.sx)} ${f(g.sy)}A${f(g.r)} ${f(g.r)} 0 ${g.long?1:0} ${g.sweep} ${f(g.ex)} ${f(g.ey)}`;
 }
 function gArcPoints(g,n){
   /* the same arc as points, for export and for finding the nearest one when erasing */
-  let sweepAngle=g.d;
-  if(g.long) sweepAngle=g.d>0?g.d-TAU:g.d+TAU;
-  const pts=[]; for(let k=0;k<=n;k++){const t=g.a0+sweepAngle*k/n;pts.push(v(g.cx+g.r*Math.cos(t),g.cy+g.r*Math.sin(t)))}
+  const pts=[]; for(let k=0;k<=n;k++){const t=g.a0+g.sweepAngle*k/n;pts.push(v(g.cx+g.r*Math.cos(t),g.cy+g.r*Math.sin(t)))}
   return pts;
 }
-function gAddArc(C,A,B){
+function gAddArc(C,A,B,flag){
   const G=gGeom(), maps=gMaps(G), arcs=gParse(st.gArcs), seen=new Set(arcs.map(t=>t.join()));
-  const long=st.gArcLong?1:0;
+  const long=flag===undefined?(st.gArcLong?1:0):flag;
   for(const f of maps){
     const c=f(C[0],C[1]), a=f(A[0],A[1]), b=f(B[0],B[1]);
     const key=[c[0],c[1],a[0],a[1],b[0],b[1],long];
@@ -1544,7 +1561,7 @@ function renderGrid(){
     `<b>${iso?'Triangle grid':'Square grid'}</b>`,`repeat ${st.gW}${iso?'':' × '+st.gH}`,
     `${segs.length} lines`,arcs.length?`${arcs.length} arcs`:'',circ.length?`${circ.length} circles`:'',
     symBad?'<span class="warn">4-fold symmetry needs equal width and height</span>':'',
-    `tool: ${({line:'draw line',arc:'draw arc',circle:'draw circle',fill:'fill square',erase:'erase'})[st.gTool]}`
+    `tool: ${({line:'draw line',arc:'draw arc',arc3:'draw arc through 3 points',circle:'draw circle',fill:'fill square',erase:'erase'})[st.gTool]}`
   ].filter(Boolean).map(b=>`<span>${b}</span>`).join('');
 }
 function gShowStart(){
@@ -1571,12 +1588,12 @@ function gMove(e){
   if(!gZone(G,ij)){h.setAttribute('visibility','hidden');pv.setAttribute('visibility','hidden');return}
   const p=G.P(ij[0],ij[1]); h.setAttribute('cx',p.x);h.setAttribute('cy',p.y);h.setAttribute('visibility','visible');
   const ap=document.getElementById('gp-arc'); if(ap) ap.setAttribute('visibility','hidden');
-  if(GP.start&&GP.mid&&st.gTool==='arc'){
+  if(GP.start&&GP.mid&&(st.gTool==='arc'||st.gTool==='arc3')){
     /* third click pending: show the arc that would be drawn */
-    const g=gArcGeom(G,[GP.start[0],GP.start[1],GP.mid[0],GP.mid[1],ij[0],ij[1],st.gArcLong?1:0],v(0,0));
-    if(g&&ap){ap.setAttribute('d',gArcPath(g));ap.setAttribute('visibility','visible')}
+    const g=gArcGeom(G,[GP.start[0],GP.start[1],GP.mid[0],GP.mid[1],ij[0],ij[1],st.gTool==='arc3'?2:(st.gArcLong?1:0)],v(0,0));
+    if(g&&ap){ap.setAttribute('d',gArcPath(g));ap.setAttribute('visibility','visible')}   /* no arc when the points are in a line */
     pv.setAttribute('visibility','hidden');
-  }else if(GP.start&&(st.gTool==='line'||st.gTool==='circle'||st.gTool==='arc')){
+  }else if(GP.start&&(st.gTool==='line'||st.gTool==='circle'||st.gTool==='arc'||st.gTool==='arc3')){
     const a=G.P(GP.start[0],GP.start[1]);
     pv.setAttribute('x1',a.x);pv.setAttribute('y1',a.y);pv.setAttribute('x2',p.x);pv.setAttribute('y2',p.y);pv.setAttribute('visibility','visible');
   }else pv.setAttribute('visibility','hidden');
@@ -1592,14 +1609,19 @@ function gDown(e){
     const i=Math.floor((q.x-G.ox)/G.step), j=Math.floor((q.y-G.oy)/G.step);
     gSnap(); gToggleCell(i,j); render(); sync(); return;
   }
-  if(tool==='arc'){
+  if(tool==='arc'||tool==='arc3'){
+    /* arc: centre, start, end.  3-point arc: start, a point it passes through, end. */
     if(!GP.start){GP.start=ij;GP.mid=null;gShowStart();return}
     if(!GP.mid){
-      if(GP.start[0]===ij[0]&&GP.start[1]===ij[1]) return;     /* the start cannot sit on the centre */
+      if(GP.start[0]===ij[0]&&GP.start[1]===ij[1]) return;
       GP.mid=ij;return;
     }
-    if((ij[0]===GP.start[0]&&ij[1]===GP.start[1])) return;
-    gSnap(); gAddArc(GP.start,GP.mid,ij); GP.start=null; GP.mid=null; gShowStart(); render(); sync(); return;
+    if(ij[0]===GP.start[0]&&ij[1]===GP.start[1]) return;
+    if(tool==='arc3'&&ij[0]===GP.mid[0]&&ij[1]===GP.mid[1]) return;
+    const flag=tool==='arc3'?2:(st.gArcLong?1:0);
+    /* three points in a straight line have no circle through them: wait for another point */
+    if(!gArcGeom(G,[GP.start[0],GP.start[1],GP.mid[0],GP.mid[1],ij[0],ij[1],flag],v(0,0))) return;
+    gSnap(); gAddArc(GP.start,GP.mid,ij,flag); GP.start=null; GP.mid=null; gShowStart(); render(); sync(); return;
   }
   if(!GP.start){GP.start=ij;gShowStart();return}
   if(GP.start[0]===ij[0]&&GP.start[1]===ij[1]){GP.start=null;gShowStart();return}
@@ -1871,8 +1893,8 @@ function buildParams(){
     if(c.k==='width') h+='<h3>Line &amp; frame</h3>';
     if(c.k==='palMode') h+='<h3>Colour</h3>';
     if(c.type==='seg'){
-      h+=`<div class="row"><div class="rlab"><span>${cv(c.label)}</span></div><div class="seg" style="width:100%">`+
-        c.opts.map(([val,lab])=>`<button data-seg="${c.k}" data-v="${val}" class="${st[c.k]===val?'on':''}" style="flex:1">${lab}</button>`).join('')+`</div></div>`;
+      h+=`<div class="row"><div class="rlab"><span>${cv(c.label)}</span></div><div class="seg" style="width:100%;flex-wrap:wrap">`+
+        c.opts.map(([val,lab])=>`<button data-seg="${c.k}" data-v="${val}" class="${st[c.k]===val?'on':''}" style="flex:1 1 30%;border-bottom:1px solid var(--line)">${lab}</button>`).join('')+`</div></div>`;
     }else if(c.type==='acts'){
       h+=`<div class="row" style="display:flex;gap:6px">`+c.acts.map(([id,lab])=>`<button class="btn" data-act="${id}" style="flex:1">${lab}</button>`).join('')+`</div>`;
     }else if(c.type==='sel'){
