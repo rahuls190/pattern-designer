@@ -1052,6 +1052,7 @@ const CTRL={
   {k:'gArcLong',label:'Arc: take the long way round',type:'chk',when:s=>s.gTool==='arc'},
   {k:'gChain',label:'Keep drawing from the last point',type:'chk'},
   {type:'acts',acts:[['undo','Undo'],['clear','Clear'],['random','Random']]},
+  {type:'acts',acts:[['closeEnds','Close near ends']],when:s=>s.gCheck},
   {k:'gType',label:'Grid',type:'sel',opts:[['square','Square grid'],['iso','Triangle (isometric) grid']]},
   {k:'gW',label:s=>s.gType==='iso'?'Repeat size (grid steps)':'Repeat width (squares)',min:1,max:64,step:1},
   {k:'gH',label:'Repeat height (squares)',min:1,max:64,step:1,when:s=>s.gType!=='iso'},
@@ -1424,8 +1425,8 @@ function gOpenEnds(segs,FW,FH){
     return (px-(o[0]+u*dx))**2+(py-(o[1]+u*dy))**2;
   };
   const out=[];
-  for(const t of segs) for(const p of [[t[0],t[1]],[t[2],t[3]]]){
-    const px=p[0],py=p[1];
+  segs.forEach((t,si)=>{ for(let end=0;end<2;end++){
+    const px=t[end*2],py=t[end*2+1];
     /* the point's own segment contributes one entry, so two or more means
        another line ends here too and this end is closed */
     if((cnt.get(px+','+py)||0)>1) continue;
@@ -1437,9 +1438,85 @@ function gOpenEnds(segs,FW,FH){
       if(o[0]===t[0]&&o[1]===t[1]&&o[2]===t[2]&&o[3]===t[3]) continue;
       const d=gap2(px,py,o); if(d<g) g=d;
     }
-    out.push({i:px,j:py,gap:Math.sqrt(g)});
-  }
+    out.push({i:px,j:py,gap:Math.sqrt(g),seg:si,end});
+  }});
   return out;
+}
+
+/* Move the ends that all but meet onto the line they were reaching for. Only
+   ends within a grid step are touched, because that is the distance a
+   mis-transcribed point lands at; a border that stops in open space is further
+   out and is left alone. The new position is the nearest grid point that does
+   lie on a line, which is the smallest change that closes the gap — it is a
+   repair to a transcription, not a redrawing, and Undo steps back out of it.
+   Every move is worked out against the original geometry so the result does
+   not depend on the order they are applied in. */
+/* say it on the button itself, the way Copy link reports a copy */
+function gSay(m){
+  const b=document.querySelector('[data-act="closeEnds"]'); if(!b) return;
+  const t=b.dataset.label||(b.dataset.label=b.textContent);
+  b.textContent=m; setTimeout(()=>{b.textContent=t},1800);
+}
+function gCloseEnds(){
+  const G=gGeom(), FW=G.FW, FH=G.FH;
+  const segs=gParse(st.gData); if(!segs.length) return;
+  const open=gOpenEnds(segs,FW,FH).filter(e=>e.gap<=1.0001);
+  if(!open.length){gSay('Nothing to close');return}
+  const tiled=[];
+  for(let a=-2;a<=2;a++)for(let b=-2;b<=2;b++)for(const t of segs)
+    tiled.push([t[0]+a*FW,t[1]+b*FH,t[2]+a*FW,t[3]+b*FH]);
+  const cr=(ax,ay,bx,by)=>ax*by-ay*bx;
+  const onLine=(px,py,own)=>{
+    for(const o of tiled){
+      if(o===own) continue;
+      if((px===o[0]&&py===o[1])||(px===o[2]&&py===o[3])) return true;
+      if(cr(o[2]-o[0],o[3]-o[1],px-o[0],py-o[1])!==0) continue;
+      const d=(px-o[0])*(o[2]-o[0])+(py-o[1])*(o[3]-o[1]);
+      if(d>0&&d<(o[2]-o[0])**2+(o[3]-o[1])**2) return true;
+    }
+    return false;
+  };
+  /* Moving a line's end swings the whole line, so any end resting part way
+     along it comes loose — closing one gap by opening others. Those lines are
+     load bearing and are left alone; only a line nothing rests on can be moved
+     safely, which is what keeps this a repair rather than a redraw. */
+  const carries=t=>{
+    for(const o of tiled){
+      if(o[0]===t[0]&&o[1]===t[1]&&o[2]===t[2]&&o[3]===t[3]) continue;
+      for(const q of [[o[0],o[1]],[o[2],o[3]]]){
+        if(cr(t[2]-t[0],t[3]-t[1],q[0]-t[0],q[1]-t[1])!==0) continue;
+        const d=(q[0]-t[0])*(t[2]-t[0])+(q[1]-t[1])*(t[3]-t[1]);
+        if(d>0&&d<(t[2]-t[0])**2+(t[3]-t[1])**2) return true;
+      }
+    }
+    return false;
+  };
+  const moves=[];
+  for(const e of open){
+    const t=segs[e.seg], ox=t[(1-e.end)*2], oy=t[(1-e.end)*2+1];
+    if(carries(t)) continue;
+    let best=null,bd=Infinity;
+    /* one step in each direction and no further: the point is known to be
+       within a grid step of a line, so a fix that reaches further is redrawing
+       the pattern rather than correcting a slip, and is better left alone */
+    for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++){
+      if(!dx&&!dy) continue;
+      const x=e.i+dx, y=e.j+dy;
+      if(x===ox&&y===oy) continue;               /* would collapse the line */
+      const d=dx*dx+dy*dy;
+      if(d>bd) continue;
+      if(!onLine(x,y,t)) continue;
+      if(d<bd||(d===bd&&best&&(x<best[0]||(x===best[0]&&y<best[1])))){bd=d;best=[x,y]}
+    }
+    if(best) moves.push({seg:e.seg,end:e.end,to:best});
+  }
+  if(!moves.length){gSay('No close fit found');return}
+  gSnap();
+  for(const m of moves){segs[m.seg][m.end*2]=m.to[0];segs[m.seg][m.end*2+1]=m.to[1]}
+  st.gData=gStr(segs);
+  const left=gOpenEnds(segs,FW,FH).length;
+  render();sync();
+  gSay(`Closed ${moves.length}${left?` · ${left} left`:''}`);
 }
 
 function gSnap(){GP.hist.push({d:st.gData,c:st.gCirc,f:st.gFill,a:st.gArcs});if(GP.hist.length>80)GP.hist.shift()}
@@ -1761,7 +1838,7 @@ function gRandom(){
   for(let k=0;k<n;k++){const nx=pick(); if(nx[0]!==cur[0]||nx[1]!==cur[1]) gAddSeg(cur,nx); cur=R()<0.5?nx:pick()}
   GP.start=null; render(); sync();
 }
-const GACT={undo:gUndo,clear:gClear,random:gRandom};
+const GACT={undo:gUndo,clear:gClear,random:gRandom,closeEnds:gCloseEnds};
 
 /* the drawing is saved into the link as text, and library entries are just this text */
 /*LIB-START*/
