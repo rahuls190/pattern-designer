@@ -983,7 +983,7 @@ const ENGINES=[
    src:'The Metropolitan Museum of Art, <i>Islamic Art and Geometric Design</i> activity pack [1]. Documented construction.'},
   {id:'gridp',name:'Draw on a grid',sub:'Field · Critchlow method',tag:'doc',tagText:'documented',
    def:{gType:'square',gW:4,gH:4,gSub:1,gSize:56,gSym:'d4',gTool:'line',gChain:true,gShowGrid:true,gShowCell:true,
-        gBand:false,gBandW:8,width:2,round:0,frame:false,gData:'',gCirc:'',gFill:'',gArcs:'',gArcLong:false,pal:1},
+        gBand:false,gBandW:8,width:2,round:0,frame:false,gData:'',gCirc:'',gFill:'',gArcs:'',gArcLong:false,gCheck:false,pal:1},
    src:'Robert Field, <i>Geometric Patterns from Islamic Art and Architecture</i> (Tarquin, 2000) [30]: every pattern is straight lines between points of a square or triangle grid, repeated across the plane. Keith Critchlow, <i>Islamic Patterns</i> (Thames and Hudson, 1976) [31] analyses specimen patterns on the same grids. Click two grid points to draw a line; symmetry is applied as you draw, and the repeat cell tiles the panel.'},
   {id:'subst',name:'Self-similar subdivision', sub:'rep-tiles · substitution', tag:'doc', tagText:'documented', def:{subDepth:4,width:3,round:0},
    src:'Robert Fathauer, <i>Tessellations: Mathematics, Art, and Recreation</i>, A K Peters/CRC Press 2021 [29] — ch.6 polyforms and rep-tiles, ch.8 substitution tilings, ch.9 fractal tilings. Answers item 07 of the research catalogue: subdivide a tile configuration at a smaller scale by a stored rule, to a finite depth.'},
@@ -1022,7 +1022,7 @@ const DEF={engine:'pic',tiling:'octasq',mode:'line',
   subRule:'penrose',subDepth:4,
   vlayout:'hex',vrepeat:3,vjitter:55,vcount:24,vsym:8,vmirror:true,vrelax:2,seed:7,
   gType:'square',gW:4,gH:4,gSub:1,gSize:56,gSym:'d4',gTool:'line',gChain:true,gShowGrid:true,gShowCell:true,
-  gBand:false,gBandW:8,gData:'',gCirc:'',gFill:'',gArcs:'',gArcLong:false,
+  gBand:false,gBandW:8,gData:'',gCirc:'',gFill:'',gArcs:'',gArcLong:false,gCheck:false,
   units:'mm',artW:297,artH:210,
   pal:0,palMode:'preset',colourBy:'type',
   cHue:210,cSpread:120,cSat:55,cLight:48,cContrast:55,cReverse:false};
@@ -1060,6 +1060,7 @@ const CTRL={
   {k:'gSize',label:'Grid spacing',min:20,max:120,step:1,unit:' px',len:true},
   {k:'gShowGrid',label:'Show grid points',type:'chk'},
   {k:'gShowCell',label:'Show repeat cell',type:'chk'},
+  {k:'gCheck',label:'Mark unclosed line ends',type:'chk'},
   {k:'gBand',label:'Draw as an outlined band',type:'chk'},
   {k:'gBandW',label:'Band width',min:3,max:24,step:1,unit:' px',len:true,when:s=>s.gBand}
  ],
@@ -1392,6 +1393,55 @@ const gSymOpts=()=>st.gType==='iso'
   ?[['none','None'],['m','Mirror'],['r2','2-fold rotation'],['r3','3-fold rotation'],['r6','6-fold rotation'],['r3m','3-fold + mirrors'],['d6','6-fold + mirrors']]
   :[['none','None'],['mx','Mirror left–right'],['my','Mirror up–down'],['mxy','Both mirrors'],['r2','2-fold rotation'],['r4','4-fold rotation'],['d4','4-fold + mirrors']];
 
+/* ---------- unclosed line ends ------------------------------------------
+   In a finished grid pattern every line ends on another line, either at a
+   shared point or part way along one. Repeating the cell is what closes most
+   of them, so the test has to run on the tiled set rather than the stored one.
+   An end that still meets nothing is either deliberate — a border stops — or a
+   slip in transcribing the pattern, and the gap to the nearest line separates
+   the two: a slip lands a grid step or less away. The grid-to-page map is
+   affine, so incidence on the page is incidence in grid coordinates, and the
+   whole test is exact integer arithmetic with no tolerance to tune. */
+function gOpenEnds(segs,FW,FH){
+  if(!segs.length) return [];
+  const tiled=[], cnt=new Map();
+  const bump=(x,y)=>{const k=x+','+y;cnt.set(k,(cnt.get(k)||0)+1)};
+  for(let a=-2;a<=2;a++)for(let b=-2;b<=2;b++)for(const t of segs){
+    const o=[t[0]+a*FW,t[1]+b*FH,t[2]+a*FW,t[3]+b*FH];
+    tiled.push(o); bump(o[0],o[1]); bump(o[2],o[3]);
+  }
+  const cr=(ax,ay,bx,by)=>ax*by-ay*bx;
+  const within=(px,py,o)=>{                      /* strictly inside the segment */
+    if((px===o[0]&&py===o[1])||(px===o[2]&&py===o[3])) return false;
+    if(cr(o[2]-o[0],o[3]-o[1],px-o[0],py-o[1])!==0) return false;
+    const d=(px-o[0])*(o[2]-o[0])+(py-o[1])*(o[3]-o[1]);
+    return d>0&&d<(o[2]-o[0])**2+(o[3]-o[1])**2;
+  };
+  const gap2=(px,py,o)=>{
+    const dx=o[2]-o[0],dy=o[3]-o[1],L=dx*dx+dy*dy;
+    if(!L) return (px-o[0])**2+(py-o[1])**2;
+    let u=((px-o[0])*dx+(py-o[1])*dy)/L; u=Math.max(0,Math.min(1,u));
+    return (px-(o[0]+u*dx))**2+(py-(o[1]+u*dy))**2;
+  };
+  const out=[];
+  for(const t of segs) for(const p of [[t[0],t[1]],[t[2],t[3]]]){
+    const px=p[0],py=p[1];
+    /* the point's own segment contributes one entry, so two or more means
+       another line ends here too and this end is closed */
+    if((cnt.get(px+','+py)||0)>1) continue;
+    let met=false;
+    for(const o of tiled) if(within(px,py,o)){met=true;break}
+    if(met) continue;
+    let g=Infinity;
+    for(const o of tiled){
+      if(o[0]===t[0]&&o[1]===t[1]&&o[2]===t[2]&&o[3]===t[3]) continue;
+      const d=gap2(px,py,o); if(d<g) g=d;
+    }
+    out.push({i:px,j:py,gap:Math.sqrt(g)});
+  }
+  return out;
+}
+
 function gSnap(){GP.hist.push({d:st.gData,c:st.gCirc,f:st.gFill,a:st.gArcs});if(GP.hist.length>80)GP.hist.shift()}
 function gUndo(){const h=GP.hist.pop();if(!h)return;st.gData=h.d;st.gCirc=h.c;st.gFill=h.f;st.gArcs=h.a||'';GP.start=null;GP.mid=null;render();sync()}
 function gClear(){gSnap();st.gData='';st.gCirc='';st.gFill='';st.gArcs='';GP.start=null;GP.mid=null;render();sync()}
@@ -1571,6 +1621,24 @@ function renderGrid(thumb){
     }
     s+=`<path d="${dd}" stroke="${P.acc}" stroke-opacity=".55" stroke-width="3.2" stroke-linecap="round"/>`;
   }
+  /* every line end that meets nothing, marked on each repeat so the whole
+     panel can be checked at once. A ring within one grid step of another line
+     is drawn solid — that is the distance a mis-transcribed point lands at —
+     and anything further is drawn faint, since a border is meant to stop. */
+  let openEnds=null;
+  if(st.gCheck){
+    openEnds=gOpenEnds(segs,FW,FH);
+    let near='',far='';
+    for(const o of offs)for(const e of openEnds){
+      const p=node(e.i,e.j), x=p.x+o.x, y=p.y+o.y;
+      if(x<-12||x>W+12||y<-12||y>H+12) continue;
+      const r=e.gap<=1.0001?6:4;
+      const d=`M${f(x-r)} ${f(y)}a${r} ${r} 0 1 0 ${2*r} 0a${r} ${r} 0 1 0 ${-2*r} 0`;
+      if(e.gap<=1.0001) near+=d; else far+=d;
+    }
+    if(far) s+=`<path d="${far}" fill="none" stroke="#e0653f" stroke-opacity=".45" stroke-width="1.5"/>`;
+    if(near) s+=`<path d="${near}" fill="none" stroke="#e0653f" stroke-width="2.5"/>`;
+  }
   s+=`<line id="gp-prev" stroke="${P.acc}" stroke-width="2" stroke-dasharray="4 4" x1="0" y1="0" x2="0" y2="0" visibility="hidden"/>`;
   s+=`<path id="gp-arc" fill="none" stroke="${P.acc}" stroke-width="2" stroke-dasharray="4 4" d="M0 0" visibility="hidden"/>`;
   s+=`<circle id="gp-start" r="7" fill="none" stroke="${P.acc}" stroke-width="2.5" visibility="hidden"/>`;
@@ -1591,6 +1659,9 @@ function renderGrid(thumb){
     `<b>${iso?'Triangle grid':'Square grid'}</b>`,`repeat ${st.gW}${iso?'':' × '+st.gH}`,`square ${fmtU(st.gSize)} ${st.units}`,artBit(),
     `${segs.length} lines`,arcs.length?`${arcs.length} arcs`:'',circ.length?`${circ.length} circles`:'',
     symBad?'<span class="warn">4-fold symmetry needs equal width and height</span>':'',
+    openEnds?(openEnds.length
+      ?`<span class="warn">${openEnds.length} unclosed end${openEnds.length===1?'':'s'}${(()=>{const n=openEnds.filter(e=>e.gap<=1.0001).length;return n?`, ${n} within a grid step`:''})()}</span>`
+      :'every line end closes'):'',
     `tool: ${({line:'draw line',arc:'draw arc',arc3:'draw arc through 3 points',circle:'draw circle',fill:'fill square',erase:'erase'})[st.gTool]}`
   ].filter(Boolean).map(b=>`<span>${b}</span>`).join('');
 }
