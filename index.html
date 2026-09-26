@@ -2290,9 +2290,15 @@ function outs(){
 }
 
 /* URL state */
+/* Only what differs from the defaults goes in the link. A design is restored by
+   laying the link over the defaults, so a short link and a full one open the
+   same thing — and the keys belonging to engines this design never touched stay
+   out of it. Links written before this still load, since they only ever set
+   values the defaults already hold. */
 function sync(){
-  const q=Object.entries(st).map(([k,v])=>k+'='+(typeof v==='boolean'?(v?1:0):v)).join('&');
-  history.replaceState(null,'','#'+q);
+  const q=Object.entries(st).filter(([k,v])=>DEF[k]!==v)
+    .map(([k,v])=>k+'='+(typeof v==='boolean'?(v?1:0):v)).join('&');
+  history.replaceState(null,'',q?'#'+q:location.pathname+location.search);
 }
 function load(){
   if(!location.hash) return;
