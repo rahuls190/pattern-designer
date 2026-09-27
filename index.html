@@ -1163,59 +1163,27 @@ function generateFractalTessellation(st, W, H, rotr){
   const shapes = [];
   const under = [];
   const fam = st.subFam || 'sierpinski';
-  const depth = Math.max(0, Math.min(5, Math.round(st.subDepth !== undefined ? st.subDepth : 3)));
+  const reqDepth = Math.max(0, Math.min(5, Math.round(st.subDepth !== undefined ? st.subDepth : 3)));
   const scaleRatio = Math.max(0.2, Math.min(0.9, st.subScale || 0.5));
   const twist = (st.subTwist || 0) * Math.PI / 180;
   const mask = st.subMask || 'all';
   const kerf = st.tessKerf || 0;
 
   if (fam === 'koch') {
-    const baseTiles = tilePlane('hex', st.scale, rotr, W, H, 2.5);
-    const kDepth = Math.min(3, depth);
+    const baseTiles = tilePlane('hex', st.scale, rotr, W, H, 0.6);
+    const kDepth = Math.min(3, reqDepth);
     for (const t of baseTiles) {
       under.push(t.pts);
       const kPts = kochPolygon(t.pts, kDepth);
       const deformed = kerf > 0 ? applyTileDeformation(kPts, 'straight', 0, kerf) : kPts;
       shapes.push({ pts: deformed, c: t.c, n: deformed.length, depth: kDepth, cls: 0 });
     }
-  } else if (fam === 'carpet') {
-    const baseTiles = tilePlane('square', st.scale, rotr, W, H, 2.5);
-    for (const t of baseTiles) {
-      under.push(t.pts);
-      const queue = [{ pts: t.pts, d: 0 }];
-      while (queue.length > 0) {
-        const item = queue.shift();
-        if (item.d >= depth) {
-          const deformed = kerf > 0 ? applyTileDeformation(item.pts, 'straight', 0, kerf) : item.pts;
-          shapes.push({ pts: deformed, c: centroid(deformed), n: 4, depth: item.d, cls: item.d });
-          continue;
-        }
-        const [p0, p1, p2, p3] = item.pts;
-        const u = sub(p1, p0), v_vec = sub(p3, p0);
-        for (let ix = 0; ix < 3; ix++) {
-          for (let iy = 0; iy < 3; iy++) {
-            const isCenter = (ix === 1 && iy === 1);
-            if (isCenter && mask === 'leaves') continue;
-            const b0 = add(p0, add(mul(u, ix / 3), mul(v_vec, iy / 3)));
-            const b1 = add(p0, add(mul(u, (ix + 1) / 3), mul(v_vec, iy / 3)));
-            const b2 = add(p0, add(mul(u, (ix + 1) / 3), mul(v_vec, (iy + 1) / 3)));
-            const b3 = add(p0, add(mul(u, ix / 3), mul(v_vec, (iy + 1) / 3)));
-            const subSq = [b0, b1, b2, b3];
-            if (isCenter) {
-              if (mask === 'wire' || mask === 'all') {
-                const defCore = kerf > 0 ? applyTileDeformation(subSq, 'straight', 0, kerf) : subSq;
-                shapes.push({ pts: defCore, c: centroid(defCore), n: 4, depth: item.d + 1, cls: 99 });
-              }
-            } else {
-              queue.push({ pts: subSq, d: item.d + 1 });
-            }
-          }
-        }
-        if (shapes.length + queue.length > 6000) break;
-      }
-    }
-  } else if (fam === 'rosette') {
-    const baseTiles = tilePlane('hex', st.scale * 1.5, rotr, W, H, 2.5);
+    const dual = extractDualGrid(baseTiles, W, H);
+    return { shapes, under, dualLines: dual.dualLines, dualNodes: dual.dualNodes };
+  }
+
+  if (fam === 'rosette') {
+    const baseTiles = tilePlane('hex', st.scale * 1.4, rotr, W, H, 0.6);
     for (const t of baseTiles) {
       under.push(t.pts);
       const c = t.c;
@@ -1223,7 +1191,7 @@ function generateFractalTessellation(st, W, H, rotr){
       const sides = t.pts.length;
       let prevRing = t.pts;
 
-      for (let d = 0; d <= depth; d++) {
+      for (let d = 0; d <= reqDepth; d++) {
         const curR = baseR * Math.pow(scaleRatio, d);
         const curAng = rotr + d * twist;
         const curRing = [];
@@ -1241,88 +1209,150 @@ function generateFractalTessellation(st, W, H, rotr){
           }
         }
         prevRing = curRing;
-        if (d === depth || mask === 'leaves') {
+        if (d === reqDepth || mask === 'leaves') {
           const defCore = kerf > 0 ? applyTileDeformation(curRing, 'straight', 0, kerf) : curRing;
           shapes.push({ pts: defCore, c, n: sides, depth: d, cls: 0 });
         }
       }
     }
-  } else if (fam === 'reptile') {
-    const baseTiles = tilePlane('tri', st.scale * 1.4, rotr, W, H, 2.5);
-    for (const t of baseTiles) {
-      under.push(t.pts);
-      const queue = [{ pts: t.pts, d: 0 }];
-      while (queue.length > 0) {
-        const item = queue.shift();
-        if (item.d >= depth) {
-          const deformed = kerf > 0 ? applyTileDeformation(item.pts, 'straight', 0, kerf) : item.pts;
-          shapes.push({ pts: deformed, c: centroid(deformed), n: 3, depth: item.d, cls: item.d });
-          continue;
+    const dual = extractDualGrid(baseTiles, W, H);
+    return { shapes, under, dualLines: dual.dualLines, dualNodes: dual.dualNodes };
+  }
+
+  if (fam === 'carpet') {
+    const baseTiles = tilePlane('square', st.scale, rotr, W, H, 0.6);
+    let effDepth = reqDepth;
+    while (effDepth > 1 && baseTiles.length * Math.pow(8, effDepth) > 16000) effDepth--;
+
+    function subSquare(p0, p1, p2, p3, d) {
+      if (d >= effDepth) {
+        const sq = [p0, p1, p2, p3];
+        const def = kerf > 0 ? applyTileDeformation(sq, 'straight', 0, kerf) : sq;
+        shapes.push({ pts: def, c: centroid(def), n: 4, depth: d, cls: d });
+        return;
+      }
+      const u = sub(p1, p0), v_vec = sub(p3, p0);
+      for (let ix = 0; ix < 3; ix++) {
+        for (let iy = 0; iy < 3; iy++) {
+          const isCenter = (ix === 1 && iy === 1);
+          if (isCenter && mask === 'leaves') continue;
+          const b0 = add(p0, add(mul(u, ix / 3), mul(v_vec, iy / 3)));
+          const b1 = add(p0, add(mul(u, (ix + 1) / 3), mul(v_vec, iy / 3)));
+          const b2 = add(p0, add(mul(u, (ix + 1) / 3), mul(v_vec, (iy + 1) / 3)));
+          const b3 = add(p0, add(mul(u, ix / 3), mul(v_vec, (iy + 1) / 3)));
+          const subSq = [b0, b1, b2, b3];
+          if (isCenter) {
+            if (mask === 'wire' || mask === 'all') {
+              const defCore = kerf > 0 ? applyTileDeformation(subSq, 'straight', 0, kerf) : subSq;
+              shapes.push({ pts: defCore, c: centroid(defCore), n: 4, depth: d + 1, cls: 99 });
+            }
+          } else {
+            subSquare(b0, b1, b2, b3, d + 1);
+          }
         }
-        const [A, B, C] = item.pts;
-        const mab = mid(A, B), mbc = mid(B, C), mca = mid(C, A);
-        queue.push({ pts: [A, mab, mca], d: item.d + 1 });
-        queue.push({ pts: [mab, B, mbc], d: item.d + 1 });
-        queue.push({ pts: [mca, mbc, C], d: item.d + 1 });
-        queue.push({ pts: [mab, mbc, mca], d: item.d + 1 });
-        if (shapes.length + queue.length > 6000) break;
       }
     }
-  } else if (fam === 'pinwheel') {
-    const cSize = st.scale * 1.6;
+
+    for (const t of baseTiles) {
+      under.push(t.pts);
+      subSquare(t.pts[0], t.pts[1], t.pts[2], t.pts[3], 0);
+    }
+    const dual = extractDualGrid(baseTiles, W, H);
+    return { shapes, under, dualLines: dual.dualLines, dualNodes: dual.dualNodes };
+  }
+
+  if (fam === 'reptile') {
+    const baseTiles = tilePlane('tri', st.scale * 1.4, rotr, W, H, 0.6);
+    let effDepth = reqDepth;
+    while (effDepth > 1 && baseTiles.length * Math.pow(4, effDepth) > 16000) effDepth--;
+
+    function subRepTri(A, B, C, d) {
+      if (d >= effDepth) {
+        const tri = [A, B, C];
+        const def = kerf > 0 ? applyTileDeformation(tri, 'straight', 0, kerf) : tri;
+        shapes.push({ pts: def, c: centroid(def), n: 3, depth: d, cls: d });
+        return;
+      }
+      const mab = mid(A, B), mbc = mid(B, C), mca = mid(C, A);
+      subRepTri(A, mab, mca, d + 1);
+      subRepTri(mab, B, mbc, d + 1);
+      subRepTri(mca, mbc, C, d + 1);
+      subRepTri(mab, mbc, mca, d + 1);
+    }
+
+    for (const t of baseTiles) {
+      under.push(t.pts);
+      subRepTri(t.pts[0], t.pts[1], t.pts[2], 0);
+    }
+    const dual = extractDualGrid(baseTiles, W, H);
+    return { shapes, under, dualLines: dual.dualLines, dualNodes: dual.dualNodes };
+  }
+
+  if (fam === 'pinwheel') {
+    const cSize = Math.max(30, st.scale * 1.5);
     const cols = Math.ceil(W / cSize) + 2, rows = Math.ceil(H / cSize) + 2;
+    let effDepth = Math.min(3, reqDepth);
+
+    function subPin(P0, P1, P2, d) {
+      if (d >= effDepth) {
+        const tri = [P0, P1, P2];
+        const def = kerf > 0 ? applyTileDeformation(tri, 'straight', 0, kerf) : tri;
+        shapes.push({ pts: def, c: centroid(def), n: 3, depth: d, cls: d });
+        return;
+      }
+      const m01 = mid(P0, P1), m12 = mid(P1, P2), m20 = mid(P2, P0);
+      subPin(P0, m01, m20, d + 1);
+      subPin(m01, P1, m12, d + 1);
+      subPin(m20, m12, P2, d + 1);
+      subPin(m01, m12, m20, d + 1);
+    }
+
+    const baseTiles = [];
     for (let j = -1; j < rows; j++) {
       for (let i = -1; i < cols; i++) {
         const cx = i * cSize + (j % 2) * (cSize / 2), cy = j * cSize;
         const A = v(cx, cy), B = v(cx + cSize, cy), C = v(cx, cy + cSize * 0.5);
         under.push([A, B, C]);
-        const queue = [{ pts: [A, B, C], d: 0 }];
-        while (queue.length > 0) {
-          const item = queue.shift();
-          if (item.d >= depth) {
-            const deformed = kerf > 0 ? applyTileDeformation(item.pts, 'straight', 0, kerf) : item.pts;
-            shapes.push({ pts: deformed, c: centroid(deformed), n: 3, depth: item.d, cls: item.d });
-            continue;
-          }
-          const [P0, P1, P2] = item.pts;
-          const m01 = mid(P0, P1), m12 = mid(P1, P2), m20 = mid(P2, P0);
-          queue.push({ pts: [P0, m01, m20], d: item.d + 1 });
-          queue.push({ pts: [m01, P1, m12], d: item.d + 1 });
-          queue.push({ pts: [m20, m12, P2], d: item.d + 1 });
-          queue.push({ pts: [m01, m12, m20], d: item.d + 1 });
-          if (shapes.length + queue.length > 6000) break;
-        }
+        baseTiles.push({ pts: [A, B, C], c: centroid([A, B, C]) });
+        subPin(A, B, C, 0);
       }
     }
-  } else {
-    /* Sierpinski gasket / star */
-    const baseTiles = tilePlane('tri', st.scale * 1.5, rotr, W, H, 2.5);
-    for (const t of baseTiles) {
-      under.push(t.pts);
-      const queue = [{ pts: t.pts, d: 0 }];
-      while (queue.length > 0) {
-        const item = queue.shift();
-        if (item.d >= depth) {
-          const deformed = kerf > 0 ? applyTileDeformation(item.pts, 'straight', 0, kerf) : item.pts;
-          shapes.push({ pts: deformed, c: centroid(deformed), n: 3, depth: item.d, cls: item.d });
-          continue;
-        }
-        const [A, B, C] = item.pts;
-        const mab = mid(A, B), mbc = mid(B, C), mca = mid(C, A);
-        queue.push({ pts: [A, mab, mca], d: item.d + 1 });
-        queue.push({ pts: [mab, B, mbc], d: item.d + 1 });
-        queue.push({ pts: [mca, mbc, C], d: item.d + 1 });
-        if (mask === 'wire' || mask === 'all') {
-          const core = [mab, mbc, mca];
-          const defCore = kerf > 0 ? applyTileDeformation(core, 'straight', 0, kerf) : core;
-          shapes.push({ pts: defCore, c: centroid(defCore), n: 3, depth: item.d + 1, cls: 99 });
-        }
-        if (shapes.length + queue.length > 6000) break;
-      }
+    const dual = extractDualGrid(baseTiles, W, H);
+    return { shapes, under, dualLines: dual.dualLines, dualNodes: dual.dualNodes };
+  }
+
+  /* Default: Sierpinski gasket / star */
+  const baseTiles = tilePlane('tri', st.scale * 1.5, rotr, W, H, 0.6);
+  const branchFactor = mask === 'leaves' ? 3 : 4;
+  let effDepth = reqDepth;
+  while (effDepth > 1 && baseTiles.length * Math.pow(branchFactor, effDepth) > 20000) {
+    effDepth--;
+  }
+
+  function subSierp(A, B, C, d) {
+    if (d >= effDepth) {
+      const tri = [A, B, C];
+      const def = kerf > 0 ? applyTileDeformation(tri, 'straight', 0, kerf) : tri;
+      shapes.push({ pts: def, c: centroid(def), n: 3, depth: d, cls: d });
+      return;
+    }
+    const mab = mid(A, B), mbc = mid(B, C), mca = mid(C, A);
+    subSierp(A, mab, mca, d + 1);
+    subSierp(mab, B, mbc, d + 1);
+    subSierp(mca, mbc, C, d + 1);
+    if (mask === 'wire' || mask === 'all') {
+      const core = [mab, mbc, mca];
+      const defCore = kerf > 0 ? applyTileDeformation(core, 'straight', 0, kerf) : core;
+      shapes.push({ pts: defCore, c: centroid(defCore), n: 3, depth: d + 1, cls: 99 });
     }
   }
 
-  const dual = extractDualGrid(shapes, W, H);
+  for (const t of baseTiles) {
+    under.push(t.pts);
+    subSierp(t.pts[0], t.pts[1], t.pts[2], 0);
+  }
+
+  const dual = extractDualGrid(baseTiles, W, H);
   return { shapes, under, dualLines: dual.dualLines, dualNodes: dual.dualNodes };
 }
 
@@ -1890,6 +1920,7 @@ function build(){
   const shapes=[];      /* closed point arrays making the pattern */
   const under=[];       /* underlying polygons, for construction + mosaic */
   const rays=[],dots=[];
+  let dualLines=[], dualNodes=[];
   let faces=null;
   if(st.engine==='pic'){
     /* the dual needs a wider margin: a vertex only yields a face when every
@@ -1934,7 +1965,7 @@ function build(){
     for(const t of parents) under.push(t.p);      /* the generation before, for the construction view */
   } else if(st.engine==='tess'){
     if(st.tessFam==='regular'){
-      const ptiles=tilePlane(st.tessType||'hex', st.scale, rotr, W, H, 2.5);
+      const ptiles=tilePlane(st.tessType||'hex', st.scale, rotr, W, H, 0.6);
       const deformEdge=st.tessEdge||'straight';
       const mod=st.tessStarMod||0.25;
       const kerf=st.tessKerf||0;
@@ -1945,18 +1976,18 @@ function build(){
         if(st.mode==='construct') dots.push(t.c);
       }
       const dual=extractDualGrid(ptiles, W, H);
-      last.dualLines=dual.dualLines;
-      last.dualNodes=dual.dualNodes;
-      if(st.mode==='construct') for(const seg of dual.dualLines) rays.push(seg);
+      dualLines=dual.dualLines;
+      dualNodes=dual.dualNodes;
+      if(st.mode==='construct') for(const seg of dualLines) rays.push(seg);
     } else {
       const res=generateFractalTessellation(st, W, H, rotr);
       for(const s of res.shapes) shapes.push(s);
       for(const u of res.under) under.push(u);
-      last.dualLines=res.dualLines||[];
-      last.dualNodes=res.dualNodes||[];
+      dualLines=res.dualLines||[];
+      dualNodes=res.dualNodes||[];
       if(st.mode==='construct'){
-        for(const seg of last.dualLines) rays.push(seg);
-        for(const n of last.dualNodes) dots.push(n);
+        for(const seg of dualLines) rays.push(seg);
+        for(const n of dualNodes) dots.push(n);
       }
     }
   } else if(st.engine==='multi'){
@@ -1992,7 +2023,7 @@ function build(){
       }
     }
   }
-  last={shapes,under,rays,dots,P,faces,M:last&&last.M};
+  last={shapes,under,rays,dots,P,faces,M:last&&last.M,dualLines,dualNodes};
   return last;
 }
 
@@ -3538,18 +3569,21 @@ function render(){
   }
 
   /* Dual grid overlay for tessellation or whenever st.tessDual is active */
-  if((st.tessDual || st.dual) && last.dualLines && last.dualLines.length){
-    const dAlpha = Math.max(0.15, Math.min(1.0, st.tessDualBlend !== undefined ? st.tessDualBlend : 0.55));
-    const dW = Math.max(1, w * 0.55);
-    s+=`<g id="dual-grid" stroke="${P.acc}" stroke-opacity="${dAlpha}" stroke-width="${dW}" stroke-dasharray="5 3" stroke-linecap="round">`;
-    for(const seg of last.dualLines){
+  const dl = (last && last.dualLines) || [];
+  const dn = (last && last.dualNodes) || [];
+  if((st.tessDual || st.dual) && dl.length){
+    const blendVal = st.tessDualBlend !== undefined ? st.tessDualBlend : 0.55;
+    const dAlpha = Math.max(0.35, blendVal);
+    const dW = Math.max(1.8, w * 0.75);
+    s+=`<g id="dual-grid" stroke="${P.acc}" stroke-opacity="${dAlpha}" stroke-width="${dW}" stroke-dasharray="6 4" stroke-linecap="round">`;
+    for(const seg of dl){
       s+=`<line x1="${f(seg[0].x)}" y1="${f(seg[0].y)}" x2="${f(seg[1].x)}" y2="${f(seg[1].y)}"/>`;
     }
     s+=`</g>`;
-    if(last.dualNodes && last.dualNodes.length){
-      s+=`<g id="dual-nodes" fill="${P.acc}" fill-opacity="${dAlpha}">`;
-      for(const node of last.dualNodes){
-        s+=`<circle cx="${f(node.x)}" cy="${f(node.y)}" r="${Math.max(2, dW * 1.1)}"/>`;
+    if(dn.length){
+      s+=`<g id="dual-nodes">`;
+      for(const node of dn){
+        s+=`<circle cx="${f(node.x)}" cy="${f(node.y)}" r="${Math.max(3.2, dW * 1.3)}" fill="${P.acc}" fill-opacity="${Math.min(1.0, dAlpha + 0.25)}" stroke="${P.bg}" stroke-width="1.2"/>`;
       }
       s+=`</g>`;
     }
