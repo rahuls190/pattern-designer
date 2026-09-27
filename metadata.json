@@ -1,6 +1,6 @@
 {
   "name": "Pattern Designer",
-  "description": "Interactive designer for geometric ornament, Islamic star patterns, tilings, Voronoi designs, and grid-based drawings.",
+  "description": "Interactive designer for geometric ornament, Islamic star patterns, regular and fractal tessellations, dual-grid lattices, Voronoi designs, and multi-format vector exports (SVG, High-Res PNG, DXF).",
   "version": "1.0.0",
   "capabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

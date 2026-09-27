@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Pattern Designer</title>
-<meta name="description" content="Interactive designer for geometric ornament, Islamic star patterns, tilings, Voronoi designs, and grid-based drawings.">
+<meta name="description" content="Interactive designer for geometric ornament, Islamic star patterns, regular and fractal tessellations, dual-grid lattices, Voronoi designs, and multi-format vector exports (SVG, High-Res PNG, DXF).">
 <meta property="og:title" content="Pattern Designer">
-<meta property="og:description" content="Interactive designer for geometric ornament, Islamic star patterns, tilings, Voronoi designs, and grid-based drawings.">
+<meta property="og:description" content="Interactive designer for geometric ornament, Islamic star patterns, regular and fractal tessellations, dual-grid lattices, Voronoi designs, and multi-format vector exports (SVG, High-Res PNG, DXF).">
 <style>
 :root{
   --bg:#f5f1e8;
@@ -292,6 +292,7 @@ code{font:12px ui-monospace,Consolas,monospace;background:var(--panel-sub);paddi
     <button class="btn btn-sm" id="copy" title="Copy shareable link with parameters">🔗 Share</button>
     <div class="seg">
       <button class="btn btn-sm pri" id="exp" title="Export SVG vector file">SVG</button>
+      <button class="btn btn-sm" id="expPng" title="Export High-Res PNG (Offscreen Canvas / 300 DPI, Shift+Click for 4K)">PNG</button>
       <button class="btn btn-sm" id="expPdf" title="Export Vector PDF for Adobe Illustrator">PDF</button>
       <button class="btn btn-sm" id="expDxf" title="Export CAD DXF R12 for CNC / AutoCAD">DXF</button>
     </div>
@@ -1046,6 +1047,285 @@ function substitution(st,W,H){
   return {tiles,parents,rule};
 }
 
+/* ============================================================ regular & fractal tessellation engine */
+function applyTileDeformation(pts, edgeType, starMod, kerf){
+  const n = pts.length;
+  if (n < 3) return pts;
+  const c = centroid(pts);
+
+  /* Kerf spacing / tile inset */
+  let base = pts;
+  if (kerf > 0.05) {
+    base = pts.map(p => {
+      const d = sub(p, c);
+      const l = len(d);
+      if (l < 1e-6) return p;
+      const factor = Math.max(0.08, 1 - kerf / l);
+      return add(c, mul(d, factor));
+    });
+  }
+  if (!edgeType || edgeType === 'straight') return base;
+
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const p1 = base[i], p2 = base[(i + 1) % n];
+    out.push(p1);
+    const m = mid(p1, p2);
+    if (edgeType === 'star') {
+      out.push(lerp(m, c, Math.min(0.85, starMod * 1.5)));
+    } else if (edgeType === 'petal') {
+      const edgeVec = sub(p2, p1);
+      const edgeLen = len(edgeVec);
+      const perp = norm(v(-edgeVec.y, edgeVec.x));
+      const toMid = sub(m, c);
+      const sign = (perp.x * toMid.x + perp.y * toMid.y) >= 0 ? 1 : -1;
+      out.push(add(m, mul(perp, sign * edgeLen * starMod * 0.5)));
+    } else if (edgeType === 'zigzag') {
+      const p13 = lerp(p1, p2, 0.33);
+      const p23 = lerp(p1, p2, 0.67);
+      const edgeVec = sub(p2, p1);
+      const edgeLen = len(edgeVec);
+      const perp = norm(v(-edgeVec.y, edgeVec.x));
+      const toMid = sub(m, c);
+      const sign = (perp.x * toMid.x + perp.y * toMid.y) >= 0 ? 1 : -1;
+      const offset = mul(perp, sign * edgeLen * starMod * 0.4);
+      out.push(add(p13, offset));
+      out.push(sub(p23, offset));
+    }
+  }
+  return out;
+}
+
+function extractDualGrid(shapes, W, H){
+  const edgeMap = new Map();
+  const dualLines = [];
+  const dualNodes = [];
+  const nodeSet = new Set();
+
+  for (let si = 0; si < shapes.length; si++) {
+    const sh = shapes[si];
+    const pts = sh.pts;
+    const n = pts.length;
+    const c = sh.c || centroid(pts);
+    const nodeKey = Math.round(c.x * 2) + ',' + Math.round(c.y * 2);
+    if (!nodeSet.has(nodeKey)) {
+      nodeSet.add(nodeKey);
+      dualNodes.push(c);
+    }
+
+    for (let i = 0; i < n; i++) {
+      const p1 = pts[i], p2 = pts[(i + 1) % n];
+      const m = mid(p1, p2);
+      const mk = Math.round(m.x * 4) + '_' + Math.round(m.y * 4);
+      if (edgeMap.has(mk)) {
+        const otherC = edgeMap.get(mk);
+        dualLines.push([c, otherC]);
+      } else {
+        edgeMap.set(mk, c);
+      }
+    }
+  }
+  return { dualLines, dualNodes };
+}
+
+function kochSubdivideEdge(a, b, c, depth){
+  if (depth <= 0) return [a];
+  const p1 = lerp(a, b, 1 / 3);
+  const p2 = lerp(a, b, 2 / 3);
+  const m = mid(p1, p2);
+  const edgeVec = sub(p2, p1);
+  const edgeLen = len(edgeVec);
+  const perp = norm(v(-edgeVec.y, edgeVec.x));
+  const toMid = sub(m, c);
+  const sign = (perp.x * toMid.x + perp.y * toMid.y) >= 0 ? 1 : -1;
+  const peak = add(m, mul(perp, sign * edgeLen * (Math.sqrt(3) / 2)));
+  return [
+    ...kochSubdivideEdge(a, p1, c, depth - 1),
+    ...kochSubdivideEdge(p1, peak, c, depth - 1),
+    ...kochSubdivideEdge(peak, p2, c, depth - 1),
+    ...kochSubdivideEdge(p2, b, c, depth - 1)
+  ];
+}
+
+function kochPolygon(pts, depth){
+  if (depth <= 0) return pts;
+  const c = centroid(pts);
+  const out = [];
+  const n = pts.length;
+  for (let i = 0; i < n; i++) {
+    const a = pts[i], b = pts[(i + 1) % n];
+    out.push(...kochSubdivideEdge(a, b, c, depth));
+  }
+  return out;
+}
+
+function generateFractalTessellation(st, W, H, rotr){
+  const shapes = [];
+  const under = [];
+  const fam = st.subFam || 'sierpinski';
+  const depth = Math.max(0, Math.min(5, Math.round(st.subDepth !== undefined ? st.subDepth : 3)));
+  const scaleRatio = Math.max(0.2, Math.min(0.9, st.subScale || 0.5));
+  const twist = (st.subTwist || 0) * Math.PI / 180;
+  const mask = st.subMask || 'all';
+  const kerf = st.tessKerf || 0;
+
+  if (fam === 'koch') {
+    const baseTiles = tilePlane('hex', st.scale, rotr, W, H, 2.5);
+    const kDepth = Math.min(3, depth);
+    for (const t of baseTiles) {
+      under.push(t.pts);
+      const kPts = kochPolygon(t.pts, kDepth);
+      const deformed = kerf > 0 ? applyTileDeformation(kPts, 'straight', 0, kerf) : kPts;
+      shapes.push({ pts: deformed, c: t.c, n: deformed.length, depth: kDepth, cls: 0 });
+    }
+  } else if (fam === 'carpet') {
+    const baseTiles = tilePlane('square', st.scale, rotr, W, H, 2.5);
+    for (const t of baseTiles) {
+      under.push(t.pts);
+      const queue = [{ pts: t.pts, d: 0 }];
+      while (queue.length > 0) {
+        const item = queue.shift();
+        if (item.d >= depth) {
+          const deformed = kerf > 0 ? applyTileDeformation(item.pts, 'straight', 0, kerf) : item.pts;
+          shapes.push({ pts: deformed, c: centroid(deformed), n: 4, depth: item.d, cls: item.d });
+          continue;
+        }
+        const [p0, p1, p2, p3] = item.pts;
+        const u = sub(p1, p0), v_vec = sub(p3, p0);
+        for (let ix = 0; ix < 3; ix++) {
+          for (let iy = 0; iy < 3; iy++) {
+            const isCenter = (ix === 1 && iy === 1);
+            if (isCenter && mask === 'leaves') continue;
+            const b0 = add(p0, add(mul(u, ix / 3), mul(v_vec, iy / 3)));
+            const b1 = add(p0, add(mul(u, (ix + 1) / 3), mul(v_vec, iy / 3)));
+            const b2 = add(p0, add(mul(u, (ix + 1) / 3), mul(v_vec, (iy + 1) / 3)));
+            const b3 = add(p0, add(mul(u, ix / 3), mul(v_vec, (iy + 1) / 3)));
+            const subSq = [b0, b1, b2, b3];
+            if (isCenter) {
+              if (mask === 'wire' || mask === 'all') {
+                const defCore = kerf > 0 ? applyTileDeformation(subSq, 'straight', 0, kerf) : subSq;
+                shapes.push({ pts: defCore, c: centroid(defCore), n: 4, depth: item.d + 1, cls: 99 });
+              }
+            } else {
+              queue.push({ pts: subSq, d: item.d + 1 });
+            }
+          }
+        }
+        if (shapes.length + queue.length > 6000) break;
+      }
+    }
+  } else if (fam === 'rosette') {
+    const baseTiles = tilePlane('hex', st.scale * 1.5, rotr, W, H, 2.5);
+    for (const t of baseTiles) {
+      under.push(t.pts);
+      const c = t.c;
+      const baseR = len(sub(t.pts[0], c));
+      const sides = t.pts.length;
+      let prevRing = t.pts;
+
+      for (let d = 0; d <= depth; d++) {
+        const curR = baseR * Math.pow(scaleRatio, d);
+        const curAng = rotr + d * twist;
+        const curRing = [];
+        for (let i = 0; i < sides; i++) {
+          const a = curAng + (2 * Math.PI * i) / sides;
+          curRing.push(v(c.x + curR * Math.cos(a), c.y + curR * Math.sin(a)));
+        }
+
+        if (d > 0 && mask !== 'leaves') {
+          for (let i = 0; i < sides; i++) {
+            const j = (i + 1) % sides;
+            const facet = [prevRing[i], prevRing[j], curRing[j], curRing[i]];
+            const deformed = kerf > 0 ? applyTileDeformation(facet, 'straight', 0, kerf) : facet;
+            shapes.push({ pts: deformed, c: centroid(deformed), n: 4, depth: d, cls: d });
+          }
+        }
+        prevRing = curRing;
+        if (d === depth || mask === 'leaves') {
+          const defCore = kerf > 0 ? applyTileDeformation(curRing, 'straight', 0, kerf) : curRing;
+          shapes.push({ pts: defCore, c, n: sides, depth: d, cls: 0 });
+        }
+      }
+    }
+  } else if (fam === 'reptile') {
+    const baseTiles = tilePlane('tri', st.scale * 1.4, rotr, W, H, 2.5);
+    for (const t of baseTiles) {
+      under.push(t.pts);
+      const queue = [{ pts: t.pts, d: 0 }];
+      while (queue.length > 0) {
+        const item = queue.shift();
+        if (item.d >= depth) {
+          const deformed = kerf > 0 ? applyTileDeformation(item.pts, 'straight', 0, kerf) : item.pts;
+          shapes.push({ pts: deformed, c: centroid(deformed), n: 3, depth: item.d, cls: item.d });
+          continue;
+        }
+        const [A, B, C] = item.pts;
+        const mab = mid(A, B), mbc = mid(B, C), mca = mid(C, A);
+        queue.push({ pts: [A, mab, mca], d: item.d + 1 });
+        queue.push({ pts: [mab, B, mbc], d: item.d + 1 });
+        queue.push({ pts: [mca, mbc, C], d: item.d + 1 });
+        queue.push({ pts: [mab, mbc, mca], d: item.d + 1 });
+        if (shapes.length + queue.length > 6000) break;
+      }
+    }
+  } else if (fam === 'pinwheel') {
+    const cSize = st.scale * 1.6;
+    const cols = Math.ceil(W / cSize) + 2, rows = Math.ceil(H / cSize) + 2;
+    for (let j = -1; j < rows; j++) {
+      for (let i = -1; i < cols; i++) {
+        const cx = i * cSize + (j % 2) * (cSize / 2), cy = j * cSize;
+        const A = v(cx, cy), B = v(cx + cSize, cy), C = v(cx, cy + cSize * 0.5);
+        under.push([A, B, C]);
+        const queue = [{ pts: [A, B, C], d: 0 }];
+        while (queue.length > 0) {
+          const item = queue.shift();
+          if (item.d >= depth) {
+            const deformed = kerf > 0 ? applyTileDeformation(item.pts, 'straight', 0, kerf) : item.pts;
+            shapes.push({ pts: deformed, c: centroid(deformed), n: 3, depth: item.d, cls: item.d });
+            continue;
+          }
+          const [P0, P1, P2] = item.pts;
+          const m01 = mid(P0, P1), m12 = mid(P1, P2), m20 = mid(P2, P0);
+          queue.push({ pts: [P0, m01, m20], d: item.d + 1 });
+          queue.push({ pts: [m01, P1, m12], d: item.d + 1 });
+          queue.push({ pts: [m20, m12, P2], d: item.d + 1 });
+          queue.push({ pts: [m01, m12, m20], d: item.d + 1 });
+          if (shapes.length + queue.length > 6000) break;
+        }
+      }
+    }
+  } else {
+    /* Sierpinski gasket / star */
+    const baseTiles = tilePlane('tri', st.scale * 1.5, rotr, W, H, 2.5);
+    for (const t of baseTiles) {
+      under.push(t.pts);
+      const queue = [{ pts: t.pts, d: 0 }];
+      while (queue.length > 0) {
+        const item = queue.shift();
+        if (item.d >= depth) {
+          const deformed = kerf > 0 ? applyTileDeformation(item.pts, 'straight', 0, kerf) : item.pts;
+          shapes.push({ pts: deformed, c: centroid(deformed), n: 3, depth: item.d, cls: item.d });
+          continue;
+        }
+        const [A, B, C] = item.pts;
+        const mab = mid(A, B), mbc = mid(B, C), mca = mid(C, A);
+        queue.push({ pts: [A, mab, mca], d: item.d + 1 });
+        queue.push({ pts: [mab, B, mbc], d: item.d + 1 });
+        queue.push({ pts: [mca, mbc, C], d: item.d + 1 });
+        if (mask === 'wire' || mask === 'all') {
+          const core = [mab, mbc, mca];
+          const defCore = kerf > 0 ? applyTileDeformation(core, 'straight', 0, kerf) : core;
+          shapes.push({ pts: defCore, c: centroid(defCore), n: 3, depth: item.d + 1, cls: 99 });
+        }
+        if (shapes.length + queue.length > 6000) break;
+      }
+    }
+  }
+
+  const dual = extractDualGrid(shapes, W, H);
+  return { shapes, under, dualLines: dual.dualLines, dualNodes: dual.dualNodes };
+}
+
 /* ============================================================ path emitting */
 const f=x=>Math.round(x*100)/100;
 /* Reference edge length for the rounding radius, set once per render.
@@ -1362,6 +1642,10 @@ function colourer(shapes,mode,n){
 const ENGINES=[
   {id:'pic',  name:'Polygons in contact', sub:'Hankin · Kaplan', tag:'doc', def:{angle:50,scale:76,width:4,round:0},
    src:'Hankin, <i>Drawing of Geometric Patterns in Saracenic Art</i> (1925) [3]; Kaplan, <i>Islamic Star Patterns from Polygons in Contact</i> (2005) [7]. Documented construction, implemented directly.'},
+  {id:'tess', name:'Regular & Fractal Tessellation', sub:'Dual-grid · recursive · tile editing', tag:'doc', tagText:'interactive',
+   def:{tessFam:'regular',tessType:'hex',tessDual:true,tessDualBlend:0.55,tessKerf:0,tessEdge:'straight',tessStarMod:0.25,
+        subFam:'sierpinski',subDepth:3,subScale:0.5,subTwist:0,subMask:'all',scale:72,width:2.5,round:0,frame:true},
+   src:'Euclidean regular & Archimedean tilings, Laves dual lattices (Grünbaum & Shephard, <i>Tilings and Patterns</i>, 1987), and recursive self-similar fractal dissections (Fathauer, <i>Tessellations: Mathematics, Art, and Recreation</i>, 2021). Features interactive dual-grid morphing, edge deformations, kerf spacing, and multi-depth fractal generation.'},
   {id:'star', name:'Star polygons {n/d}', sub:'compass construction', tag:'doc', def:{scell:150,width:3,round:0},
    src:'The Metropolitan Museum of Art, <i>Islamic Art and Geometric Design</i> activity pack [1]. Documented construction.'},
   {id:'gridp',name:'Draw on a grid',sub:'Field · Critchlow method',tag:'doc',tagText:'documented',
@@ -1382,6 +1666,14 @@ const MODES=[['construct','Construction'],['line','Line'],['interlace','Interlac
    adjusted afterwards. The note says which construction produces it, because a
    look is not a claim about any historic object. */
 const PRESETS=[
+  {name:'Fractal Hexagonal Starburst',note:'Recursive hexagonal Sierpinski deflation with gold/cyan depth gradient',
+   s:{engine:'tess',tessFam:'fractal',subFam:'sierpinski',subDepth:3,subScale:0.5,scale:120,tessDual:true,tessDualBlend:0.4,width:2,mode:'mosaic',pal:1,colourBy:'type',frame:true}},
+  {name:'Archimedean Dual Kagome Lattice',note:'3.6.3.6 trihexagonal tiling with dual rhombille grid overlay and edge chamfer',
+   s:{engine:'tess',tessFam:'regular',tessType:'trihex',tessDual:true,tessDualBlend:0.65,tessKerf:3,tessEdge:'straight',scale:75,width:2.5,mode:'line',pal:0,frame:true}},
+  {name:'Koch Snowflake Tessellation',note:'Periodic hexagonal tiling with recursive fractal edge inflation',
+   s:{engine:'tess',tessFam:'fractal',subFam:'koch',subDepth:2,scale:95,tessDual:false,width:2,mode:'mosaic',pal:1,colourBy:'area',frame:false}},
+  {name:'Concentric Star Deflation',note:'Recursive 8-point rosette deflation with 45° twist and tile gap kerf',
+   s:{engine:'tess',tessFam:'fractal',subFam:'rosette',subDepth:3,subScale:0.58,subTwist:22.5,tessKerf:2,scale:140,width:2,mode:'mosaic',pal:1,colourBy:'type',frame:true}},
   {name:'Interlaced 12-fold stars',note:'Polygons in contact on 4.6.12, woven',
    s:{engine:'pic',tiling:'trunctrihex',angle:38,scale:58,width:4,mode:'interlace',pal:1,frame:false}},
   {name:'Thin-line 8-point stars',note:'Polygons in contact on 4.8.8, fine line',
@@ -1400,6 +1692,8 @@ const PRESETS=[
 /* ============================================================ state */
 const DEF={engine:'pic',tiling:'octasq',mode:'line',
   angle:50,scale:76,rotation:0,round:0,width:4,frame:true,dual:false,
+  tessFam:'regular',tessType:'hex',tessDual:true,tessDualBlend:0.55,tessKerf:0,tessEdge:'straight',tessStarMod:0.25,
+  subFam:'sierpinski',subDepth:3,subScale:0.5,subTwist:0,subMask:'all',
   sn:12,sd:5,scell:150,ssec:true,
   mN:5,mOffset:0.2,mDisorder:0,mMotif:false,
   subRule:'penrose',subDepth:4,
@@ -1415,6 +1709,41 @@ let st=Object.assign({},DEF);
 const PERIODIC=s=>s.vlayout!=='radial'&&s.vlayout!=='scatter';
 const cv=(x,s)=>typeof x==='function'?x(s||st):x;      /* control fields may be functions of state */
 const CTRL={
+ tess:[
+  {k:'tessFam', label:'Category', type:'seg', opts:[['regular','Regular & Semi-Regular'],['fractal','Fractal (Thracterd)']]} ,
+  {k:'tessType', label:'Tiling system', type:'sel', opts:[
+    ['hex','Hexagonal {6,3}'],['tri','Triangular {3,6}'],['square','Square {4,4}'],
+    ['trihex','Trihexagonal (Kagome) 3.6.3.6'],['octasq','Truncated square 4.8.8'],
+    ['rhombitri','Rhombitrihexagonal 3.4.6.4'],['trunchex','Truncated hexagonal 3.12.12'],
+    ['trunctrihex','Truncated trihexagonal 4.6.12'],['elongtri','Elongated triangular 3.3.3.4.4']],
+    when:s=>s.tessFam==='regular'},
+  {k:'tessEdge', label:'Tile edge profile', type:'sel', opts:[
+    ['straight','Straight edges'],['star','Inward star (darts)'],['petal','Curved petal'],['zigzag','Zig-zag']],
+    when:s=>s.tessFam==='regular'},
+  {k:'tessStarMod', label:'Edge deflection', min:0.05, max:0.6, step:0.01,
+    when:s=>s.tessFam==='regular'&&s.tessEdge!=='straight'},
+  {k:'tessKerf', label:'Tile gap / kerf spacing', min:0, max:18, step:0.5, unit:' px', len:true},
+  {k:'tessDual', label:'Show dual (Laves) grid overlay', type:'chk'},
+  {k:'tessDualBlend', label:'Dual grid visibility', min:0.1, max:1, step:0.05, pct:true, when:s=>s.tessDual},
+
+  {k:'subFam', label:'Fractal subdivision rule', type:'sel', opts:[
+    ['sierpinski','Sierpinski Gasket / Star'],['carpet','Sierpinski Carpet (Square/Hex)'],
+    ['koch','Koch Snowflake Tessellation'],['rosette','Concentric Star Deflation'],
+    ['reptile','Rep-Tile Dissection (4-fold/9-fold)'],['pinwheel','Radin-Conway Pinwheel']],
+    when:s=>s.tessFam==='fractal'},
+  {k:'subDepth', label:'Recursion depth', min:0, max:5, step:1, unit:'levels', when:s=>s.tessFam==='fractal'},
+  {k:'subScale', label:'Inward scale ratio', min:0.25, max:0.9, step:0.01, pct:true,
+    when:s=>s.tessFam==='fractal'&&(s.subFam==='rosette'||s.subFam==='sierpinski')},
+  {k:'subTwist', label:'Twist angle per step', min:0, max:90, step:1, unit:'°', deg:true,
+    when:s=>s.tessFam==='fractal'&&s.subFam==='rosette'},
+  {k:'subMask', label:'Facet rendering', type:'sel', opts:[
+    ['all','All recursive facets'],['leaves','Terminal leaves only'],['wire','Wireframe with core']],
+    when:s=>s.tessFam==='fractal'},
+
+  {k:'scale', label:'Tile size / scale', min:30, max:240, step:1, unit:' px', len:true},
+  {k:'rotation', label:'Rotation', min:0, max:90, step:1, unit:'°', deg:true},
+  {k:'round', label:'Sharp → round', min:0, max:1, step:0.01, pct:true}
+ ],
  pic:[
   {k:'dual',     label:'Dual (Laves) tiling', type:'chk'},
   {k:'angle',    label:'Contact angle', min:15,max:80,step:1,unit:'°'},
@@ -1603,6 +1932,33 @@ function build(){
     const {tiles,parents}=substitution(st,W,H);
     for(const t of tiles){const c=centroid(t.p);shapes.push({pts:t.p,c,n:t.p.length,cls:t.t})}
     for(const t of parents) under.push(t.p);      /* the generation before, for the construction view */
+  } else if(st.engine==='tess'){
+    if(st.tessFam==='regular'){
+      const ptiles=tilePlane(st.tessType||'hex', st.scale, rotr, W, H, 2.5);
+      const deformEdge=st.tessEdge||'straight';
+      const mod=st.tessStarMod||0.25;
+      const kerf=st.tessKerf||0;
+      for(const t of ptiles){
+        const deformed=applyTileDeformation(t.pts, deformEdge, mod, kerf);
+        shapes.push({pts:deformed, c:t.c, n:t.n, cls:t.n});
+        under.push(t.pts);
+        if(st.mode==='construct') dots.push(t.c);
+      }
+      const dual=extractDualGrid(ptiles, W, H);
+      last.dualLines=dual.dualLines;
+      last.dualNodes=dual.dualNodes;
+      if(st.mode==='construct') for(const seg of dual.dualLines) rays.push(seg);
+    } else {
+      const res=generateFractalTessellation(st, W, H, rotr);
+      for(const s of res.shapes) shapes.push(s);
+      for(const u of res.under) under.push(u);
+      last.dualLines=res.dualLines||[];
+      last.dualNodes=res.dualNodes||[];
+      if(st.mode==='construct'){
+        for(const seg of last.dualLines) rays.push(seg);
+        for(const n of last.dualNodes) dots.push(n);
+      }
+    }
   } else if(st.engine==='multi'){
     const M=multigrid(st,W,H);
     for(const t of M.tiles){
@@ -3144,10 +3500,15 @@ function render(){
         s+=`<path d="${pathD(o,r)}" fill="${P.fills[pick(shapes[i],i)]}"/>`;
       }
       s+=`</g>`;
-    }else if(st.engine==='subst'){
+    }else if(st.engine==='subst'||st.engine==='tess'){
       s+=`<g stroke="${P.grout}" stroke-width="${Math.max(.6,w*0.5)}" stroke-linejoin="round">`;
-      for(let i=0;i<shapes.length;i++)
-        s+=`<path d="${pathD(shapes[i].pts,r)}" fill="${P.fills[pick(shapes[i],i)]}"/>`;
+      for(let i=0;i<shapes.length;i++){
+        let cIdx = pick(shapes[i],i);
+        if(shapes[i].depth !== undefined && st.colourBy === 'type'){
+          cIdx = shapes[i].depth % nf;
+        }
+        s+=`<path d="${pathD(shapes[i].pts,r)}" fill="${P.fills[cIdx]}"/>`;
+      }
       s+=`</g>`;
     }else{
       if(last.faces&&last.faces.length){
@@ -3176,6 +3537,24 @@ function render(){
     }
   }
 
+  /* Dual grid overlay for tessellation or whenever st.tessDual is active */
+  if((st.tessDual || st.dual) && last.dualLines && last.dualLines.length){
+    const dAlpha = Math.max(0.15, Math.min(1.0, st.tessDualBlend !== undefined ? st.tessDualBlend : 0.55));
+    const dW = Math.max(1, w * 0.55);
+    s+=`<g id="dual-grid" stroke="${P.acc}" stroke-opacity="${dAlpha}" stroke-width="${dW}" stroke-dasharray="5 3" stroke-linecap="round">`;
+    for(const seg of last.dualLines){
+      s+=`<line x1="${f(seg[0].x)}" y1="${f(seg[0].y)}" x2="${f(seg[1].x)}" y2="${f(seg[1].y)}"/>`;
+    }
+    s+=`</g>`;
+    if(last.dualNodes && last.dualNodes.length){
+      s+=`<g id="dual-nodes" fill="${P.acc}" fill-opacity="${dAlpha}">`;
+      for(const node of last.dualNodes){
+        s+=`<circle cx="${f(node.x)}" cy="${f(node.y)}" r="${Math.max(2, dW * 1.1)}"/>`;
+      }
+      s+=`</g>`;
+    }
+  }
+
   if(st.frame){
     const inset=Math.max(10,w*2);
     s+=`<rect x="${inset}" y="${inset}" width="${W-2*inset}" height="${H-2*inset}" fill="none" stroke="${st.mode==='jali'?P.mat:P.acc}" stroke-width="${Math.max(6,w*2)}"/>`;
@@ -3193,6 +3572,16 @@ function updateInfo(shapes,measured){
   const ap=Math.round((1-cover)*100);
   const eng=ENGINES.find(e=>e.id===st.engine);
   const bits=[];
+  if(st.engine==='tess'){
+    if(st.tessFam==='regular'){
+      const T=TILINGS[st.tessType]||TILINGS.hex;
+      bits.push(`<b>${T.label}</b> ${st.tessDual?'· Dual overlay':T.vf}`,`edge: ${st.tessEdge||'straight'}`,`${shapes.length} tiles`);
+      if(st.tessKerf>0) bits.push(`kerf ${st.tessKerf}px`);
+    } else {
+      bits.push(`<b>Fractal ${st.subFam}</b>`,`depth ${st.subDepth}`,`${shapes.length} facets`);
+      if(st.tessDual) bits.push('dual centroid lattice');
+    }
+  }
   if(st.engine==='pic'){const T=TILINGS[st.tiling];
     bits.push(`<b>${T.label}</b> ${st.dual?'· dual (Laves)':T.vf}`,`contact ${st.angle}°`)}
   if(st.engine==='star'){const d=Math.max(2,Math.min(st.sd,Math.floor((st.sn-1)/2)));bits.push(`<b>{${st.sn}/${d}}</b>`,`${(function g(a,b){return b?g(b,a%b):a})(st.sn,d)} component(s)`)}
@@ -3727,6 +4116,13 @@ function exportDXF(){
     put(0,'SEQEND'); put(8,layer);
   };
   for(const p of polys) emit(p,'PATTERN');
+  if(last.dualLines && last.dualLines.length){
+    for(const seg of last.dualLines){
+      put(0,'LINE'); put(8,'DUAL_GRID');
+      put(10,(seg[0].x*k).toFixed(4)); put(20,((H-seg[0].y)*k).toFixed(4)); put(30,'0.0');
+      put(11,(seg[1].x*k).toFixed(4)); put(21,((H-seg[1].y)*k).toFixed(4)); put(31,'0.0');
+    }
+  }
   if(st.frame){
     const i=Math.max(10,st.width*2);
     emit([v(i,i),v(W-i,i),v(W-i,H-i),v(i,H-i)],'FRAME');
@@ -3773,9 +4169,53 @@ function exportPDF(){
   return pdf;
 }
 
+function exportPNG(scale){
+  const sc = scale || 2;
+  const svg = $('svg').cloneNode(true);
+  const ov = svg.querySelector('#ov'); if(ov) ov.remove();
+  const guides = svg.querySelector('#gp-guides'); if(guides) guides.remove();
+  const snapBadge = svg.querySelector('#gp-smart-snap-badge'); if(snapBadge) snapBadge.remove();
+  const curP = svg.querySelector('#gp-prev'); if(curP) curP.remove();
+  const curArc = svg.querySelector('#gp-arc'); if(curArc) curArc.remove();
+  const curSpline = svg.querySelector('#gp-spline'); if(curSpline) curSpline.remove();
+  const curKnots = svg.querySelector('#gp-spline-knots'); if(curKnots) curKnots.remove();
+  const curStart = svg.querySelector('#gp-start'); if(curStart) curStart.remove();
+  const curHover = svg.querySelector('#gp-hover'); if(curHover) curHover.remove();
+  svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  svg.setAttribute('width', W);
+  svg.setAttribute('height', H);
+
+  const xml = new XMLSerializer().serializeToString(svg);
+  const svgBlob = new Blob([xml], {type: 'image/svg+xml;charset=utf-8'});
+  const url = URL.createObjectURL(svgBlob);
+  const img = new Image();
+  img.onload = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(W * sc);
+    canvas.height = Math.round(H * sc);
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    URL.revokeObjectURL(url);
+    canvas.toBlob(blob => {
+      if(blob){
+        download(blob, baseName() + (sc >= 4 ? '-4k.png' : '-300dpi.png'));
+      }
+    }, 'image/png');
+  };
+  img.onerror = () => {
+    URL.revokeObjectURL(url);
+    console.error('PNG export failed');
+  };
+  img.src = url;
+}
+
 /* actions */
 $('expDxf').onclick=()=>download(new Blob([exportDXF()],{type:'image/vnd.dxf'}),baseName()+'.dxf');
 $('expPdf').onclick=()=>download(new Blob([exportPDF()],{type:'application/pdf'}),baseName()+'.pdf');
+const btnExpPng = $('expPng');
+if(btnExpPng) btnExpPng.onclick=(e)=>exportPNG(e.shiftKey?4:2);
 $('exp').onclick=()=>{
   const svg=$('svg').cloneNode(true);
   const ov=svg.querySelector('#ov'); if(ov) ov.remove();
@@ -3801,7 +4241,25 @@ $('copy').onclick=async()=>{
 $('reset').onclick=()=>{const e=st.engine,t=st.tiling;st=Object.assign({},DEF,{engine:e,tiling:t});buildLists();buildParams();render();sync()};
 $('rnd').onclick=()=>{
   const R=Math.random;
-  if(st.engine==='pic'){
+  if(st.engine==='tess'){
+    st.tessFam=R()<0.5?'regular':'fractal';
+    if(st.tessFam==='regular'){
+      const ts=['hex','tri','square','trihex','octasq','rhombitri','trunchex','trunctrihex'];
+      st.tessType=ts[Math.floor(R()*ts.length)];
+      st.tessEdge=['straight','straight','star','petal','zigzag'][Math.floor(R()*5)];
+      st.tessStarMod=0.1+Math.round(R()*40)/100;
+      st.tessKerf=R()<0.4?Math.round(R()*12):0;
+      st.tessDual=R()<0.5;
+    } else {
+      const fs=['sierpinski','carpet','koch','rosette','reptile'];
+      st.subFam=fs[Math.floor(R()*fs.length)];
+      st.subDepth=1+Math.floor(R()*3);
+      st.subScale=0.4+Math.round(R()*40)/100;
+      st.subTwist=Math.floor(R()*6)*15;
+      st.tessDual=R()<0.4;
+    }
+  }
+  else if(st.engine==='pic'){
     const ks=Object.keys(TILINGS);
     st.tiling=ks[Math.floor(R()*ks.length)];st.angle=20+Math.floor(R()*55);st.dual=R()<0.35}
   else if(st.engine==='star'){st.sn=6+Math.floor(R()*16);st.sd=2+Math.floor(R()*(Math.floor(st.sn/2)-1))}
