@@ -122,7 +122,7 @@ code{font:12.5px ui-monospace,Consolas,monospace;background:var(--panel);padding
     <div id="engines"></div>
     <h3 id="h-tiling">Underlying tiling</h3>
     <div id="tilings"></div>
-    <h3 id="h-glib" style="display:none">Patterns from the books</h3>
+    <h3 id="h-glib" style="display:none">Numbered pattern collection</h3>
     <div id="glib"></div>
     <div class="card" id="srcCard"></div>
   </aside>
@@ -144,7 +144,7 @@ code{font:12.5px ui-monospace,Consolas,monospace;background:var(--panel);padding
 <!-- ================= GUIDE ================= -->
 <div class="page" id="p-guide" style="max-width:1080px">
   <h1>Guide: drawing on a grid</h1>
-  <p class="lead">Every pattern in Robert Field's book is straight lines between the points of a grid, repeated. This tool lets you draw the same way, at any real size, and the gallery below shows every example from the books.</p>
+  <p class="lead">Draw on a square or triangle grid. The numbered library contains drawings transcribed from the reference diagrams.</p>
   <div id="guideBody"></div>
 </div>
 
@@ -255,6 +255,8 @@ code{font:12.5px ui-monospace,Consolas,monospace;background:var(--panel);padding
   <p>Girih tiles with edge matching and strapwork, self-similar subdivision, arboreal jali, Gothic arch and rose geometry, Art Nouveau spline ironwork, Art Deco fan and stepped grammars, Ottoman floral fields, and fabrication export (DXF, minimum bridge validation) once a fabricator has been consulted.</p>
 </div>
 
+<script src="reference-patterns.js"></script>
+<script src="image-patterns.js"></script>
 <script>
 'use strict';
 /* ============================================================ geometry */
@@ -1053,8 +1055,8 @@ const CTRL={
   {k:'gChain',label:'Keep drawing from the last point',type:'chk'},
   {type:'acts',acts:[['undo','Undo'],['clear','Clear'],['random','Random']]},
   {k:'gType',label:'Grid',type:'sel',opts:[['square','Square grid'],['iso','Triangle (isometric) grid']]},
-  {k:'gW',label:s=>s.gType==='iso'?'Repeat size (grid steps)':'Repeat width (squares)',min:1,max:12,step:1},
-  {k:'gH',label:'Repeat height (squares)',min:1,max:12,step:1,when:s=>s.gType!=='iso'},
+  {k:'gW',label:s=>s.gType==='iso'?'Repeat size (grid steps)':'Repeat width (squares)',min:1,max:64,step:1},
+  {k:'gH',label:'Repeat height (squares)',min:1,max:64,step:1,when:s=>s.gType!=='iso'},
   {k:'gSub',label:'Points per square',min:1,max:4,step:1},
   {k:'gSym',label:'Symmetry',type:'sel',opts:s=>gSymOpts()},
   {k:'gSize',label:'Grid spacing',min:20,max:120,step:1,unit:' px',len:true},
@@ -1694,37 +1696,119 @@ const GACT={undo:gUndo,clear:gClear,random:gRandom};
 
 /* the drawing is saved into the link as text, and library entries are just this text */
 /*LIB-START*/
-const GRID_LIB=[
-  {"group":"Field: blocks, borders and brickwork (pp.6-19)","name":"Page 6, pattern 1","note":"square grid, repeat 32 × 36","s":{"gType":"square","gW":32,"gH":36,"gSub":1,"gSize":18,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gData":"0,14,2,14;24,18,44,18;24,23,44,23;0,27,4,27;1,13,2,13;3,13,4,13;4,22,5,22;8,0,28,0;8,5,28,5;8,9,12,9;8,27,12,27;9,32,12,32;10,14,11,14;16,9,20,9;16,32,18,32;17,31,18,31;19,31,20,31;20,4,21,4;24,9,28,9;24,27,28,27;25,14,28,14;26,32,27,32;0,27,0,50;1,13,1,14;2,22,2,23;3,22,3,23;4,27,4,49;4,22,4,23;5,22,5,23;6,22,6,23;7,22,7,23;8,0,8,5;8,9,8,13;8,22,8,23;8,27,8,31;9,22,9,23;10,13,10,14;10,22,10,23;10,31,10,32;11,13,11,14;11,22,11,23;11,31,11,32;12,9,12,13;12,18,12,22;12,27,12,32;16,9,16,32;17,31,17,32;18,4,18,5;19,4,19,5;20,4,20,5;20,9,20,31;21,4,21,5;22,4,22,5;23,4,23,5;24,4,24,5;24,9,24,13;24,18,24,23;24,27,24,31;25,4,25,5;26,4,26,5;26,13,26,14;26,31,26,32;27,4,27,5;27,13,27,14;27,31,27,32;28,0,28,4;28,9,28,14;28,27,28,31;0,13,1,14;1,13,2,14;1,22,2,23;3,22,4,23;3,27,4,28;4,22,5,23;5,22,6,23;6,22,7,23;7,22,8,23;8,4,9,5;8,22,9,23;8,31,9,32;9,13,10,14;9,22,10,23;9,31,10,32;10,13,11,14;10,22,11,23;10,31,11,32;11,9,12,10;11,18,12,19;11,22,12,23;11,27,12,28;16,31,17,32;17,4,18,5;17,31,18,32;19,4,20,5;19,9,20,10;20,4,21,5;21,4,22,5;22,4,23,5;23,4,24,5;24,4,25,5;24,13,25,14;24,22,25,23;25,4,26,5;25,13,26,14;25,31,26,32;26,4,27,5;26,13,27,14;26,31,27,32;27,0,28,1;27,4,28,5;27,9,28,10;27,27,28,28;0,14,1,13;1,14,2,13;2,23,3,22;3,14,4,13;3,23,4,22;4,23,5,22;5,23,6,22;6,23,7,22;7,23,8,22;8,23,9,22;9,14,10,13;9,23,10,22;10,14,11,13;10,23,11,22;10,32,11,31;11,14,12,13;11,23,12,22;11,32,12,31;16,32,17,31;17,32,18,31;18,5,19,4;19,5,20,4;19,32,20,31;20,5,21,4;21,5,22,4;22,5,23,4;23,5,24,4;24,5,25,4;25,5,26,4;25,32,26,31;26,5,27,4;26,14,27,13;26,32,27,31;27,5,28,4;27,14,28,13;27,32,28,31;0,13,2,14;1,13,3,14;2,22,4,23;3,22,5,23;4,22,6,23;5,22,7,23;6,22,8,23;7,22,9,23;8,13,10,14;8,22,10,23;8,31,10,32;9,13,11,14;9,22,11,23;9,31,11,32;10,13,12,14;10,22,12,23;16,31,18,32;17,31,19,32;18,4,20,5;19,4,21,5;20,4,22,5;21,4,23,5;22,4,24,5;23,4,25,5;24,4,26,5;24,13,26,14;24,31,26,32;25,4,27,5;25,13,27,14;25,31,27,32;26,4,28,5;26,31,28,32;2,14,4,13;2,23,4,22;3,23,5,22;4,23,6,22;5,23,7,22;6,23,8,22;7,23,9,22;8,14,10,13;8,23,10,22;9,14,11,13;9,23,11,22;10,14,12,13;10,23,12,22;10,32,12,31;18,5,20,4;18,32,20,31;19,5,21,4;20,5,22,4;21,5,23,4;22,5,24,4;23,5,25,4;24,5,26,4;24,32,26,31;25,5,27,4;25,32,27,31;26,5,28,4;26,14,28,13;26,32,28,31;3,14,4,12;11,14,12,12;11,23,12,21;11,32,12,30;19,32,20,30;27,5,28,3;27,14,28,12;27,32,28,30"}},
-  {"group":"Field: blocks, borders and brickwork (pp.6-19)","name":"Page 11, pattern 1","note":"square grid, repeat 16 × 16","s":{"gType":"square","gW":16,"gH":16,"gSub":1,"gSize":28,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gFill":"0,0;1,0;8,0;9,0;0,1;1,1;8,1;9,1;6,2;7,2;10,2;11,2;6,3;7,3;10,3;11,3;4,4;5,4;12,4;13,4;4,5;5,5;12,5;13,5;2,6;3,6;8,6;9,6;14,6;15,6;0,7;2,7;3,7;8,7;9,7;14,7;15,7;0,8;1,8;6,8;7,8;10,8;11,8;0,9;1,9;6,9;7,9;10,9;11,9;0,10;2,10;3,10;8,10;9,10;14,10;15,10;2,11;3,11;8,11;9,11;14,11;15,11;4,12;5,12;12,12;13,12;4,13;5,13;12,13;13,13;6,14;7,14;10,14;11,14;6,15;7,15;10,15;11,15"}},
-  {"group":"Field: blocks, borders and brickwork (pp.6-19)","name":"Page 12, pattern 1","note":"square grid, repeat 16 × 16","s":{"gType":"square","gW":16,"gH":16,"gSub":1,"gSize":28,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gFill":"0,0;2,0;4,0;6,0;7,0;8,0;9,0;10,0;12,0;14,0;2,1;4,1;8,1;0,2;1,2;2,2;3,2;4,2;5,2;6,2;8,2;10,2;12,2;14,2;2,3;3,3;4,3;10,3;12,3;0,4;1,4;3,4;4,4;5,4;6,4;8,4;9,4;10,4;12,4;13,4;14,4;2,5;4,5;11,5;12,5;0,6;2,6;4,6;6,6;8,6;9,6;10,6;11,6;13,6;14,6;0,7;10,7;12,7;0,8;1,8;2,8;4,8;6,8;8,8;10,8;12,8;14,8;15,8;0,9;4,9;6,9;0,10;2,10;3,10;4,10;5,10;6,10;7,10;8,10;10,10;12,10;14,10;5,11;6,11;12,11;14,11;0,12;2,12;3,12;4,12;5,12;7,12;8,12;10,12;11,12;12,12;14,12;15,12;4,13;6,13;12,13;13,13;14,13;0,14;2,14;4,14;6,14;8,14;10,14;11,14;12,14;13,14;14,14;15,14;8,15;12,15;14,15"}},
-  {"group":"Field: eight-pointed stars and grids (pp.20-27)","name":"Page 22, pattern 1","note":"square grid, repeat 12 × 12","s":{"gType":"square","gW":12,"gH":12,"gSub":1,"gSize":38,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gData":"2,2,4,2;2,10,4,10;8,2,10,2;8,10,10,10;2,2,2,4;2,8,2,10;10,2,10,4;10,8,10,10;10,4,14,8;4,10,8,14;10,8,14,4;4,2,8,-2"}},
-  {"group":"Field: eight-pointed stars and grids (pp.20-27)","name":"Page 22, pattern 2","note":"square grid, repeat 13 × 13","s":{"gType":"square","gW":13,"gH":13,"gSub":1,"gSize":35,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gData":"2,2,5,2;2,12,5,12;3,3,5,3;3,11,5,11;9,2,12,2;9,3,11,3;9,11,11,11;9,12,10,12;2,2,2,5;2,9,2,12;3,3,3,5;3,9,3,11;11,3,11,5;11,9,11,11;12,2,12,5;12,9,12,12;1,8,2,9;5,11,6,12;7,1,9,3;8,1,9,2;11,5,13,7;1,6,2,5;1,7,3,5;5,2,6,1;5,3,7,1;7,0,9,-2;8,0,9,-1;11,9,13,7;12,9,13,8"}},
-  {"group":"Field: eight-pointed stars and grids (pp.20-27)","name":"Page 23, pattern 1","note":"square grid, repeat 16 × 16","s":{"gType":"square","gW":16,"gH":16,"gSub":1,"gSize":28,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gData":"2,4,6,4;2,12,6,12;10,4,14,4;10,12,14,12;4,2,4,6;4,10,4,14;12,2,12,6;12,10,12,14;0,10,2,12;2,8,4,10;4,14,6,16;6,12,8,14;8,2,10,4;10,0,12,2;12,6,14,8;14,4,16,6;0,6,2,4;2,8,4,6;4,2,6,0;6,4,8,2;8,14,10,12;10,0,12,-2;12,10,14,8;14,12,16,10"}},
-  {"group":"Field: eight-pointed stars and grids (pp.20-27)","name":"Page 26, pattern 1","note":"square grid, repeat 18 × 16","s":{"gType":"square","gW":18,"gH":16,"gSub":1,"gSize":25,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gData":"0,2,2,2;3,2,9,2;4,5,6,5;4,15,5,15;5,6,6,6;5,8,8,8;5,12,8,12;5,14,6,14;8,5,12,5;8,15,12,15;11,2,17,2;12,8,15,8;12,12,15,12;14,5,16,5;14,6,15,6;14,14,15,14;14,15,16,15;0,15,0,18;0,3,0,5;2,11,2,18;2,3,2,9;5,4,5,6;5,8,5,12;5,14,5,16;6,5,6,6;8,5,8,8;8,12,8,15;12,5,12,8;12,12,12,15;14,5,14,6;14,14,14,15;15,4,15,6;15,8,15,12;15,14,15,16;0,1,2,3;16,5,19,8;1,12,4,15;2,1,3,2;2,9,4,11;4,9,5,10;5,0,6,1;5,7,8,10;5,13,7,15;7,5,10,8;9,0,11,2;9,2,11,4;9,4,10,5;10,12,13,15;12,1,15,4;12,10,15,13;13,5,15,7;15,10,16,11;16,9,18,11;16,15,19,12;1,8,4,5;2,3,3,2;2,11,4,9;5,13,8,10;7,15,10,12;9,0,10,-1;9,4,10,3;10,1,11,0;10,8,13,5;12,10,15,7;14,1,15,0;15,10,16,9"}},
-  {"group":"Field: eight-pointed stars and grids (pp.20-27)","name":"Page 26, pattern 2","note":"square grid, repeat 14 × 14","s":{"gType":"square","gW":14,"gH":14,"gSub":1,"gSize":32,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gData":"2,0,12,0;2,4,12,4;5,10,9,10;2,4,2,14;8,7,8,11;12,4,12,14;0,5,5,10;3,2,8,7;6,11,11,16;9,8,14,13;0,13,3,10;3,2,8,-3;8,5,11,2;9,10,14,5"}},
-  {"group":"Field: eight-pointed stars and grids (pp.20-27)","name":"Page 26, pattern 3","note":"square grid, repeat 12 × 12","s":{"gType":"square","gW":12,"gH":12,"gSub":1,"gSize":38,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gData":"11,5,15,5;11,7,15,7;2,1,3,1;2,11,3,11;4,4,6,4;4,8,6,8;5,1,9,1;5,11,9,11;8,4,10,4;8,8,10,8;11,1,12,1;11,11,12,11;0,1,0,2;0,4,0,8;0,10,0,11;2,1,2,2;2,4,2,8;2,10,2,11;5,3,5,5;5,7,5,9;6,10,6,14;8,10,8,14;9,3,9,5;9,7,9,9;2,2,4,4;2,8,5,11;3,1,5,3;3,5,5,7;6,2,8,4;6,8,8,10;9,1,12,4;9,5,11,7;9,9,11,11;10,8,12,10;2,4,5,1;2,10,4,8;3,7,5,5;3,11,5,9;6,4,8,2;6,10,8,8;9,3,11,1;9,7,11,5;9,11,12,8;10,4,12,2"}},
-  {"group":"Field: glazing bars and octagons (pp.28-37)","name":"Page 29, pattern 1","note":"square grid, repeat 5 × 5","s":{"gType":"square","gW":5,"gH":5,"gSub":1,"gSize":56,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gData":"0,1,3,1;0,2,3,2;1,0,1,3;2,0,2,3;3,2,6,5;2,3,5,6;3,1,6,-2;2,0,5,-3"}},
-  {"group":"Field: glazing bars and octagons (pp.28-37)","name":"Page 29, pattern 2","note":"square grid, repeat 6 × 6","s":{"gType":"square","gW":6,"gH":6,"gSub":1,"gSize":56,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gData":"5,3,7,3;2,0,4,0;0,2,0,4;3,5,3,7;0,4,2,6;1,3,3,5;3,1,5,3;4,0,6,2;0,2,2,0;1,3,3,1;3,5,5,3;4,0,6,-2"}},
-  {"group":"Field: glazing bars and octagons (pp.28-37)","name":"Page 29, pattern 3","note":"square grid, repeat 4 × 4","s":{"gType":"square","gW":4,"gH":4,"gSub":1,"gSize":56,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gData":"1,0,3,0;1,1,3,1;1,3,3,3;0,1,0,3;1,1,1,3;3,1,3,3;3,3,5,5;0,3,1,4;1,2,2,3;2,1,3,2;3,0,4,1;3,1,5,-1;0,1,1,0;1,2,2,1;2,3,3,2;3,0,4,-1"}},
-  {"group":"Field: glazing bars and octagons (pp.28-37)","name":"Page 31, pattern 1","note":"square grid, repeat 8 × 8","s":{"gType":"square","gW":8,"gH":8,"gSub":1,"gSize":56,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gData":"5,1,11,1;6,2,10,2;7,3,9,3;7,5,9,5;6,6,10,6;5,7,11,7;1,5,1,11;2,6,2,10;3,7,3,9;5,7,5,9;6,6,6,10;7,5,7,11;1,3,5,7;2,2,6,6;3,1,4,2;5,3,7,5;1,5,5,1;2,6,6,2;3,7,7,3"}},
-  {"group":"Field: glazing bars and octagons (pp.28-37)","name":"Page 31, pattern 2","note":"square grid, repeat 8 × 8","s":{"gType":"square","gW":8,"gH":8,"gSub":1,"gSize":56,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gData":"5,1,11,1;6,2,10,2;6,6,10,6;5,7,11,7;1,5,1,11;2,6,2,10;6,6,6,10;7,5,7,11;7,3,9,5;1,3,5,7;2,2,6,6;3,1,7,5;3,7,5,9;7,5,9,3;1,5,5,1;2,6,6,2;3,1,5,-1;3,7,7,3"}},
-  {"group":"Field: glazing bars and octagons (pp.28-37)","name":"Page 34, pattern 1","note":"square grid, repeat 4 × 4","s":{"gType":"square","gW":4,"gH":4,"gSub":1,"gSize":56,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gData":"2,1,4,1;1,2,1,4;0,1,1,2;1,0,2,1;0,1,1,0;1,2,2,1"}},
-  {"group":"Field: glazing bars and octagons (pp.28-37)","name":"Page 35, pattern 1","note":"square grid, repeat 3 × 3","s":{"gType":"square","gW":3,"gH":3,"gSub":1,"gSize":56,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gData":"0,0,3,0;0,0,0,3;0,0,3,3;0,0,3,-3;2,1,4,2;1,2,2,4;2,2,4,1;1,1,2,-1"}},
-  {"group":"Field: unusual shapes and single-tile designs (pp.38-43)","name":"Page 38, pattern 1","note":"square grid, repeat 8 × 8","s":{"gType":"square","gW":8,"gH":8,"gSub":1,"gSize":56,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gData":"6,1,10,1;6,7,10,7;2,3,6,3;2,5,6,5;1,2,1,6;3,6,3,10;5,6,5,10;7,2,7,6;0,1,1,2;1,4,2,5;2,7,3,8;3,2,4,3;4,5,5,6;5,0,6,1;6,3,7,4;7,6,8,7;0,7,1,6;1,4,2,3;2,1,3,0;3,6,4,5;4,3,5,2;5,0,6,-1;6,5,7,4;7,2,8,1"}},
-  {"group":"Field: unusual shapes and single-tile designs (pp.38-43)","name":"Page 39, pattern 1","note":"square grid, repeat 14 × 14","s":{"gType":"square","gW":14,"gH":14,"gSub":1,"gSize":32,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gData":"11,2,17,2;11,12,17,12;4,5,10,5;4,9,10,9;2,4,2,10;5,11,5,17;9,11,9,17;12,4,12,10;0,2,2,4;2,7,4,9;3,12,5,14;5,3,7,5;7,9,9,11;9,0,11,2;10,5,12,7;12,10,14,12;0,12,2,10;2,7,4,5;3,2,5,0;5,11,7,9;7,5,9,3;9,0,11,-2;10,9,12,7;12,4,14,2;2,4,4,5;3,2,5,3;9,11,11,12;10,9,12,10;2,10,3,12;4,9,5,11;9,3,10,5;11,2,12,4;2,10,4,9;3,12,5,11;9,3,11,2;10,5,12,4;2,4,3,2;4,5,5,3;9,11,10,9;11,12,12,10"}},
-  {"group":"Field: unusual shapes and single-tile designs (pp.38-43)","name":"Page 40, pattern 1","note":"square grid, repeat 4 × 8","s":{"gType":"square","gW":4,"gH":8,"gSub":1,"gSize":56,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gData":"1,1,1,3;1,5,1,7;3,1,3,3;3,5,3,7;3,3,5,5;1,7,3,9;3,5,5,3;1,1,3,-1"}},
-  {"group":"Field: unusual shapes and single-tile designs (pp.38-43)","name":"Page 42, pattern 1","note":"square grid, repeat 16 × 16","s":{"gType":"square","gW":16,"gH":16,"gSub":1,"gSize":28,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gData":"2,0,6,0;2,2,6,2;2,4,4,4;2,14,4,14;4,8,8,8;4,10,8,10;6,6,8,6;6,12,8,12;10,6,12,6;10,8,14,8;10,10,14,10;10,12,12,12;12,0,16,0;12,2,16,2;14,4,16,4;14,14,16,14;0,4,0,8;0,10,0,14;2,4,2,8;2,10,2,14;4,6,4,8;4,10,4,12;6,2,6,4;6,14,6,16;8,2,8,6;8,12,8,16;10,2,10,6;10,12,10,16;12,2,12,4;12,14,12,16;14,6,14,8;14,10,14,12;0,0,2,2;0,8,2,10;4,4,6,6;4,12,6,14;8,0,10,2;8,8,10,10;12,4,14,6;12,12,14,14;0,2,2,0;0,10,2,8;4,6,6,4;4,14,6,12;8,2,10,0;8,10,10,8;12,6,14,4;12,14,14,12"}},
-  {"group":"Field: unusual shapes and single-tile designs (pp.38-43)","name":"Page 43, pattern 1","note":"square grid, repeat 16 × 16","s":{"gType":"square","gW":16,"gH":16,"gSub":1,"gSize":28,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gData":"12,8,20,8;0,12,4,12;4,0,12,0;4,4,8,4;8,12,12,12;12,4,16,4;0,4,0,12;4,4,4,8;4,12,4,16;8,12,8,20;12,0,12,4;12,8,12,12;0,4,1,5;2,6,4,8;5,1,8,4;8,12,12,16;12,8,16,12;0,12,4,8;4,0,8,-4;8,4,12,0;12,8,16,4;15,11,17,12;7,4,9,3;7,13,9,12;3,9,4,7"}},
-  {"group":"Field: triangle grid, hexagons and six-pointed stars (pp.52-63)","name":"Page 52, pattern 1","note":"triangle grid, repeat 6","s":{"gType":"iso","gW":6,"gH":6,"gSub":1,"gSize":56,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gData":"0,5,6,11;1,0,13,-6;0,5,-6,17"}},
-  {"group":"Field: triangle grid, hexagons and six-pointed stars (pp.52-63)","name":"Page 52, pattern 2","note":"triangle grid, repeat 9","s":{"gType":"iso","gW":9,"gH":9,"gSub":1,"gSize":51,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gData":"7,0,10,0;7,8,11,8;2,0,6,0;3,8,6,8;6,0,6,4;6,5,6,8;7,0,7,3;7,4,7,8;7,3,10,0;7,4,11,0;2,8,6,4;3,8,6,5"}},
-  {"group":"Field: triangle grid, hexagons and six-pointed stars (pp.52-63)","name":"Page 53, pattern 1","note":"triangle grid, repeat 12","s":{"gType":"iso","gW":12,"gH":12,"gSub":1,"gSize":38,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gData":"0,2,4,2;10,6,14,6;2,10,6,10;4,6,8,6;6,2,10,2;8,10,12,10;2,0,2,4;2,6,2,10;6,10,6,14;6,4,6,8;10,2,10,6;10,8,10,12;10,8,14,4;0,10,4,6;2,0,6,-4;4,2,8,-2;6,4,10,0;8,6,12,2"}},
-  {"group":"Field: triangle grid, hexagons and six-pointed stars (pp.52-63)","name":"Page 53, pattern 2","note":"triangle grid, repeat 12","s":{"gType":"iso","gW":12,"gH":12,"gSub":1,"gSize":38,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gData":"11,4,13,4;1,8,3,8;3,4,5,4;9,8,11,8;3,2,3,4;3,6,3,8;11,4,11,6;11,8,11,10;11,10,13,8;1,4,3,2;3,6,5,4;9,8,11,6;2,1,3,2;2,10,3,11;5,1,6,2;5,4,6,5;5,7,6,8;5,10,6,11;8,1,9,2;8,4,9,5;8,7,9,8;8,10,9,11;11,1,12,2;11,10,12,11;0,2,2,1;0,11,2,10;3,2,5,1;3,8,5,7;3,11,5,10;6,2,8,1;6,5,8,4;6,8,8,7;6,11,8,10;9,2,11,1;9,5,11,4;9,11,11,10;0,2,-1,4;0,11,-1,13;3,8,2,10;3,11,2,13;6,2,5,4;6,5,5,7;6,8,5,10;6,11,5,13;9,2,8,4;9,5,8,7;9,8,8,10;9,11,8,13"}},
-  {"group":"Field: triangle grid, hexagons and six-pointed stars (pp.52-63)","name":"Page 56, pattern 1","note":"triangle grid, repeat 20","s":{"gType":"iso","gW":20,"gH":20,"gSub":1,"gSize":23,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gData":"8,16,9,16;10,18,11,18;12,14,13,14;14,16,15,16;0,7,0,8;2,3,2,4;2,6,2,7;2,9,2,10;4,5,4,6;18,8,18,9;8,11,9,10;9,6,10,5;10,7,11,6;12,9,13,8;14,5,15,4;19,1,21,3;0,8,1,9;1,5,2,6;1,11,3,13;2,4,3,5;2,10,3,11;3,7,5,9;4,6,5,7;5,15,7,17;7,15,8,16;8,18,9,19;9,13,11,15;9,17,10,18;10,0,11,1;11,13,12,14;11,19,13,21;12,16,13,17;13,15,14,16;14,18,15,19;15,17,17,19;17,5,19,7;17,7,18,8;19,3,20,4;19,9,20,10;3,12,7,10;3,13,7,11;3,19,7,17;5,1,9,-1;5,9,9,7;5,19,7,18;7,1,9,0;7,7,9,6;9,9,11,8;9,10,11,9;9,16,11,15;9,17,11,16;11,5,13,4;11,6,13,5;11,18,13,17;11,19,13,18;13,7,17,5;13,8,15,7;13,14,15,13;13,15,17,13;15,3,19,1;15,4,17,3;15,16,17,15;15,17,19,15;0,5,-1,7;0,11,-1,13;3,7,-1,15;1,5,0,7;1,7,0,9;3,19,1,23;2,7,1,9;3,1,2,3;5,1,3,5;5,3,4,5;7,11,5,15;8,11,7,13;9,7,8,9;10,7,9,9;11,9,9,13;11,3,10,5;13,1,11,5;12,9,11,11;13,5,12,7;14,5,13,7;15,1,14,3;17,19,15,23;18,9,17,11;19,9,17,13"}},
-  {"group":"Field: triangle grid, hexagons and six-pointed stars (pp.52-63)","name":"Page 56, pattern 2","note":"square grid, repeat 20 × 28","s":{"gType":"square","gW":20,"gH":28,"gSub":1,"gSize":18,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gData":"6,22,7,22;16,8,17,8;2,2,2,5;2,13,2,16;2,18,2,21;2,25,2,28;3,25,3,29;3,2,3,5;3,13,3,16;3,17,3,21;5,27,5,30;5,3,5,6;5,12,5,14;5,16,5,19;6,27,6,30;6,4,6,7;6,11,6,14;6,16,6,19;12,27,12,30;12,4,12,7;12,11,12,14;12,16,12,19;13,27,13,30;13,3,13,7;13,11,13,15;13,16,13,19;15,2,15,5;15,13,15,16;15,17,15,20;15,26,15,28;16,2,16,5;16,13,16,16;16,18,16,21;16,25,16,28;0,0,1,1;0,7,1,8;2,12,3,13;2,21,3,22;3,10,4,11;4,21,5,22;5,10,6,11;5,19,6,20;7,3,8,4;7,24,8,25;9,25,10,26;10,14,11,15;10,21,11,22;12,7,13,8;12,26,13,27;13,24,14,25;14,7,15,8;15,5,16,6;15,24,16,25;17,10,18,11;17,17,18,18;19,11,20,12;0,11,1,10;0,18,2,16;2,25,3,24;3,8,4,7;4,25,5,24;5,8,6,7;7,15,8,14;7,22,8,21;8,26,9,25;10,4,12,2;10,25,11,24;12,11,13,10;13,22,14,21;14,11,15,10;15,22,16,21;17,1,18,0;17,8,18,7;18,12,19,11;0,11,2,12;0,12,2,13;0,27,2,28;3,1,5,2;3,2,5,3;3,9,5,10;3,22,5,23;6,4,8,5;6,19,8,20;6,20,8,21;7,1,9,2;7,23,9,24;9,16,11,17;9,22,11,23;10,13,12,14;10,25,12,26;10,26,12,27;13,8,15,9;13,15,15,16;13,16,15,17;13,23,15,24;16,5,18,6;16,6,18,7;16,18,18,19;17,9,19,10;17,15,19,16;19,2,21,3;19,8,21,9;0,6,2,5;0,7,2,6;0,19,2,18;3,9,5,8;3,16,5,15;3,17,5,16;3,24,5,23;3,25,5,24;6,14,8,13;6,15,8,14;6,27,8,26;7,17,9,16;7,23,9,22;9,2,11,1;9,24,11,23;10,5,12,4;10,20,12,19;10,21,12,20;13,2,15,1;13,3,15,2;13,10,15,9;13,11,15,10;13,23,15,22;16,0,18,-1;16,1,18,0;16,13,18,12;17,3,19,2;17,9,19,8;19,10,21,9;19,16,21,15"}},
-  {"group":"Field: triangle grid, hexagons and six-pointed stars (pp.52-63)","name":"Page 57, pattern 1","note":"triangle grid, repeat 12","s":{"gType":"iso","gW":12,"gH":12,"gSub":1,"gSize":38,"gSym":"none","gTool":"line","gShowGrid":false,"gShowCell":true,"width":2,"pal":1,"gData":"0,0,6,0;9,9,9,15;11,4,11,5;6,9,12,3;6,0,9,3;9,9,12,12;0,0,6,-3;0,3,6,0;0,3,-3,9;9,3,6,9"}},
-];
 /*LIB-END*/
+
+/* Source diagram transcriptions. Coordinates are grid intersections read from
+   the printed construction overlays. Source metadata is not shown in the UI. */
+function bookPath(points,closed=true){
+  const out=[];
+  for(let i=1;i<points.length;i++)out.push([...points[i-1],...points[i]]);
+  if(closed)out.push([...points[points.length-1],...points[0]]);
+  return out;
+}
+function bookEntry(id,name,w,segments,source,h=w){
+  // Canonicalize shared edges so a line is stored and edited only once.
+  const unique=new Map();
+  for(const segment of segments){
+    const t=gCanon(segment);
+    if(t[0]!==t[2]||t[1]!==t[3])unique.set(t.join(','),t);
+  }
+  return {id,group:'Medium',name,note:'Medium',source,
+    s:{gType:'square',gW:w,gH:h,gSub:1,gSize:40,gSym:'none',
+      gTool:'line',gShowGrid:false,gShowCell:true,gBand:false,
+      gData:gStr([...unique.values()]),gCirc:'',gFill:'',gArcs:'',
+      width:2,pal:1,frame:false}};
+}
+function bookWindowSquare(diamond){
+  const edges=[
+    ...bookPath([[2,0],[6,0],[8,2],[8,6],[6,8],[2,8],[0,6],[0,2]]),
+    ...bookPath([[2,2],[6,2],[6,6],[2,6]]),
+    [0,0,2,2],[6,2,8,0],[6,6,8,8],[2,6,0,8]
+  ];
+  if(diamond)edges.push(...bookPath([[4,2],[6,4],[4,6],[2,4]]));
+  return edges;
+}
+function bookDiagonalWindow(spokes){
+  const w=spokes?8:10,r=spokes?1:2,c=w/2,inner=c-1;
+  const edges=[[0,inner,w,w+inner],[0,inner+2,w,w+inner+2],
+    [0,inner,w,inner-w],[0,inner+2,w,inner+2-w]];
+  for(const [x,y] of [[0,0],[c,c]]){
+    edges.push(...bookPath([[x-r,y-r],[x+r,y-r],[x+r,y+r],[x-r,y+r]]));
+    if(spokes)edges.push([x-1,y-1,x-1,y-2],[x+1,y-1,x+2,y-1],
+      [x+1,y+1,x+1,y+2],[x-1,y+1,x-2,y+1]);
+  }
+  return edges;
+}
+function bookElongatedWindow(){
+  const edges=[];
+  for(const [x,y] of [[2,4],[0,10]]){
+    edges.push(...bookPath([[x,y-4],[x+2,y-2],[x+2,y+2],[x,y+4],[x-2,y+2],[x-2,y-2]]));
+    edges.push(...bookPath([[x,y-2],[x+1,y-1],[x+1,y+1],[x,y+2],[x-1,y+1],[x-1,y-1]]));
+    edges.push([x,y+2,x-2,y+4],[x,y+2,x+2,y+4]);
+  }
+  return edges;
+}
+const GRID_LIB=[
+  bookEntry('field-31-upper','11. Square and hexagon barred window lattice',8,
+    [[1,1,2,1],[1,1,1,2],[1,2,2,2],[1,2,1,3],[1,3,2,4],[1,5,1,6],[1,5,2,4],[1,6,2,6],[1,6,1,7],[1,7,2,7],[1,7,1,8],[1,0,1,1],[2,1,3,1],[2,1,2,2],[2,2,3,3],[2,4,3,5],[2,4,3,3],[2,6,2,7],[2,6,3,5],[2,7,3,7],[2,7,2,8],[2,0,2,1],[3,1,4,2],[3,3,4,4],[3,3,4,2],[3,5,4,6],[3,5,4,4],[3,7,3,8],[3,7,4,6],[3,0,3,1],[4,2,5,3],[4,2,5,1],[4,4,5,5],[4,4,5,3],[4,6,5,7],[4,6,5,5],[5,1,6,1],[5,3,6,4],[5,3,6,2],[5,5,6,6],[5,5,6,4],[5,7,6,7],[5,7,5,8],[5,0,5,1],[6,1,7,1],[6,1,6,2],[6,2,7,2],[6,4,7,5],[6,4,7,3],[6,6,7,6],[6,6,6,7],[6,7,7,7],[6,7,6,8],[6,0,6,1],[7,1,8,1],[7,1,7,2],[7,2,8,2],[7,2,7,3],[7,3,8,3],[7,5,8,5],[7,5,7,6],[7,6,8,6],[7,6,7,7],[7,7,8,7],[7,7,7,8],[7,0,7,1],[0,1,1,1],[0,2,1,2],[0,3,1,3],[0,5,1,5],[0,6,1,6],[0,7,1,7]],
+    {book:'Robert Field',pdfPage:16,printedPage:31,diagram:'upper',construction:'Eight-step repeat traced from the printed grid; 72 unit edges.'}),
+  bookEntry('field-31-lower','12. Square and diamond barred window lattice',8,
+    [[1,1,2,1],[1,1,1,2],[1,2,2,2],[1,2,1,3],[1,3,2,4],[1,5,1,6],[1,5,2,4],[1,6,2,6],[1,6,1,7],[1,7,2,7],[1,7,1,8],[1,0,1,1],[2,1,3,1],[2,1,2,2],[2,2,3,3],[2,4,3,5],[2,4,3,3],[2,6,2,7],[2,6,3,5],[2,7,3,7],[2,7,2,8],[2,0,2,1],[3,1,4,2],[3,3,4,4],[3,3,4,2],[3,5,4,6],[3,5,4,4],[3,7,4,8],[3,7,4,6],[3,1,4,0],[4,2,5,3],[4,2,5,1],[4,4,5,5],[4,4,5,3],[4,6,5,7],[4,6,5,5],[4,0,5,1],[4,0,5,-1],[5,1,6,1],[5,3,6,4],[5,3,6,2],[5,5,6,6],[5,5,6,4],[5,7,6,7],[6,1,7,1],[6,1,6,2],[6,2,7,2],[6,4,7,5],[6,4,7,3],[6,6,7,6],[6,6,6,7],[6,7,7,7],[6,7,6,8],[6,0,6,1],[7,1,8,1],[7,1,7,2],[7,2,8,2],[7,2,7,3],[7,3,8,4],[7,5,7,6],[7,5,8,4],[7,6,8,6],[7,6,7,7],[7,7,8,7],[7,7,7,8],[7,0,7,1],[0,1,1,1],[0,2,1,2],[0,4,1,5],[0,4,1,3],[0,6,1,6],[0,7,1,7]],
+    {book:'Robert Field',pdfPage:16,printedPage:31,diagram:'lower',construction:'Eight-step repeat traced from the printed grid; 72 unit edges. Construction-grid lines omitted.'}),
+  bookEntry('field-30-upper-left','09. Diamond lattice with four-pane junctions',10,
+    [[1,7,2,7],[1,9,2,10],[1,9,2,8],[1,3,2,4],[1,3,2,2],[1,5,2,5],[2,7,3,7],[2,7,2,8],[2,8,3,9],[2,0,3,1],[2,2,3,1],[2,4,2,5],[2,4,3,3],[2,5,3,5],[2,5,2,6],[2,6,2,7],[3,7,4,8],[3,9,4,10],[3,1,4,2],[3,1,4,0],[3,3,4,2],[3,5,4,6],[3,5,4,4],[3,7,4,6],[4,8,5,9],[4,0,5,0],[4,2,5,2],[4,4,5,3],[4,6,5,7],[4,6,5,5],[5,7,6,8],[5,9,5,10],[5,9,6,8],[5,0,6,0],[5,0,5,1],[5,1,5,2],[5,2,6,2],[5,2,5,3],[5,3,6,4],[5,5,6,4],[6,8,7,9],[6,8,7,7],[6,0,7,0],[6,2,7,2],[6,4,7,5],[6,4,7,3],[7,1,7,2],[7,2,8,2],[7,2,7,3],[7,3,8,4],[7,5,8,6],[7,7,8,6],[7,9,7,10],[7,9,8,8],[7,0,8,0],[7,0,7,1],[8,2,9,3],[8,2,9,1],[8,4,9,5],[8,6,9,7],[8,6,9,5],[8,8,9,7],[8,0,9,1],[8,0,9,-1],[9,1,10,2],[9,3,10,4],[9,5,10,5],[9,7,10,7],[9,9,10,8],[9,1,10,0],[0,2,1,3],[0,4,0,5],[0,4,1,3],[0,5,1,5],[0,5,0,6],[0,6,0,7],[0,7,1,7],[0,7,0,8],[0,8,1,9],[0,0,1,-1]],
+    {book:'Robert Field',pdfPage:16,printedPage:30,diagram:'upper left',construction:'Ten-step repeat; all 80 unit edges confirmed in at least three source repetitions.'}),
+  bookEntry('field-30-upper-right','10. Alternating diamond and four-pane windows',12,
+    [[0,0,1,0],[0,0,0,1],[0,1,1,2],[0,3,1,2],[1,5,1,6],[1,0,2,1],[1,2,2,3],[1,2,2,1],[1,4,1,5],[1,4,2,3],[2,1,3,2],[2,1,3,0],[2,3,3,4],[2,3,3,2],[3,5,3,6],[3,0,4,0],[3,2,4,3],[3,2,4,1],[3,4,4,4],[3,4,3,5],[4,5,4,6],[4,0,5,0],[4,0,4,1],[4,1,5,1],[4,3,5,3],[4,3,4,4],[4,4,5,4],[4,4,4,5],[5,1,6,1],[5,3,6,3],[5,4,6,4],[5,0,6,0],[0,3,0,4],[0,4,1,4],[0,4,0,5],[0,5,0,6],[4,5,6,5],[5,4,5,6],[6,0,7,0],[6,0,6,1],[6,1,7,2],[6,3,7,2],[7,5,7,6],[7,0,8,1],[7,2,8,3],[7,2,8,1],[7,4,7,5],[7,4,8,3],[8,1,9,2],[8,1,9,0],[8,3,9,4],[8,3,9,2],[9,5,9,6],[9,0,10,0],[9,2,10,3],[9,2,10,1],[9,4,10,4],[9,4,9,5],[10,5,10,6],[10,0,11,0],[10,0,10,1],[10,1,11,1],[10,3,11,3],[10,3,10,4],[10,4,11,4],[10,4,10,5],[11,1,12,1],[11,3,12,3],[11,4,12,4],[11,0,12,0],[6,3,6,4],[6,4,7,4],[6,4,6,5],[6,5,6,6],[11,4,12,5],[12,5,11,6],[11,6,10,5],[10,5,11,4],[0,6,1,6],[0,6,0,7],[0,7,1,8],[0,9,1,8],[1,11,1,12],[1,6,2,7],[1,8,2,9],[1,8,2,7],[1,10,1,11],[1,10,2,9],[2,7,3,8],[2,7,3,6],[2,9,3,10],[2,9,3,8],[3,11,3,12],[3,6,4,6],[3,8,4,9],[3,8,4,7],[3,10,4,10],[3,10,3,11],[4,11,4,12],[4,6,5,6],[4,6,4,7],[4,7,5,7],[4,9,5,9],[4,9,4,10],[4,10,5,10],[4,10,4,11],[5,7,6,7],[5,9,6,9],[5,10,6,10],[5,6,6,6],[0,9,0,10],[0,10,1,10],[0,10,0,11],[0,11,0,12],[5,10,6,11],[6,11,5,12],[5,12,4,11],[4,11,5,10],[6,6,7,6],[6,6,6,7],[6,7,7,8],[6,9,7,8],[7,11,7,12],[7,6,8,7],[7,8,8,9],[7,8,8,7],[7,10,7,11],[7,10,8,9],[8,7,9,8],[8,7,9,6],[8,9,9,10],[8,9,9,8],[9,11,9,12],[9,6,10,6],[9,8,10,9],[9,8,10,7],[9,10,10,10],[9,10,9,11],[10,11,10,12],[10,6,11,6],[10,6,10,7],[10,7,11,7],[10,9,11,9],[10,9,10,10],[10,10,11,10],[10,10,10,11],[11,7,12,7],[11,9,12,9],[11,10,12,10],[11,6,12,6],[6,9,6,10],[6,10,7,10],[6,10,6,11],[6,11,6,12],[10,11,12,11],[11,10,11,12]],
+    {book:'Robert Field',pdfPage:16,printedPage:30,diagram:'upper right',construction:'Six-step frame repeat with alternating square ornaments; full ornamental repeat is twelve steps.'}),
+  bookEntry('field-30-lower','08. Square and hexagon window lattice',8,
+    [[1,1,2,2],[1,3,2,4],[1,3,2,2],[1,5,1,6],[1,5,2,4],[1,6,1,7],[1,7,2,8],[1,1,2,0],[2,2,3,3],[2,2,3,1],[2,4,3,5],[2,4,3,3],[2,0,3,1],[2,0,3,-1],[3,1,4,2],[3,3,4,4],[3,3,4,2],[3,5,3,6],[3,6,3,7],[3,1,4,0],[4,2,5,3],[4,2,5,1],[4,4,4,5],[4,5,4,6],[4,6,4,7],[4,6,5,7],[4,6,5,5],[4,7,4,8],[5,4,6,4],[5,5,6,4],[5,7,6,8],[6,3,6,4],[6,4,7,4],[6,4,7,5],[6,0,6,1],[6,0,7,-1],[7,3,8,2],[7,4,8,4],[7,5,8,6],[7,7,8,6],[7,0,8,0],[7,1,8,2],[0,2,1,3],[0,4,0,5],[0,4,1,3],[0,5,0,6],[0,6,0,7],[0,7,0,8],[0,0,1,1],[0,2,1,1],[3,6,4,6],[4,4,5,4],[4,0,5,0],[5,1,6,1],[5,3,6,3],[5,0,6,0],[6,1,7,1],[6,3,7,3],[6,0,7,0],[0,6,1,6]],
+    {book:'Robert Field',pdfPage:16,printedPage:30,diagram:'lower',
+      construction:'Eight-step repeat transcribed from the visible unit grid; central squares and inscribed diamonds, horizontal and vertical hexagons.'}),
+  bookEntry('field-29-upper-left','01. Octagon and diamond window lattice',6,[
+    ...bookPath([[2,0],[4,0],[6,2],[6,4],[4,6],[2,6],[0,4],[0,2]]),
+    ...bookPath([[3,1],[5,3],[3,5],[1,3]]),
+    [3,0,3,1],[5,3,6,3],[3,5,3,6],[0,3,1,3]
+  ],{book:'Robert Field',pdfPage:15,printedPage:29,diagram:'upper left',
+    construction:'Six-grid-step repeat; two-step bevels; diamond vertices at (3,1), (5,3), (3,5), (1,3).'}),
+  bookEntry('field-29-lower-left','02. Square-centred octagon window lattice',8,
+    bookWindowSquare(false),
+    {book:'Robert Field',pdfPage:15,printedPage:29,diagram:'lower left',
+      construction:'Eight-grid-step repeat; inner square from (2,2) to (6,6); diagonal corner bars.'}),
+  bookEntry('field-29-lower-right','03. Diamond-in-square octagon window lattice',8,
+    bookWindowSquare(true),
+    {book:'Robert Field',pdfPage:15,printedPage:29,diagram:'lower right',
+      construction:'Same outer construction as lower left, with an inscribed four-step diamond.'}),
+  bookEntry('field-29-upper-right','04. Crossed star window lattice',5,[
+    [2,0,2,1],[2,1,3,1],[2,1,2,2],[2,2,3,2],[2,2,2,3],
+    [3,3,4,4],[3,0,3,1],[3,0,4,-1],[3,1,4,1],[3,1,3,2],
+    [3,2,4,2],[3,2,3,3],[4,4,5,5],[4,4,5,3],[4,1,5,0],
+    [4,2,5,3],[0,3,1,4],[0,0,1,1],[0,0,1,-1],[0,3,1,2],
+    [1,4,2,5],[1,4,2,3],[1,1,2,1],[1,2,2,2]
+  ],{book:'Robert Field',pdfPage:15,printedPage:29,diagram:'upper right',
+    construction:'Five-step square repeat. All 24 unit edges sampled against seven or more ungridded repeats in the source scan.'}),
+  bookEntry('field-28-lower-left','05. Diagonal bands with square windows',10,
+    bookDiagonalWindow(false),{book:'Robert Field',pdfPage:15,printedPage:28,diagram:'lower left',
+      construction:'Ten-step repeat, diagonal boundaries at offsets 4 and 6; four-step square apertures on alternating centres.'}),
+  bookEntry('field-28-lower-right','06. Diagonal bands with divided windows',8,
+    bookDiagonalWindow(true),{book:'Robert Field',pdfPage:15,printedPage:28,diagram:'lower right',
+      construction:'Eight-step repeat, diagonal boundaries at offsets 3 and 5; two-step squares and four one-step extensions.'}),
+  bookEntry('field-28-upper-right','07. Staggered elongated window lattice',4,
+    bookElongatedWindow(),{book:'Robert Field',pdfPage:15,printedPage:28,diagram:'upper right',
+      construction:'Four by twelve repeat. Alternating rows are displaced two steps horizontally and six vertically.'},12)
+];
+
+GRID_LIB.sort((a,b)=>parseInt(a.name,10)-parseInt(b.name,10));
+GRID_LIB.push(...REFERENCE_PATTERNS,...IMAGE_PATTERNS);
+GRID_LIB.splice(0,GRID_LIB.length,...new Map(GRID_LIB.map(entry=>[entry.id,entry])).values());
+const complexityOrder={Easy:0,Medium:1,Advanced:2,Hard:2};
+GRID_LIB.sort((a,b)=>(complexityOrder[a.group]??1)-(complexityOrder[b.group]??1)
+  || a.s.gType.localeCompare(b.s.gType)
+  || a.name.replace(/^\d+\.\s*/, '').localeCompare(b.name.replace(/^\d+\.\s*/, '')));
+GRID_LIB.forEach((entry,i)=>{
+  entry.group=entry.group==='Hard'?'Advanced':entry.group;
+  entry.name=String(i+1).padStart(2,'0')+'. '+entry.name.replace(/^\d+\.\s*/, '');
+});
 
 /* ============================================================ guide
    Instructions for the grid designer, with pictures drawn by the designer itself and a
@@ -1810,10 +1894,10 @@ function buildGuide(){
   });
   h+='</div>';
   /* the worked example builds one of the book's patterns a few lines at a time */
-  const w=GRID_LIB.findIndex(e=>/Page 22/.test(e.name))>=0?GRID_LIB.findIndex(e=>/Page 22/.test(e.name)):(GRID_LIB.length?0:-1);
+  const w=GRID_LIB.length?0:-1;
   if(w>=0){
     const e=GRID_LIB[w], segs=(e.s.gData||'').split(';').filter(Boolean);
-    h+=`<h2>Worked example: ${e.name}</h2><p>The pattern below is drawn from Field's book. Its repeat cell is ${e.s.gW}${e.s.gType==='iso'?'':' × '+e.s.gH} grid squares and it is made of ${segs.length} straight lines. Here it is built up a few lines at a time.</p><div class="gframes">`;
+    h+=`<h2>Worked example: ${e.name}</h2><p>The repeat cell is ${e.s.gW}${e.s.gType==='iso'?'':' × '+e.s.gH} grid squares, with ${segs.length} straight lines.</p><div class="gframes">`;
     [0.25,0.5,0.75,1].forEach(f=>{
       const n=Math.max(1,Math.round(segs.length*f));
       h+=`<div class="gpic">${gridThumb(Object.assign({},e.s,{gData:segs.slice(0,n).join(';'),gShowCell:true}),400,300,{cell:true,label:n+' lines'})}<div class="gcap">${n} of ${segs.length} lines</div></div>`;
@@ -1821,10 +1905,10 @@ function buildGuide(){
     h+=`</div><p><button class="btn" id="guideOpenW">Open this pattern in the designer</button></p>`;
   }
   /* every pattern in the library */
-  h+=`<h2>All the examples from the books</h2>`;
+  h+=`<h2>Pattern library</h2>`;
   if(!GRID_LIB.length){h+='<p>No patterns are loaded yet.</p>'}
   else{
-    h+=`<p>${GRID_LIB.length} patterns recovered from the two books. Each is a drawing on a grid, so it opens in the designer and can be changed, resized, and exported.</p>`;
+    h+=`<p>${GRID_LIB.length} drawings transcribed so far.</p>`;
     let cur='';
     GRID_LIB.forEach((e,i)=>{
       if(e.group!==cur){ if(cur) h+='</div>'; cur=e.group; h+=`<h3 class="ggrp">${cur}</h3><div class="gal">`; }
@@ -1832,7 +1916,7 @@ function buildGuide(){
     });
     if(cur) h+='</div>';
   }
-  h+=`<h2>Sources</h2><p>Robert Field, <i>Geometric Patterns from Islamic Art and Architecture</i> (Tarquin, 2000) and Keith Critchlow, <i>Islamic Patterns: An Analytical and Cosmological Approach</i> (Thames and Hudson, 1976). The patterns here were recovered from scans of the books by finding the grid each drawing sits on, and each was checked by rebuilding it and comparing with the page. No page image is reproduced.</p>`;
+  h+=`<h2>Method</h2><p>Each library drawing follows an individual source diagram and its construction grid. The library is being rebuilt; additional diagrams will be included after comparison with their sources.</p>`;
   el.innerHTML=h;
   el.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>openGridEntry(+b.dataset.open));
   const wb=document.getElementById('guideOpenW'); if(wb) wb.onclick=()=>openGridEntry(w);
@@ -1999,13 +2083,33 @@ function applyPreset(i){
   clampAll();
   buildLists();buildParams();render();sync();
 }
-/* grid library: grouped by the book and the page a pattern comes from */
+/* numbered grid library grouped by complexity */
 function loadGridPattern(i){
   const e=GRID_LIB[i]; if(!e) return;
   GP.lib=i;
   st=Object.assign({},DEF,ENGINES.find(x=>x.id==='gridp').def,{engine:'gridp'},e.s);
   GP.start=null; GP.hist=[];
   clampAll(); buildLists(); buildParams(); render(); sync();
+}
+function importGridPattern(entry){
+  if(!entry||typeof entry.name!=='string'||!entry.s||typeof entry.s!=='object')
+    throw new Error('Invalid pattern file');
+  const s=entry.s;
+  const type=s.gType;
+  const w=Number(s.gW),h=Number(s.gH);
+  if(!['square','iso'].includes(type)||!Number.isInteger(w)||!Number.isInteger(h)||
+     w<1||w>64||h<1||h>64||typeof s.gData!=='string'||s.gData.length>100000)
+    throw new Error('Pattern grid or line data is invalid');
+  for(const field of ['gData','gCirc','gArcs']){
+    const value=s[field]||'';
+    if(typeof value!=='string'||value.length>100000||
+       (value&&!value.split(';').every(row=>row.split(',').every(v=>v!==''&&Number.isFinite(Number(v))))))
+      throw new Error('Invalid '+field);
+  }
+  const safeName=entry.name.replace(/[<>&"']/g,'').slice(0,90);
+  GRID_LIB.push({id:String(entry.id||'imported').slice(0,90),name:safeName,
+    group:'Imported',note:'Imported',s:Object.assign({},s,{gSym:'none'})});
+  loadGridPattern(GRID_LIB.length-1);
 }
 function buildGridLib(){
   const on=st.engine==='gridp';
@@ -2020,14 +2124,26 @@ function buildGridLib(){
     opts+=`<option value="${i}"${i===GP.lib?' selected':''}>${e.name} · ${size(e)}</option>`;
   });
   if(open) opts+='</optgroup>';
-  $('glib').innerHTML=`<select id="glibSel" aria-label="Patterns from the books">${opts}</select>
+  $('glib').innerHTML=`<select id="glibSel" aria-label="Numbered patterns by complexity">${opts}</select>
     <div style="display:flex;gap:6px;margin-top:8px">
       <button class="btn" id="glibPrev" style="flex:1">‹ Previous</button>
       <button class="btn" id="glibNext" style="flex:1">Next ›</button></div>
+    <div style="margin-top:8px"><button class="btn" id="gridImport">Import pattern JSON</button>
+      <input type="file" id="gridImportFile" accept=".json,application/json" hidden></div>
+    <div class="card" id="gridImportStatus" style="display:none"></div>
     <div class="card" style="margin-top:8px">Open the <a href="#" data-go="guide">guide</a> to see every pattern as a picture.</div>`;
   $('glibSel').onchange=e=>{ if(e.target.value!=='') loadGridPattern(+e.target.value) };
   const step=d=>{ const n=GRID_LIB.length; loadGridPattern(GP.lib===undefined||GP.lib===null?(d>0?0:n-1):(GP.lib+d+n)%n) };
   $('glibPrev').onclick=()=>step(-1); $('glibNext').onclick=()=>step(1);
+  $('gridImport').onclick=()=>$('gridImportFile').click();
+  $('gridImportFile').onchange=async event=>{
+    const file=event.target.files[0]; if(!file)return;
+    try{
+      const data=JSON.parse(await file.text());
+      if(Array.isArray(data))throw new Error('Choose one pattern JSON file');
+      importGridPattern(data);
+    }catch(error){const status=$('gridImportStatus');status.style.display='block';status.textContent=error.message}
+  };
   $('glib').querySelectorAll('[data-go]').forEach(a=>a.onclick=ev=>{ev.preventDefault();document.querySelector('#nav [data-p='+a.dataset.go+']').click()});
 }
 function buildLists(){

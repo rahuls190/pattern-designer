@@ -1,0 +1,126 @@
+[
+  {
+    "id": "field-53-hexagon-stars",
+    "group": "Medium",
+    "name": "Six-point stars among regular hexagons",
+    "source": {
+      "book": "Robert Field, Geometric Patterns from Islamic Art & Architecture",
+      "pdfPage": 27,
+      "printedPage": 53,
+      "diagram": "topkapi",
+      "construction": "Regular unit hexagons and six-point star boundaries on the triangular lattice; centres at (2m,2n), with stars where m-n is divisible by 3."
+    },
+    "s": {
+      "gType": "iso",
+      "gW": 6,
+      "gH": 6,
+      "gSub": 1,
+      "gSize": 40,
+      "gSym": "none",
+      "gTool": "line",
+      "gShowGrid": false,
+      "gShowCell": true,
+      "gBand": false,
+      "width": 2,
+      "pal": 1,
+      "frame": false,
+      "gData": "1,4,1,5;1,5,2,5;1,6,2,5;1,0,1,1;0,1,1,1;5,2,6,1;5,1,5,2;4,1,5,1;4,1,5,0;5,5,5,6;5,5,6,5;0,5,1,4;0,3,1,2;5,3,6,3;5,2,5,3;1,1,1,2;5,4,5,5;5,4,6,3;0,3,1,3;1,3,1,4;2,1,3,0;1,1,2,1;2,5,3,5;3,5,3,6;3,0,3,1;3,1,4,1;3,2,4,1;3,2,3,3;2,3,3,3;1,4,2,3;2,5,3,4;3,3,3,4;3,6,4,5;4,5,5,5;4,3,5,2;3,3,4,3",
+      "gCirc": "",
+      "gArcs": "",
+      "gFill": ""
+    }
+  },
+  {
+    "id": "field-55-hexagons-stars-rhombi",
+    "group": "Medium",
+    "name": "Six-point stars, large hexagons and rhombi",
+    "source": {
+      "book": "Robert Field, Geometric Patterns from Islamic Art & Architecture",
+      "pdfPage": 28,
+      "printedPage": 55,
+      "diagram": "gurgan",
+      "construction": "Regular side-2 hexagons at (3m,3n) where m-n is divisible by 3, unit-edge six-point stars at the remaining centres. Rhombi are the residual faces."
+    },
+    "s": {
+      "gType": "iso",
+      "gW": 9,
+      "gH": 9,
+      "gSub": 1,
+      "gSize": 40,
+      "gSym": "none",
+      "gTool": "line",
+      "gShowGrid": false,
+      "gShowCell": true,
+      "gBand": false,
+      "width": 2,
+      "pal": 1,
+      "frame": false,
+      "gData": "1,1,2,0;0,2,1,1;8,2,9,2;7,2,8,2;7,1,7,2;7,0,7,1;7,9,8,8;8,8,9,7;0,7,1,7;1,7,2,7;2,7,2,8;2,8,2,9;1,1,1,2;1,2,2,2;1,3,2,2;1,3,1,4;0,4,1,4;8,5,9,4;8,4,8,5;7,4,8,4;7,4,8,3;8,2,8,3;1,4,1,5;1,5,2,5;1,6,2,5;1,6,1,7;8,7,8,8;7,7,8,7;7,7,8,6;8,5,8,6;8,5,9,5;0,5,1,4;4,7,4,8;4,8,5,8;4,9,5,8;4,0,4,1;3,1,4,1;2,2,3,1;2,1,2,2;1,1,2,1;2,8,3,8;3,8,4,7;4,4,5,3;3,5,4,4;2,5,3,5;4,1,5,1;5,1,5,2;5,2,5,3;4,4,4,5;4,5,5,5;4,6,5,5;4,6,4,7;3,7,4,7;2,8,3,7;1,7,2,6;2,5,2,6;7,7,7,8;7,8,8,8;6,1,7,1;5,2,6,1;4,1,5,0;5,8,5,9;5,8,6,8;6,8,7,7;7,3,8,2;7,3,7,4;6,4,7,4;5,5,6,4;5,4,5,5;4,4,5,4;5,2,6,2;6,2,7,1",
+      "gCirc": "",
+      "gArcs": "",
+      "gFill": ""
+    }
+  },
+  {
+    "id": "field-52-hexagon-triangle-net",
+    "group": "Easy",
+    "name": "Pointed hexagons and equilateral triangles",
+    "source": {
+      "book": "Robert Field, Geometric Patterns from Islamic Art & Architecture",
+      "pdfPage": 27,
+      "printedPage": 52,
+      "diagram": "intro",
+      "construction": "Regular pointed hexagons with vertices (1,1),(-1,2),(-2,1),(-1,-1),(1,-2),(2,-1). Centres form the sublattice (2m,2n), m-n divisible by 3. Equilateral triangles are the residual faces."
+    },
+    "s": {
+      "gType": "iso",
+      "gW": 6,
+      "gH": 6,
+      "gSub": 1,
+      "gSize": 40,
+      "gSym": "none",
+      "gTool": "line",
+      "gShowGrid": false,
+      "gShowCell": true,
+      "gBand": false,
+      "width": 2,
+      "pal": 1,
+      "frame": false,
+      "gData": "-1,2,1,1;4,1,5,2;4,1,5,-1;-1,5,1,4;1,4,2,5;1,1,2,-1;1,4,3,3;0,3,1,4;0,3,1,1;1,1,3,0;3,0,4,1;3,3,4,1;3,6,5,5;2,5,3,6;2,5,3,3;3,3,5,2;5,2,6,3;5,5,6,3",
+      "gCirc": "",
+      "gArcs": "",
+      "gFill": ""
+    }
+  },
+  {
+    "id": "field-55-stars-in-touching-hexagons",
+    "group": "Easy",
+    "name": "Six-point stars in touching hexagons",
+    "source": {
+      "book": "Robert Field, Geometric Patterns from Islamic Art & Architecture",
+      "pdfPage": 28,
+      "printedPage": 55,
+      "diagram": "konya",
+      "construction": "Side-2 regular hexagons at (4m,4n), each containing the unit-edge six-point star. The star tips bisect the hexagon sides; equilateral triangles occupy the gaps."
+    },
+    "s": {
+      "gType": "iso",
+      "gW": 4,
+      "gH": 4,
+      "gSub": 1,
+      "gSize": 40,
+      "gSym": "none",
+      "gTool": "line",
+      "gShowGrid": false,
+      "gShowCell": true,
+      "gBand": false,
+      "width": 2,
+      "pal": 1,
+      "frame": false,
+      "gData": "1,1,2,0;0,2,1,1;3,2,4,2;2,2,3,2;2,1,2,2;2,0,2,1;2,4,3,3;3,3,4,2;0,2,1,2;1,2,2,2;2,2,2,3;2,3,2,4;1,2,1,3;1,3,2,3;1,4,2,3;1,0,1,1;0,1,1,1;3,2,4,1;3,1,3,2;2,1,3,1;2,1,3,0;3,3,3,4;3,3,4,3;0,3,1,2",
+      "gCirc": "",
+      "gArcs": "",
+      "gFill": ""
+    }
+  }
+]

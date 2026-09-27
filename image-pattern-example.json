@@ -1,0 +1,17 @@
+{
+  "patterns": [
+    {
+      "id": "my-square-pattern",
+      "name": "Square pattern",
+      "complexity": "Medium",
+      "image": "diagram.png",
+      "grid": "square",
+      "origin": [20, 20],
+      "u": [30, 0],
+      "v": [0, 30],
+      "repeat": [8, 8],
+      "bounds": [20, 20, 620, 620],
+      "exclude": [[20, 20, 180, 180]]
+    }
+  ]
+}
