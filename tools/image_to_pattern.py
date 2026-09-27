@@ -136,7 +136,7 @@ def comparison(image, edges, bounds, origin, u, v, repeat, output):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('manifest', type=Path, help='JSON manifest of cropped diagrams and grid calibrations')
-    parser.add_argument('--site', type=Path, default=Path(__file__).resolve().parent,
+    parser.add_argument('--site', type=Path, default=Path(__file__).resolve().parent.parent,
                         help='Website folder containing index.html')
     parser.add_argument('--review', type=Path, help='Folder for source/drawing comparisons')
     args = parser.parse_args()

@@ -6,19 +6,19 @@ Open `index.html` in a browser. No build step, no dependencies, no server.
 
 ## Convert scanned grid diagrams
 
-`image_to_pattern.py` traces straight grid edges from cropped scan images. It accepts
-several diagrams in one manifest and adds their editable linework to the website.
+`tools/image_to_pattern.py` is a separate command-line tool. It traces straight
+grid edges from cropped scan images and adds their editable linework to the library.
 Python needs Pillow and NumPy (`pip install pillow numpy`).
 
-1. Copy `image-pattern-example.json` and place each cropped diagram beside it. For each
+1. Copy `tools/image-pattern-example.json` and place each cropped diagram beside it. For each
    image, give the grid origin, the pixel vectors for one step along the two grid axes,
    the repeat size, and the usable image bounds. An `exclude` rectangle can mask a
    printed construction grid or other annotation. For a triangle grid, set `grid` to
    `iso` and use equal repeat dimensions.
-2. Run `python image_to_pattern.py your-manifest.json`. It updates
-   `image-patterns.json` and `image-patterns.js`. Refresh `index.html` to see the
-   numbered entries in Draw. The generated individual JSON files can also be opened
-   with Draw's **Import pattern JSON** button without changing the website files.
+2. Run `python tools/image_to_pattern.py your-manifest.json`. The tool updates
+   `image-patterns.json` and `image-patterns.js`, which supply the numbered entries
+   in Draw when the website is refreshed. There is no converter or import control
+   in the website.
 3. Review the source-versus-drawing images and `report.json` in
    `image-pattern-review/`. Tune `origin`, `u`, `v`, `radius`, or `vote_ratio` for any
    missing lines, then rerun. The script updates entries by ID rather than duplicating

@@ -55,12 +55,13 @@ async function main() {
     await page.setViewportSize(viewport);
     await page.screenshot({path:path.join(output, `gallery-${viewport.width}.png`),fullPage:true});
   }
-  const imported = await page.evaluate(() => {
-    importGridPattern({id:'test-import',name:'Test import',s:{gType:'square',gW:2,gH:2,gData:'0,0,1,0'}});
+  const generated = await page.evaluate(() => {
+    const i=GRID_LIB.findIndex(entry=>entry.id==='field-31-lower');
+    loadGridPattern(i);
     return {count:GRID_LIB.length,engine:st.engine,data:st.gData};
   });
-  if(imported.count!==entries.length+1||imported.engine!=='gridp'||imported.data!=='0,0,1,0')
-    throw new Error('Pattern import failed');
+  if(generated.count!==entries.length||generated.engine!=='gridp'||!generated.data)
+    throw new Error('Generated library pattern failed to open');
   await browser.close();
   if (errors.length) throw new Error(errors.join('\n'));
   fs.writeFileSync(path.join(output, 'audit.json'), JSON.stringify(entries.map(({svg,data,...e})=>e),null,2));

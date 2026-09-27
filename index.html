@@ -2239,26 +2239,6 @@ function loadGridPattern(i){
   GP.start=null; GP.hist=[];
   clampAll(); buildLists(); buildParams(); render(); sync();
 }
-function importGridPattern(entry){
-  if(!entry||typeof entry.name!=='string'||!entry.s||typeof entry.s!=='object')
-    throw new Error('Invalid pattern file');
-  const s=entry.s;
-  const type=s.gType;
-  const w=Number(s.gW),h=Number(s.gH);
-  if(!['square','iso'].includes(type)||!Number.isInteger(w)||!Number.isInteger(h)||
-     w<1||w>64||h<1||h>64||typeof s.gData!=='string'||s.gData.length>100000)
-    throw new Error('Pattern grid or line data is invalid');
-  for(const field of ['gData','gCirc','gArcs']){
-    const value=s[field]||'';
-    if(typeof value!=='string'||value.length>100000||
-       (value&&!value.split(';').every(row=>row.split(',').every(v=>v!==''&&Number.isFinite(Number(v))))))
-      throw new Error('Invalid '+field);
-  }
-  const safeName=entry.name.replace(/[<>&"']/g,'').slice(0,90);
-  GRID_LIB.push({id:String(entry.id||'imported').slice(0,90),name:safeName,
-    group:'Imported',note:'Imported',s:Object.assign({},s,{gSym:'none'})});
-  loadGridPattern(GRID_LIB.length-1);
-}
 function buildGridLib(){
   const on=st.engine==='gridp';
   $('h-glib').style.display=on?'':'none';
@@ -2276,22 +2256,10 @@ function buildGridLib(){
     <div style="display:flex;gap:6px;margin-top:8px">
       <button class="btn" id="glibPrev" style="flex:1">‹ Previous</button>
       <button class="btn" id="glibNext" style="flex:1">Next ›</button></div>
-    <div style="margin-top:8px"><button class="btn" id="gridImport">Import pattern JSON</button>
-      <input type="file" id="gridImportFile" accept=".json,application/json" hidden></div>
-    <div class="card" id="gridImportStatus" style="display:none"></div>
     <div class="card" style="margin-top:8px">Open the <a href="#" data-go="guide">guide</a> to see every pattern as a picture.</div>`;
   $('glibSel').onchange=e=>{ if(e.target.value!=='') loadGridPattern(+e.target.value) };
   const step=d=>{ const n=GRID_LIB.length; loadGridPattern(GP.lib===undefined||GP.lib===null?(d>0?0:n-1):(GP.lib+d+n)%n) };
   $('glibPrev').onclick=()=>step(-1); $('glibNext').onclick=()=>step(1);
-  $('gridImport').onclick=()=>$('gridImportFile').click();
-  $('gridImportFile').onchange=async event=>{
-    const file=event.target.files[0]; if(!file)return;
-    try{
-      const data=JSON.parse(await file.text());
-      if(Array.isArray(data))throw new Error('Choose one pattern JSON file');
-      importGridPattern(data);
-    }catch(error){const status=$('gridImportStatus');status.style.display='block';status.textContent=error.message}
-  };
   $('glib').querySelectorAll('[data-go]').forEach(a=>a.onclick=ev=>{ev.preventDefault();document.querySelector('#nav [data-p='+a.dataset.go+']').click()});
 }
 function buildLists(){
