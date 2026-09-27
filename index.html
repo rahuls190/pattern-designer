@@ -4,103 +4,282 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Pattern Designer</title>
+<meta name="description" content="Interactive designer for geometric ornament, Islamic star patterns, tilings, Voronoi designs, and grid-based drawings.">
+<meta property="og:title" content="Pattern Designer">
+<meta property="og:description" content="Interactive designer for geometric ornament, Islamic star patterns, tilings, Voronoi designs, and grid-based drawings.">
 <style>
-:root{--bg:#f4efe6;--panel:#fbf8f2;--ink:#231f2e;--mute:#6f6a78;--line:#ddd3c1;--accent:#2b3a8c;--gold:#b98a2e;--ok:#1f7a4d}
-@media(prefers-color-scheme:dark){:root{--bg:#16141d;--panel:#1e1b28;--ink:#efe9dc;--mute:#9b95a8;--line:#332f42;--accent:#8fa0ff;--gold:#d8ac4d;--ok:#4fbd8a}}
+:root{
+  --bg:#f5f1e8;
+  --panel:#ffffff;
+  --panel-sub:#faf7f0;
+  --ink:#1f1b26;
+  --mute:#6e6978;
+  --line:#ded7c8;
+  --line-light:#eae4d7;
+  --accent:#2b3a8c;
+  --accent-soft:rgba(43,58,140,0.08);
+  --gold:#b98a2e;
+  --ok:#1f7a4d;
+  --shadow-sm:0 1px 3px rgba(35,31,46,0.06), 0 1px 2px rgba(35,31,46,0.04);
+  --shadow-md:0 4px 16px rgba(35,31,46,0.08);
+  --shadow-art:0 10px 32px rgba(35,31,46,0.12);
+  --radius-sm:6px;
+  --radius-md:8px;
+  --radius-lg:12px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#131119;
+    --panel:#1c1924;
+    --panel-sub:#23202e;
+    --ink:#f2edf0;
+    --mute:#9a93a6;
+    --line:#322e3d;
+    --line-light:#282533;
+    --accent:#8fa0ff;
+    --accent-soft:rgba(143,160,255,0.12);
+    --gold:#d8ac4d;
+    --ok:#4fbd8a;
+    --shadow-sm:0 1px 3px rgba(0,0,0,0.3);
+    --shadow-md:0 4px 16px rgba(0,0,0,0.4);
+    --shadow-art:0 10px 32px rgba(0,0,0,0.5);
+  }
+}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 Georgia,'Times New Roman',serif}
-header{display:flex;gap:20px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
-.logo{font-size:19px;letter-spacing:.04em;white-space:nowrap}.logo b{color:var(--gold)}
-nav{display:flex;gap:2px;font-family:system-ui,sans-serif;font-size:13px;flex-wrap:wrap}
-nav a{padding:6px 12px;border-radius:6px;color:var(--mute);text-decoration:none;cursor:pointer;user-select:none}
-nav a.on{background:var(--accent);color:#fff}
-.btn{font:600 13px system-ui,sans-serif;padding:7px 13px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
-.btn:hover{border-color:var(--accent)}
+body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.55 system-ui,-apple-system,sans-serif}
+header.studio-header{display:flex;gap:18px;align-items:center;padding:10px 20px;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap;min-height:54px}
+.brand{display:flex;align-items:center;gap:7px;font:17px/1 Georgia,'Times New Roman',serif;letter-spacing:.02em;white-space:nowrap;user-select:none}
+.brand-glyph{color:var(--gold);font-size:15px}
+.brand b{font-weight:700;color:var(--accent)}
+.brand-badge{font:600 10px system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;border-radius:4px;background:var(--accent-soft);color:var(--accent);margin-left:4px}
+nav.studio-nav{display:flex;gap:2px;font-family:system-ui,sans-serif;font-size:13px;flex-wrap:wrap}
+nav.studio-nav a{padding:6px 12px;border-radius:6px;color:var(--mute);text-decoration:none;cursor:pointer;user-select:none;font-weight:500;transition:all 0.15s ease}
+nav.studio-nav a:hover{color:var(--ink);background:var(--panel-sub)}
+nav.studio-nav a.on{background:var(--panel-sub);color:var(--ink);font-weight:600;box-shadow:inset 0 -2px 0 var(--accent)}
+.btn{font:600 12.5px system-ui,sans-serif;padding:6px 12px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;transition:all 0.15s ease;display:inline-flex;align-items:center;justify-content:center;gap:5px;user-select:none}
+.btn:hover{border-color:var(--accent);background:var(--panel-sub)}
 .btn.pri{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.pri:hover{filter:brightness(1.1)}
+.btn.on{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 1px 3px rgba(43,58,140,0.25)}
+.btn-sm{padding:4px 9px;font-size:11.5px}
 .spacer{flex:1}
-main{display:grid;grid-template-columns:250px 1fr 292px;height:calc(100vh - 58px);min-height:540px}
-aside{background:var(--panel);overflow:auto;padding:14px;font-family:system-ui,sans-serif;font-size:13px}
-aside.l{border-right:1px solid var(--line)}aside.r{border-left:1px solid var(--line)}
-h3{margin:16px 0 7px;font:600 10.5px system-ui,sans-serif;letter-spacing:.11em;text-transform:uppercase;color:var(--mute)}
-h3:first-child{margin-top:0}
-.item{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:7px 9px;border-radius:6px;cursor:pointer;margin-bottom:2px;user-select:none}
-.item:hover{background:var(--bg)}
-.item.on{background:var(--bg);box-shadow:inset 3px 0 var(--accent);font-weight:600}
+.hdr-actions{display:flex;gap:8px;align-items:center}
+main{display:grid;grid-template-columns:280px 1fr 310px;height:calc(100vh - 55px);min-height:550px;transition:grid-template-columns 0.25s cubic-bezier(0.16, 1, 0.3, 1)}
+main.drawer-collapsed{grid-template-columns:0px 1fr 310px}
+aside{background:var(--panel);overflow-y:auto;overflow-x:hidden;font-family:system-ui,sans-serif;font-size:13px}
+aside.l{border-right:1px solid var(--line);display:flex;flex-direction:column}
+aside.r{border-left:1px solid var(--line);padding:14px}
+main.drawer-collapsed aside.l{display:none}
+
+/* Drawer styles (Left Panel) */
+.drawer-header{padding:10px 14px;border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0;z-index:2}
+.drawer-seg{display:flex;background:var(--panel-sub);border:1px solid var(--line);border-radius:6px;padding:2px;gap:2px}
+.drawer-seg button{flex:1;border:0;background:transparent;color:var(--mute);padding:6px 8px;font:600 11.5px system-ui,sans-serif;border-radius:4px;cursor:pointer;transition:all 0.15s ease}
+.drawer-seg button.on{background:var(--panel);color:var(--ink);box-shadow:var(--shadow-sm)}
+.drawer-body{padding:12px;overflow-y:auto;flex:1}
+.drawer-hint{font-size:11px;color:var(--mute);margin-bottom:10px;line-height:1.35}
+.drawer-sec-title{font:600 10.5px system-ui,sans-serif;letter-spacing:.09em;text-transform:uppercase;color:var(--mute);margin:14px 0 6px}
+.drawer-sec-title:first-child{margin-top:0}
+
+/* Preset Cards */
+.pcard{border:1px solid var(--line);border-radius:8px;padding:9px 11px;margin-bottom:7px;background:var(--panel-sub);cursor:pointer;transition:all 0.15s ease;user-select:none}
+.pcard:hover{border-color:var(--accent);background:var(--panel);transform:translateY(-1px);box-shadow:var(--shadow-sm)}
+.pcard.on{border-color:var(--accent);background:var(--panel);box-shadow:0 0 0 1.5px var(--accent)}
+.pcard-hdr{display:flex;justify-content:space-between;align-items:baseline;gap:6px;margin-bottom:3px}
+.pcard-title{font:600 12.5px system-ui,sans-serif;color:var(--ink)}
+.pcard-note{font:11.5px/1.35 system-ui,sans-serif;color:var(--mute)}
+
+/* Engine & Tiling Cards */
+.ecard{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:6px;background:var(--panel-sub);cursor:pointer;transition:all 0.15s ease;user-select:none}
+.ecard:hover{border-color:var(--accent);background:var(--panel)}
+.ecard.on{border-color:var(--accent);background:var(--panel);box-shadow:inset 3px 0 var(--accent);font-weight:600}
+.ecard-hdr{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.ecard-title{font:600 12px system-ui,sans-serif;color:var(--ink)}
+.ecard-sub{font:11px system-ui,sans-serif;color:var(--mute);margin-top:2px}
+
+.item{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:6px 9px;border-radius:6px;cursor:pointer;margin-bottom:2px;user-select:none;font-size:12.5px}
+.item:hover{background:var(--panel-sub)}
+.item.on{background:var(--panel-sub);box-shadow:inset 3px 0 var(--accent);font-weight:600}
 .item small{color:var(--mute);font-weight:400;font-size:11px}
-.grp{font:600 9.5px system-ui,sans-serif;letter-spacing:.09em;text-transform:uppercase;color:var(--mute);
-  margin:13px 0 4px;padding:0 0 3px 9px;border-bottom:1px solid var(--line)}
+.grp{font:600 9.5px system-ui,sans-serif;letter-spacing:.09em;text-transform:uppercase;color:var(--mute);margin:11px 0 4px;padding:0 0 3px 6px;border-bottom:1px solid var(--line-light)}
 .grp:first-child{margin-top:0}
-.grp em{display:block;font:400 10px system-ui,sans-serif;letter-spacing:0;text-transform:none;
-  opacity:.75;margin-top:1px}
-.tag{font-size:9.5px;padding:2px 6px;border-radius:99px;border:1px solid var(--line);color:var(--mute);white-space:nowrap;font-weight:400}
-.tag.doc{color:var(--ok);border-color:var(--ok)}.tag.pl{color:var(--gold);border-color:var(--gold)}
-.stage{display:flex;flex-direction:column;background:var(--bg);min-width:0}
-.tools{display:flex;gap:8px;padding:9px 14px;align-items:center;flex-wrap:wrap;font-family:system-ui,sans-serif;font-size:13px}
-.seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
-.seg button{border:0;border-right:1px solid var(--line);background:var(--panel);color:var(--mute);padding:7px 11px;font:13px system-ui,sans-serif;cursor:pointer}
-.seg button:last-child{border-right:0}
-.seg button.on{background:var(--ink);color:var(--bg)}
-.canvas{flex:1;margin:0 14px;border:1px solid var(--line);border-radius:8px;overflow:hidden;position:relative;min-height:220px}
+.grp em{display:block;font:400 10px system-ui,sans-serif;letter-spacing:0;text-transform:none;opacity:.75;margin-top:1px}
+
+/* Tags */
+.tag{font-size:9.5px;padding:2px 6px;border-radius:99px;border:1px solid var(--line);color:var(--mute);white-space:nowrap;font-weight:500}
+.tag.doc{color:var(--ok);border-color:var(--ok);background:rgba(31,122,77,0.06)}
+.tag.pl{color:var(--gold);border-color:var(--gold);background:rgba(185,138,46,0.06)}
+
+/* Center Stage */
+.stage{display:flex;flex-direction:column;background:var(--bg);min-width:0;height:100%}
+.stage-bar{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.bar-sep{width:1px;height:20px;background:var(--line);margin:0 2px}
+.canvas-artboard-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:16px;overflow:hidden;position:relative}
+.canvas{width:100%;height:100%;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-md);overflow:hidden;position:relative;box-shadow:var(--shadow-art)}
 .canvas svg{width:100%;height:100%;display:block}
-.info{padding:9px 14px 12px;font-family:system-ui,sans-serif;font-size:11.5px;color:var(--mute);display:flex;gap:14px;flex-wrap:wrap}
-.info b{color:var(--ink);font-weight:600}
+.stage-footer{display:flex;justify-content:space-between;align-items:center;padding:7px 16px;background:var(--panel);border-top:1px solid var(--line);font-family:system-ui,sans-serif;font-size:11.5px;color:var(--mute);flex-wrap:wrap;gap:8px}
+.art-size-pill{font:600 11px system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--ink);background:var(--panel-sub);border:1px solid var(--line);padding:2px 7px;border-radius:4px}
+
+/* Segmented button controls */
+.seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--panel)}
+.seg button{border:0;border-right:1px solid var(--line);background:transparent;color:var(--mute);padding:6px 10px;font:12.5px system-ui,sans-serif;cursor:pointer;transition:all 0.12s ease;font-weight:500}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--ink);color:var(--bg);font-weight:600}
+.seg button:hover:not(.on){background:var(--panel-sub);color:var(--ink)}
+
+/* Inspector Panel (Right) */
+.insp-nav{display:flex;background:var(--panel-sub);border:1px solid var(--line);border-radius:6px;padding:2px;gap:2px;margin-bottom:14px;position:sticky;top:-14px;z-index:2}
+.insp-tab{flex:1;border:0;background:transparent;color:var(--mute);padding:6px 4px;font:600 11.5px system-ui,sans-serif;border-radius:4px;cursor:pointer;transition:all 0.12s ease;text-align:center;white-space:nowrap}
+.insp-tab.on{background:var(--panel);color:var(--ink);box-shadow:var(--shadow-sm)}
+.insp-sec{margin-bottom:15px;padding-bottom:12px;border-bottom:1px solid var(--line-light)}
+.insp-sec:last-child{border-bottom:0}
+.insp-hdr{font:600 10.5px system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:0 0 9px;display:flex;align-items:center;justify-content:space-between}
+
+/* Form inputs & rows */
 .row{margin-bottom:11px}
-.row label,.rlab{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:3px;font-size:12.5px}
-.row output{color:var(--mute);font-variant-numeric:tabular-nums}
+.row label,.rlab{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:3px;font-size:12.5px;font-weight:500}
 .val{display:flex;align-items:baseline;gap:2px;color:var(--mute)}
-.val input{width:52px;padding:2px 4px;border:1px solid transparent;border-radius:4px;background:var(--bg);
-  color:var(--mute);font:12.5px system-ui,sans-serif;text-align:right;font-variant-numeric:tabular-nums;
-  -moz-appearance:textfield;appearance:textfield}
+.val input{width:56px;padding:2px 5px;border:1px solid transparent;border-radius:4px;background:var(--panel-sub);color:var(--ink);font:12px system-ui,sans-serif;text-align:right;font-variant-numeric:tabular-nums;-moz-appearance:textfield;appearance:textfield}
 .val input::-webkit-outer-spin-button,.val input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .val input:hover{border-color:var(--line)}
-.val input:focus{border-color:var(--accent);background:var(--bg);color:var(--ink);outline:none}
-.val u{font-size:11.5px;text-decoration:none}
-.gsteps{display:flex;flex-direction:column;gap:22px;margin-top:12px}
-.gstep{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:center;padding-bottom:18px;border-bottom:1px solid var(--line)}
-.gstep h3{margin:0 0 6px;font-size:16px;letter-spacing:0;text-transform:none;color:var(--ink)}
-.gstep p{margin:0}
-.gpics{display:flex;gap:10px;max-width:440px;justify-self:end;width:100%}.gpics .gpic{flex:1}
-.gpic{border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--panel);line-height:0}
-.gframes{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin:12px 0}
-.gcap{font:12px system-ui,sans-serif;color:var(--mute);padding:6px 8px;line-height:1.3;background:var(--panel)}
-.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;margin:12px 0 26px}
-.gcard{display:flex;flex-direction:column;gap:6px}
-.gname{font:600 13px system-ui,sans-serif}.gnote{font:12px system-ui,sans-serif;color:var(--mute);min-height:2.4em}
-.ggrp{margin:22px 0 0;font:600 12px system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
-@media(max-width:760px){.gstep{grid-template-columns:1fr}}
-.numbox{width:100%;padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:13px system-ui,sans-serif}
-input[type=range]{width:100%;accent-color:var(--accent);margin:0}
-select{width:100%;padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:13px system-ui,sans-serif}
-.chk{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12.5px;cursor:pointer}
-.chk input{accent-color:var(--accent)}
+.val input:focus{border-color:var(--accent);background:var(--panel);outline:none}
+.val u{font-size:11px;text-decoration:none}
+.numbox{width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel-sub);color:var(--ink);font:12.5px system-ui,sans-serif}
+.numbox:focus{border-color:var(--accent);background:var(--panel);outline:none}
+input[type=range]{width:100%;accent-color:var(--accent);margin:0;cursor:pointer}
+select{width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel-sub);color:var(--ink);font:12.5px system-ui,sans-serif;cursor:pointer}
+select:focus{border-color:var(--accent);background:var(--panel);outline:none}
+.chk{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12.5px;cursor:pointer;user-select:none;font-weight:500}
+.chk input{accent-color:var(--accent);width:15px;height:15px}
+
+/* Swatches */
 .sw{display:flex;gap:6px;flex-wrap:wrap}
-.sw i{width:28px;height:28px;border-radius:5px;border:2px solid transparent;box-shadow:0 0 0 1px var(--line);cursor:pointer}
-.sw i.on{border-color:var(--accent)}
-.card{border:1px solid var(--line);border-radius:8px;padding:9px 10px;margin-top:12px;background:var(--bg);line-height:1.45;font-size:12px}
-/* only a leading <b> is the card's title — bold inside the text stays inline */
-.card>b:first-child{display:block;margin-bottom:3px;font-size:11px;letter-spacing:.06em;
-  text-transform:uppercase;color:var(--mute)}
-.warn{color:var(--gold)}
+.sw i{width:26px;height:26px;border-radius:5px;border:2px solid transparent;box-shadow:0 0 0 1px var(--line);cursor:pointer;transition:transform 0.12s ease}
+.sw i:hover{transform:scale(1.1)}
+.sw i.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+
+/* Export section buttons */
+.export-card{border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--panel-sub);margin-top:8px}
+.export-btn{width:100%;display:flex;align-items:center;justify-content:space-between;padding:8px 11px;margin-bottom:6px;border-radius:6px;border:1px solid var(--line);background:var(--panel);font:600 12px system-ui,sans-serif;color:var(--ink);cursor:pointer;transition:all 0.15s ease}
+.export-btn:last-child{margin-bottom:0}
+.export-btn:hover{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.export-btn small{font-weight:400;color:var(--mute);font-size:10.5px}
+
+/* Cards & notes */
+.card{border:1px solid var(--line);border-radius:8px;padding:9px 10px;margin-top:10px;background:var(--panel-sub);line-height:1.45;font-size:12px}
+.card>b:first-child{display:block;margin-bottom:3px;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+.reading-card{border-left:3px solid var(--accent);background:var(--panel-sub)}
+
+/* Contrast Matrix Tool */
+.contrast-card{border:1px solid var(--line);border-radius:8px;padding:9px 10px;margin-top:10px;background:var(--panel-sub);font-size:12px;line-height:1.4}
+.contrast-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.contrast-title{font:600 10.5px system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+.contrast-ref{display:flex;align-items:center;gap:6px;font:11.5px system-ui,sans-serif;color:var(--ink);margin-bottom:8px;padding:5px 7px;border-radius:6px;background:var(--panel);border:1px solid var(--line)}
+.contrast-dot{width:15px;height:15px;border-radius:3px;box-shadow:0 0 0 1px var(--line);display:inline-block;vertical-align:middle;flex-shrink:0}
+.contrast-alert{padding:6px 8px;border-radius:6px;font:11.5px/1.35 system-ui,sans-serif;margin-bottom:8px}
+.contrast-alert.warn{background:rgba(216,172,77,0.14);border:1px solid var(--gold);color:var(--ink)}
+.contrast-alert.ok{background:rgba(31,122,77,0.12);border:1px solid var(--ok);color:var(--ink)}
+.contrast-table{width:100%;border-collapse:collapse;font:11.5px system-ui,sans-serif}
+.contrast-table th{font:600 10px system-ui,sans-serif;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);padding:3px 4px;border-bottom:1px solid var(--line);text-align:left}
+.contrast-table td{padding:5px 4px;border-bottom:1px solid var(--line-light);vertical-align:middle}
+.contrast-table tr:last-child td{border-bottom:0}
+.contrast-table tr.bad{background:rgba(220,38,38,0.08)}
+.contrast-sample{width:28px;height:18px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;box-sizing:border-box}
+.ratio-val{font-variant-numeric:tabular-nums;font-weight:600;font-size:12px}
+.badge-bad{color:#dc2626;background:rgba(220,38,38,0.14);border:1px solid rgba(220,38,38,0.4);padding:1px 5px;border-radius:99px;font-size:9.5px;font-weight:600;white-space:nowrap}
+.badge-fair{color:var(--gold);background:rgba(185,138,46,0.12);border:1px solid rgba(185,138,46,0.4);padding:1px 5px;border-radius:99px;font-size:9.5px;font-weight:600;white-space:nowrap}
+.badge-good{color:var(--ok);background:rgba(31,122,77,0.12);border:1px solid rgba(31,122,77,0.4);padding:1px 5px;border-radius:99px;font-size:9.5px;font-weight:600;white-space:nowrap}
+
+/* Guide & Reference pages */
 .page{display:none;max-width:860px;margin:0 auto;padding:28px 22px 60px}
 .page.on{display:block}
-.page h1{font-size:26px;margin:0 0 6px}.page h2{font-size:18px;margin:26px 0 8px;border-bottom:1px solid var(--line);padding-bottom:5px}
-.page p,.page li{font-size:14.5px}
+.page h1{font:700 24px Georgia,serif;margin:0 0 6px}
+.page h2{font:600 17px system-ui,sans-serif;margin:26px 0 8px;border-bottom:1px solid var(--line);padding-bottom:5px}
+.page p,.page li{font-size:14px;line-height:1.6}
 .page table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}
 .page td,.page th{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}
 .page th{font:600 11px system-ui,sans-serif;text-transform:uppercase;letter-spacing:.08em;color:var(--mute)}
 .lead{color:var(--mute);font-size:14px}
-code{font:12.5px ui-monospace,Consolas,monospace;background:var(--panel);padding:1px 5px;border-radius:4px}
-@media(max-width:940px){
+code{font:12px ui-monospace,Consolas,monospace;background:var(--panel-sub);padding:1px 5px;border-radius:4px;border:1px solid var(--line-light)}
+
+/* AI Pattern Generator Modal */
+.ai-modal-backdrop{
+  position:fixed;inset:0;background:rgba(15,13,20,0.68);
+  backdrop-filter:blur(4px);z-index:9999;
+  display:flex;align-items:center;justify-content:center;padding:16px;
+}
+.ai-modal{
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  width:100%;max-width:580px;max-height:92vh;display:flex;flex-direction:column;
+  box-shadow:0 24px 48px -12px rgba(0,0,0,0.35);overflow:hidden;
+}
+.ai-modal-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 18px;border-bottom:1px solid var(--line);background:var(--panel-sub);
+}
+.ai-modal-title{
+  font:600 15px system-ui,sans-serif;display:flex;align-items:center;gap:7px;margin:0;
+}
+.ai-modal-body{
+  padding:16px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:13px;
+}
+.ai-dropzone{
+  border:2px dashed var(--line);border-radius:8px;padding:22px 14px;
+  text-align:center;cursor:pointer;background:var(--bg);transition:all .18s;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+}
+.ai-dropzone:hover,.ai-dropzone.dragover{
+  border-color:var(--accent);background:rgba(43,58,140,0.05);
+}
+.ai-preview-box{
+  position:relative;border:1px solid var(--line);border-radius:8px;
+  overflow:hidden;background:#0d1117;display:flex;align-items:center;justify-content:center;
+  max-height:200px;
+}
+.ai-preview-box img{
+  max-width:100%;max-height:200px;object-fit:contain;display:block;
+}
+.ai-samples-grid{
+  display:grid;grid-template-columns:repeat(4, 1fr);gap:8px;margin-top:6px;
+}
+.ai-sample-item{
+  border:1px solid var(--line);border-radius:6px;padding:6px 4px;
+  cursor:pointer;background:var(--bg);text-align:center;font-size:10.5px;
+  transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:3px;
+}
+.ai-sample-item:hover{
+  border-color:var(--accent);transform:translateY(-1px);background:var(--panel);
+}
+.ai-sample-item svg{
+  width:100%;height:46px;display:block;border-radius:4px;
+}
+.ai-modal-footer{
+  display:flex;align-items:center;justify-content:flex-end;gap:8px;
+  padding:12px 18px;border-top:1px solid var(--line);background:var(--panel-sub);
+}
+.ai-spinner{
+  width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);
+  border-top-color:#fff;border-radius:50%;animation:aiSpin .75s linear infinite;display:inline-block;
+  vertical-align:middle;
+}
+@keyframes aiSpin{to{transform:rotate(360deg)}}
+
+@media(max-width:980px){
   main{display:flex;flex-direction:column;height:auto}
-  .stage{order:-1}.canvas{height:56vh;margin:0 10px}
-  aside.l,aside.r{border:0;border-top:1px solid var(--line)}
+  .stage{order:-1;min-height:55vh}
+  .canvas-artboard-wrap{padding:10px;height:52vh}
+  aside.l,aside.r{border:0;border-top:1px solid var(--line);width:100%}
 }
 </style>
 </head>
 <body>
-<header>
-  <div class="logo">Pattern<b>◆</b>Designer</div>
-  <nav id="nav">
+<header class="studio-header">
+  <div class="brand">
+    <span class="brand-glyph">◆</span>
+    <span>Pattern<b>Designer</b></span>
+    <span class="brand-badge">Studio</span>
+  </div>
+  <nav id="nav" class="studio-nav">
     <a class="on" data-p="designer">Designer</a>
     <a data-p="guide">Guide</a>
     <a data-p="constructions">Constructions</a>
@@ -108,38 +287,88 @@ code{font:12.5px ui-monospace,Consolas,monospace;background:var(--panel);padding
     <a data-p="about">About</a>
   </nav>
   <div class="spacer"></div>
-  <button class="btn" id="rnd">Randomise</button>
-  <button class="btn" id="copy">Copy link</button>
-  <span class="seg"><button class="btn pri" id="exp">SVG</button><button class="btn" id="expPdf" title="Vector PDF — this is the format an .ai file uses internally, so Illustrator opens it directly">PDF</button><button class="btn" id="expDxf" title="DXF R12 — AutoCAD opens it directly; convert to DWG if you need that container">DXF</button></span>
+  <div class="hdr-actions">
+    <button class="btn btn-sm" id="rnd" title="Generate random variations">🎲 Randomise</button>
+    <button class="btn btn-sm" id="copy" title="Copy shareable link with parameters">🔗 Share</button>
+    <div class="seg">
+      <button class="btn btn-sm pri" id="exp" title="Export SVG vector file">SVG</button>
+      <button class="btn btn-sm" id="expPdf" title="Export Vector PDF for Adobe Illustrator">PDF</button>
+      <button class="btn btn-sm" id="expDxf" title="Export CAD DXF R12 for CNC / AutoCAD">DXF</button>
+    </div>
+  </div>
 </header>
 
 <!-- ================= DESIGNER ================= -->
 <main id="p-designer">
-  <aside class="l">
-    <h3>Starting points</h3>
-    <div id="presets"></div>
-    <h3>Construction engine</h3>
-    <div id="engines"></div>
-    <h3 id="h-tiling">Underlying tiling</h3>
-    <div id="tilings"></div>
-    <h3 id="h-glib" style="display:none">Numbered pattern collection</h3>
-    <div id="glib"></div>
-    <div class="card" id="srcCard"></div>
+  <!-- Left Panel: Presets & Geometric Engines Drawer -->
+  <aside class="l" id="leftDrawer">
+    <div class="drawer-header">
+      <div class="drawer-seg">
+        <button id="tabPresets" class="on" type="button">⭐ Presets</button>
+        <button id="tabEngines" type="button">📐 Engines &amp; Tilings</button>
+      </div>
+    </div>
+    <div class="drawer-body">
+      <!-- Presets pane -->
+      <div id="panePresets">
+        <div class="drawer-hint">Select a starter design to explore geometries, modes, and palettes:</div>
+        <div id="presets"></div>
+      </div>
+      <!-- Engines & Tilings pane -->
+      <div id="paneEngines" style="display:none">
+        <div class="drawer-sec-title">Construction Engine</div>
+        <div id="engines"></div>
+        <div id="h-tiling" class="drawer-sec-title" style="margin-top:14px">Underlying Tiling</div>
+        <div id="tilings"></div>
+        <div id="h-glib" class="drawer-sec-title" style="display:none;margin-top:14px">Numbered Pattern Collection</div>
+        <div id="glib"></div>
+        <div class="card" id="srcCard"></div>
+      </div>
+    </div>
   </aside>
 
+  <!-- Center Stage: Canvas & Studio Toolbar -->
   <section class="stage">
-    <div class="tools">
+    <div class="stage-bar">
+      <button class="btn btn-sm" id="btnToggleDrawer" title="Toggle presets &amp; library drawer">
+        <span>☰</span> Library
+      </button>
+      <div class="bar-sep"></div>
       <div class="seg" id="modes"></div>
+      <button class="btn btn-sm pri" id="btnStageAiImage" style="display:none;align-items:center;gap:5px" title="Generate grid pattern from image using Gemini Vision"><span>✨</span> AI from Image</button>
+      <button class="btn btn-sm" id="btnSmartSnap" style="display:none;align-items:center;gap:5px" title="Smart Snap: automatically align drawing points to the nearest structural intersection point within the detected grid"><span>🧲</span> Smart Snap</button>
       <span class="spacer"></span>
-      <span class="seg"><button id="zo">−</button><button id="zi">+</button></span>
-      <button class="btn" id="reset">Reset</button>
+      <div class="seg">
+        <button id="zo" title="Zoom out">−</button>
+        <button id="reset" title="Fit canvas to view">Fit</button>
+        <button id="zi" title="Zoom in">+</button>
+      </div>
+      <button class="btn btn-sm" id="stageRnd" title="Randomise pattern">🎲</button>
     </div>
-    <div class="canvas"><svg id="svg" viewBox="0 0 1000 720" preserveAspectRatio="xMidYMid slice"></svg></div>
-    <div class="info" id="info"></div>
+    <div class="canvas-artboard-wrap">
+      <div class="canvas"><svg id="svg" viewBox="0 0 1000 720" preserveAspectRatio="xMidYMid slice"></svg></div>
+    </div>
+    <div class="stage-footer">
+      <div class="info" id="info"></div>
+      <div class="art-size-pill" id="artDimBadge"></div>
+    </div>
   </section>
 
+  <!-- Right Panel: Inspector Controls -->
   <aside class="r" id="params"></aside>
 </main>
+
+<!-- AI Pattern Generator Modal -->
+<div id="aiModal" class="ai-modal-backdrop" style="display:none" role="dialog" aria-modal="true" aria-labelledby="aiModalTitle">
+  <div class="ai-modal">
+    <div class="ai-modal-header">
+      <h3 class="ai-modal-title" id="aiModalTitle"><span>✨</span> Generate Grid Pattern from Image (AI)</h3>
+      <button class="btn btn-sm" id="aiBtnClose" title="Close modal" style="padding:2px 8px;font-size:15px;line-height:1">✕</button>
+    </div>
+    <div class="ai-modal-body" id="aiModalBody"></div>
+    <div class="ai-modal-footer" id="aiModalFooter"></div>
+  </div>
+</div>
 
 <!-- ================= GUIDE ================= -->
 <div class="page" id="p-guide" style="max-width:1080px">
@@ -208,7 +437,7 @@ code{font:12.5px ui-monospace,Consolas,monospace;background:var(--panel);padding
   <p>Robert Field's book [30] makes every pattern the same way: straight lines between the points of a <b>square grid</b> or a <b>triangle (isometric) grid</b>, repeated across the plane. Blocks and brickwork are filled squares of the same grid. Eight-pointed stars, octagon designs, single-tile tilings, interlaced bands, circle designs and six-pointed stars are all lines and circles on a grid. Keith Critchlow's book [31] analyses specimen patterns on circle, square, hexagon and pentagon grids in the same spirit. So the way to let anyone make any of them is not a generator for each, but the drawing tool the books use.</p>
   <p><b>Repeat cell.</b> The pattern is one cell of W by H grid squares, repeated by translation. Whatever is drawn is stored once and tiled, so the same drawing fills the panel and exports as one cell.</p>
   <p><b>Symmetry while you draw.</b> Each line is stored together with its images under the chosen symmetry: mirrors, 2-fold, 4-fold rotation and 4-fold with mirrors on the square grid; mirror, 2-, 3- and 6-fold rotation and their mirror groups on the triangle grid. Four-fold symmetry needs a square cell. The mirror axes are drawn on the cell so the symmetry is visible.</p>
-  <p><b>Tools.</b> Line: click two grid points, and keep clicking to chain. Arc: click the centre, the start, then the end, and tick the box for the long way round. 3-point arc: click the start, a point the arc must pass through, and the end; the arc is the circle through those three points, and three points in a line are refused. Circle: centre, then a point on it. Fill: toggles a square, for block patterns. Erase removes a line, arc or circle together with its symmetric partners. Undo restores the previous drawing, and the pattern is saved in the link.</p>
+  <p><b>Tools.</b> Line: click two grid points, and keep clicking to chain. Spline: click points to weave smooth Catmull-Rom curvilinear Arabesques; click the last point or press Enter to finish, or click the start point to close the loop. Arc: click the centre, the start, then the end, and tick the box for the long way round. 3-point arc: click the start, a point the arc must pass through, and the end; the arc is the circle through those three points, and three points in a line are refused. Circle: centre, then a point on it. Fill: toggles a square, for block patterns. Erase removes a line, spline, arc or circle together with its symmetric partners. Undo restores the previous drawing, and the pattern is saved in the link.</p>
   <p><b>Points per square</b> puts extra grid points inside each square, so a line can start or end at a half or a third of a square. <b>Outlined band</b> draws every line as a strap, a wide stroke of the ink colour with a narrower stroke of the ground colour on top.</p>
 
   <h2>9 · Mosaic regions</h2>
@@ -926,6 +1155,158 @@ function genPalette(s){
     mat:ink, open:bg, grout, fills};
 }
 const paletteOf=s=>s.palMode==='custom'?genPalette(s):PALETTES[s.pal];
+
+/* ============================================================ WCAG contrast calculation */
+function getLuminance(hex){
+  if(!hex||hex.length<4) return 0;
+  let h=hex.replace('#','');
+  if(h.length===3) h=h.split('').map(c=>c+c).join('');
+  const n=parseInt(h,16);
+  if(isNaN(n)) return 0;
+  const r=(n>>16&255)/255, g=(n>>8&255)/255, b=(n&255)/255;
+  const toLinear=c=>c<=0.04045 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4);
+  return 0.2126*toLinear(r) + 0.7152*toLinear(g) + 0.0722*toLinear(b);
+}
+function contrastRatio(h1,h2){
+  const l1=getLuminance(h1), l2=getLuminance(h2);
+  const hi=Math.max(l1,l2), lo=Math.min(l1,l2);
+  return (hi+0.05)/(lo+0.05);
+}
+
+let contrastMatrixView = 'pairs'; // 'pairs' | 'grid'
+
+function renderContrastMatrix(){
+  const wrap = $('contrastTool');
+  if(!wrap) return;
+
+  const genP = genPalette(st);
+  const grout = genP.grout;
+  const fills = genP.fills;
+  const isCustom = st.palMode === 'custom';
+
+  const pairs = fills.map((f, i) => {
+    const ratio = contrastRatio(f, grout);
+    const isHard = ratio < 3.0;
+    const isFair = ratio >= 3.0 && ratio < 4.5;
+    const isGood = ratio >= 4.5;
+    return { idx: i + 1, fill: f, ratio, isHard, isFair, isGood };
+  });
+
+  const hardCount = pairs.filter(p => p.isHard).length;
+
+  let h = `<div class="contrast-card">
+    <div class="contrast-hdr">
+      <span class="contrast-title">Grout Contrast Matrix</span>
+      <div class="seg" style="font-size:11px">
+        <button id="cmvPairs" class="${contrastMatrixView==='pairs'?'on':''}" style="padding:2px 7px" title="Table of Fill vs Grout pairs">Pairs</button>
+        <button id="cmvGrid" class="${contrastMatrixView==='grid'?'on':''}" style="padding:2px 7px" title="Full 2D contrast matrix">Matrix</button>
+      </div>
+    </div>`;
+
+  h += `<div class="contrast-ref">
+    <span style="color:var(--mute);font-size:11px">Grout:</span>
+    <i class="contrast-dot" style="background:${grout}"></i>
+    <code>${grout}</code>
+    <span style="color:var(--mute);font-size:11px;margin-left:auto">${isCustom ? '<span class="tag">Generated ramp</span>' : '<button class="btn" id="btnApplyGen" style="padding:2px 6px;font-size:10.5px">Use Generated</button>'}</span>
+  </div>`;
+
+  if(hardCount > 0){
+    h += `<div class="contrast-alert warn">
+      <b>⚠️ ${hardCount} of ${fills.length} pairs</b> have low contrast (&lt; 3.0:1) with grout and may be hard to distinguish.
+      <div style="font-size:11px;color:var(--mute);margin-top:3px">Tip: Increase <b>Lightness</b> or adjust <b>Contrast</b> to lift dark fills above the grout.</div>
+    </div>`;
+  } else {
+    h += `<div class="contrast-alert ok">
+      <b>✓ All 6 pairs</b> have adequate contrast with grout (≥ 3.0:1) and maintain clear separation.
+    </div>`;
+  }
+
+  if(contrastMatrixView === 'pairs'){
+    h += `<table class="contrast-table">
+      <thead>
+        <tr>
+          <th>Fill</th>
+          <th>Preview</th>
+          <th style="text-align:right">Ratio</th>
+          <th style="text-align:right">Legibility</th>
+        </tr>
+      </thead>
+      <tbody>`;
+    for(const p of pairs){
+      const statusBadge = p.isHard
+        ? `<span class="badge-bad" title="Contrast ratio &lt; 3.0:1 — hard to read">⚠️ Low &lt;3:1</span>`
+        : (p.isFair
+          ? `<span class="badge-fair" title="Contrast ratio 3.0:1 – 4.5:1 — fair">Fair</span>`
+          : `<span class="badge-good" title="Contrast ratio ≥ 4.5:1 — good">✓ Good</span>`);
+
+      h += `<tr class="${p.isHard ? 'bad' : ''}">
+        <td>
+          <div style="display:flex;align-items:center;gap:5px">
+            <i class="contrast-dot" style="background:${p.fill}"></i>
+            <span>F${p.idx}</span>
+            <code style="font-size:10.5px">${p.fill}</code>
+          </div>
+        </td>
+        <td>
+          <div class="contrast-sample" style="background:${p.fill};border:2px solid ${grout};color:${grout}" title="Tile fill inside grout border">
+            <span>◆</span>
+          </div>
+        </td>
+        <td style="text-align:right">
+          <span class="ratio-val" style="${p.isHard?'color:#dc2626':''}">${p.ratio.toFixed(2)}:1</span>
+        </td>
+        <td style="text-align:right">${statusBadge}</td>
+      </tr>`;
+    }
+    h += `</tbody></table>`;
+  } else {
+    const allColors = [{label:'Gr', hex:grout, isGrout:true}, ...fills.map((f, i) => ({label:`F${i+1}`, hex:f, isGrout:false}))];
+
+    h += `<div style="font-size:11px;color:var(--mute);margin-bottom:5px">Contrast matrix (Grout &amp; Fills 1–6):</div>`;
+    h += `<div style="overflow-x:auto"><table class="contrast-table" style="font-size:10px;text-align:center">`;
+    h += `<thead><tr><th style="width:24px"></th>`;
+    for(const c of allColors){
+      h += `<th style="text-align:center;padding:2px 1px"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${c.hex};vertical-align:middle;margin-right:1px;border:1px solid var(--line)"></span>${c.label}</th>`;
+    }
+    h += `</tr></thead><tbody>`;
+
+    for(let i = 0; i < allColors.length; i++){
+      const rColor = allColors[i];
+      h += `<tr><td style="text-align:left;font-weight:600;padding:2px 3px;white-space:nowrap"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${rColor.hex};vertical-align:middle;margin-right:1px;border:1px solid var(--line)"></span>${rColor.label}</td>`;
+      for(let j = 0; j < allColors.length; j++){
+        const cColor = allColors[j];
+        if(i === j){
+          h += `<td style="color:var(--mute);background:rgba(0,0,0,0.03);padding:2px">—</td>`;
+        } else {
+          const cr = contrastRatio(rColor.hex, cColor.hex);
+          const isGroutPair = rColor.isGrout || cColor.isGrout;
+          const isHard = cr < 3.0;
+          let cellStyle = `padding:2px;font-variant-numeric:tabular-nums;`;
+          if(isGroutPair && isHard){
+            cellStyle += `background:rgba(220,38,38,0.18);color:#dc2626;font-weight:700;border:1px solid rgba(220,38,38,0.4);border-radius:2px;`;
+          } else if(isHard){
+            cellStyle += `background:rgba(220,38,38,0.08);color:var(--mute);`;
+          } else if(cr >= 4.5){
+            cellStyle += `color:var(--ok);`;
+          }
+          const tip = `${rColor.label} (${rColor.hex}) vs ${cColor.label} (${cColor.hex}): ${cr.toFixed(2)}:1${isHard ? ' [Hard to read]' : ''}`;
+          h += `<td style="${cellStyle}" title="${tip}">${cr.toFixed(1)}${isGroutPair && isHard ? '!' : ''}</td>`;
+        }
+      }
+      h += `</tr>`;
+    }
+    h += `</tbody></table></div>`;
+    h += `<div style="font-size:9.5px;color:var(--mute);margin-top:5px"><span style="color:#dc2626;font-weight:700">Red / !</span> = contrast &lt; 3.0:1 (hard to read against grout).</div>`;
+  }
+
+  h += `</div>`;
+  wrap.innerHTML = h;
+
+  const btnP = $('cmvPairs'), btnG = $('cmvGrid'), btnApp = $('btnApplyGen');
+  if(btnP) btnP.onclick = () => { contrastMatrixView = 'pairs'; renderContrastMatrix(); };
+  if(btnG) btnG.onclick = () => { contrastMatrixView = 'grid'; renderContrastMatrix(); };
+  if(btnApp) btnApp.onclick = () => { st.palMode = 'custom'; buildParams(); render(); sync(); };
+}
 /* In a generated palette the line-based modes take each stroke from the ramp,
    using the same Colour-by rule as mosaic. Preset swatches keep their single ink. */
 function hex2hsl(h){
@@ -984,8 +1365,8 @@ const ENGINES=[
   {id:'star', name:'Star polygons {n/d}', sub:'compass construction', tag:'doc', def:{scell:150,width:3,round:0},
    src:'The Metropolitan Museum of Art, <i>Islamic Art and Geometric Design</i> activity pack [1]. Documented construction.'},
   {id:'gridp',name:'Draw on a grid',sub:'Field · Critchlow method',tag:'doc',tagText:'documented',
-   def:{gType:'square',gW:4,gH:4,gSub:1,gSize:56,gSym:'d4',gTool:'line',gChain:true,gShowGrid:true,gShowCell:true,
-        gBand:false,gBandW:8,width:2,round:0,frame:false,gData:'',gCirc:'',gFill:'',gArcs:'',gArcLong:false,gCheck:false,pal:1},
+   def:{gType:'square',gW:4,gH:4,gSub:1,gSize:56,gSym:'d4',gTool:'line',gChain:true,gSmartSnap:true,gShowGrid:true,gShowCell:true,
+        gBand:false,gBandW:8,width:2,round:0,frame:false,gData:'',gCirc:'',gFill:'',gArcs:'',gSplines:'',gSplineTension:0.5,gArcLong:false,gCheck:false,pal:1},
    src:'Robert Field, <i>Geometric Patterns from Islamic Art and Architecture</i> (Tarquin, 2000) [30]: every pattern is straight lines between points of a square or triangle grid, repeated across the plane. Keith Critchlow, <i>Islamic Patterns</i> (Thames and Hudson, 1976) [31] analyses specimen patterns on the same grids. Click two grid points to draw a line; symmetry is applied as you draw, and the repeat cell tiles the panel.'},
   {id:'subst',name:'Self-similar subdivision', sub:'rep-tiles · substitution', tag:'doc', tagText:'documented', def:{subDepth:4,width:3,round:0},
    src:'Robert Fathauer, <i>Tessellations: Mathematics, Art, and Recreation</i>, A K Peters/CRC Press 2021 [29] — ch.6 polyforms and rep-tiles, ch.8 substitution tilings, ch.9 fractal tilings. Answers item 07 of the research catalogue: subdivide a tile configuration at a smaller scale by a stored rule, to a finite depth.'},
@@ -1023,8 +1404,8 @@ const DEF={engine:'pic',tiling:'octasq',mode:'line',
   mN:5,mOffset:0.2,mDisorder:0,mMotif:false,
   subRule:'penrose',subDepth:4,
   vlayout:'hex',vrepeat:3,vjitter:55,vcount:24,vsym:8,vmirror:true,vrelax:2,seed:7,
-  gType:'square',gW:4,gH:4,gSub:1,gSize:56,gSym:'d4',gTool:'line',gChain:true,gShowGrid:true,gShowCell:true,
-  gBand:false,gBandW:8,gData:'',gCirc:'',gFill:'',gArcs:'',gArcLong:false,gCheck:false,
+  gType:'square',gW:4,gH:4,gSub:1,gSize:56,gSym:'d4',gTool:'line',gChain:true,gSmartSnap:true,gShowGrid:true,gShowCell:true,
+  gBand:false,gBandW:8,gData:'',gCirc:'',gFill:'',gArcs:'',gSplines:'',gSplineTension:0.5,gArcLong:false,gCheck:false,
   units:'mm',artW:297,artH:210,
   pal:0,palMode:'preset',colourBy:'type',
   cHue:210,cSpread:120,cSat:55,cLight:48,cContrast:55,cReverse:false};
@@ -1050,10 +1431,13 @@ const CTRL={
   {k:'ssec', label:'Secondary stars',type:'chk'}
  ],
  gridp:[
-  {k:'gTool',label:'Tool',type:'seg',opts:[['line','Line'],['arc','Arc'],['arc3','3-point arc'],['circle','Circle'],['fill','Fill'],['erase','Erase']]},
+  {k:'gTool',label:'Tool',type:'seg',opts:[['line','Line'],['spline','Spline'],['arc','Arc'],['arc3','3-point arc'],['circle','Circle'],['fill','Fill'],['erase','Erase']]},
+  {k:'gSplineTension',label:'Spline curvature',min:0.1,max:0.9,step:0.05,when:s=>s.gTool==='spline'},
+  {type:'acts',acts:[['finishSpline','✓ Finish Spline (Enter)']],when:s=>s.gTool==='spline'},
   {k:'gArcLong',label:'Arc: take the long way round',type:'chk',when:s=>s.gTool==='arc'},
   {k:'gChain',label:'Keep drawing from the last point',type:'chk'},
-  {type:'acts',acts:[['undo','Undo'],['clear','Clear'],['random','Random']]},
+  {k:'gSmartSnap',label:'Smart Snap (align to intersections)',type:'chk'},
+  {type:'acts',acts:[['undo','Undo'],['clear','Clear'],['random','Random'],['aiImage','✨ AI Image']]},
   {type:'acts',acts:[['closeEnds','Close near ends']],when:s=>s.gCheck},
   {k:'gType',label:'Grid',type:'sel',opts:[['square','Square grid'],['iso','Triangle (isometric) grid']]},
   {k:'gW',label:s=>s.gType==='iso'?'Repeat size (grid steps)':'Repeat width (squares)',min:1,max:64,step:1},
@@ -1062,7 +1446,7 @@ const CTRL={
   {k:'gSym',label:'Symmetry',type:'sel',opts:s=>gSymOpts()},
   {k:'gSize',label:'Grid spacing',min:20,max:120,step:1,unit:' px',len:true},
   {k:'gShowGrid',label:'Show grid points',type:'chk'},
-  {k:'gShowCell',label:'Show repeat cell',type:'chk'},
+  {k:'gShowCell',label:'Show repeat cell & symmetry axes',type:'chk'},
   {k:'gCheck',label:'Mark unclosed line ends',type:'chk'},
   {k:'gBand',label:'Draw as an outlined band',type:'chk'},
   {k:'gBandW',label:'Band width',min:3,max:24,step:1,unit:' px',len:true,when:s=>s.gBand}
@@ -1337,12 +1721,35 @@ const openD=pts=>'M'+pts.map(p=>f(p.x)+' '+f(p.y)).join(' L');
    The repeat cell is W x H squares. Symmetry is applied while drawing: each line
    is stored together with its images, so what is stored is already symmetric and
    the pattern is just that set repeated by the two cell vectors. */
-const GP={start:null,mid:null,hover:null,hist:[],lib:null};
+const GP={start:null,mid:null,splinePts:null,hover:null,hist:[],lib:null};
 const S3G=Math.sqrt(3)/2;
 
 function gParse(str){return str?str.split(';').filter(Boolean).map(t=>t.split(',').map(Number)):[]}
 function gStr(a){return a.map(t=>t.join(',')).join(';')}
 const gCanon=t=>((t[0]<t[2])||(t[0]===t[2]&&t[1]<=t[3]))?t:[t[2],t[3],t[0],t[1]];
+
+function gParseSplines(str){
+  if(!str) return [];
+  const out = [];
+  const entries = str.split(';').filter(Boolean);
+  for(const e of entries){
+    const parts = e.split(',').map(Number);
+    if(parts.length < 4) continue;
+    const pts = [];
+    for(let k = 0; k < parts.length; k += 2){
+      if(!isNaN(parts[k]) && !isNaN(parts[k+1])) pts.push([parts[k], parts[k+1]]);
+    }
+    if(pts.length >= 2){
+      const closed = pts.length > 2 && Math.abs(pts[0][0] - pts[pts.length-1][0]) < 1e-4 && Math.abs(pts[0][1] - pts[pts.length-1][1]) < 1e-4;
+      const key = pts.map(p => `${Math.round(p[0]*100)/100},${Math.round(p[1]*100)/100}`).join(';');
+      out.push({ pts, closed, key });
+    }
+  }
+  return out;
+}
+function gStrSplines(splines){
+  return splines.map(sp => sp.pts.map(p => `${Math.round(p[0]*1000)/1000},${Math.round(p[1]*1000)/1000}`).join(',')).join(';');
+}
 
 function gGeom(){
   const iso=st.gType==='iso', sub=Math.max(1,Math.round(st.gSub));
@@ -1521,9 +1928,24 @@ function gCloseEnds(){
   gSay(`Closed ${moves.length}${left?` · ${left} left`:''}`);
 }
 
-function gSnap(){GP.hist.push({d:st.gData,c:st.gCirc,f:st.gFill,a:st.gArcs});if(GP.hist.length>80)GP.hist.shift()}
-function gUndo(){const h=GP.hist.pop();if(!h)return;st.gData=h.d;st.gCirc=h.c;st.gFill=h.f;st.gArcs=h.a||'';GP.start=null;GP.mid=null;render();sync()}
-function gClear(){gSnap();st.gData='';st.gCirc='';st.gFill='';st.gArcs='';GP.start=null;GP.mid=null;render();sync()}
+function gSnap(){GP.hist.push({d:st.gData,c:st.gCirc,f:st.gFill,a:st.gArcs,s:st.gSplines});if(GP.hist.length>80)GP.hist.shift()}
+function gUndo(){const h=GP.hist.pop();if(!h)return;st.gData=h.d;st.gCirc=h.c;st.gFill=h.f;st.gArcs=h.a||'';st.gSplines=h.s||'';GP.start=null;GP.mid=null;GP.splinePts=null;render();sync()}
+function gClear(){gSnap();st.gData='';st.gCirc='';st.gFill='';st.gArcs='';st.gSplines='';GP.start=null;GP.mid=null;GP.splinePts=null;render();sync()}
+
+function gAddSpline(pts, closed=false){
+  if(!pts || pts.length < 2) return;
+  const G=gGeom(), maps=gMaps(G), splines=gParseSplines(st.gSplines);
+  const seen=new Set(splines.map(sp=>sp.key));
+  for(const f of maps){
+    const mappedPts=pts.map(p=>f(p[0],p[1]));
+    const key=mappedPts.map(p=>`${Math.round(p[0]*100)/100},${Math.round(p[1]*100)/100}`).join(';');
+    if(!seen.has(key)){
+      seen.add(key);
+      splines.push({ pts: mappedPts, closed: !!closed, key });
+    }
+  }
+  st.gSplines=gStrSplines(splines);
+}
 
 function gAddSeg(a,b){
   const G=gGeom(), maps=gMaps(G), segs=gParse(st.gData), seen=new Set(segs.map(t=>gCanon(t).join()));
@@ -1552,6 +1974,65 @@ function gToggleCell(i,j){
   }
   st.gFill=[...cells].join(';');
 }
+function gSplinePath(pts, tension=0.5, closed=false){
+  const n=pts.length;
+  if(n<2) return '';
+  if(n===2) return `M${f(pts[0].x)} ${f(pts[0].y)}L${f(pts[1].x)} ${f(pts[1].y)}`;
+  const isLoop=closed||(n>2&&Math.hypot(pts[0].x-pts[n-1].x,pts[0].y-pts[n-1].y)<0.001);
+  const factor=(1-Math.max(0,Math.min(0.95,tension)))/6;
+  let d=`M${f(pts[0].x)} ${f(pts[0].y)}`;
+  const count=isLoop?n-1:n-1;
+  for(let i=0;i<count;i++){
+    let p0, p1=pts[i], p2=pts[i+1], p3;
+    if(isLoop){
+      p0=pts[(i-1+(n-1))%(n-1)];
+      p3=pts[(i+2)%(n-1)];
+    }else{
+      p0=i>0?pts[i-1]:p1;
+      p3=(i+2<n)?pts[i+2]:p2;
+    }
+    const cp1x=p1.x+(p2.x-p0.x)*factor;
+    const cp1y=p1.y+(p2.y-p0.y)*factor;
+    const cp2x=p2.x-(p3.x-p1.x)*factor;
+    const cp2y=p2.y-(p3.y-p1.y)*factor;
+    d+=`C${f(cp1x)} ${f(cp1y)},${f(cp2x)} ${f(cp2y)},${f(p2.x)} ${f(p2.y)}`;
+  }
+  if(isLoop) d+='Z';
+  return d;
+}
+
+function gSplinePoints(pts, tension=0.5, closed=false, samplesPerSeg=16){
+  const n=pts.length;
+  if(n<2) return pts;
+  const isLoop=closed||(n>2&&Math.hypot(pts[0].x-pts[n-1].x,pts[0].y-pts[n-1].y)<0.001);
+  const factor=(1-Math.max(0,Math.min(0.95,tension)))/6;
+  const out=[];
+  const count=isLoop?n-1:n-1;
+  for(let i=0;i<count;i++){
+    let p0, p1=pts[i], p2=pts[i+1], p3;
+    if(isLoop){
+      p0=pts[(i-1+(n-1))%(n-1)];
+      p3=pts[(i+2)%(n-1)];
+    }else{
+      p0=i>0?pts[i-1]:p1;
+      p3=(i+2<n)?pts[i+2]:p2;
+    }
+    const cp1x=p1.x+(p2.x-p0.x)*factor;
+    const cp1y=p1.y+(p2.y-p0.y)*factor;
+    const cp2x=p2.x-(p3.x-p1.x)*factor;
+    const cp2y=p2.y-(p3.y-p1.y)*factor;
+    for(let k=0;k<=samplesPerSeg;k++){
+      if(i>0&&k===0) continue;
+      const t=k/samplesPerSeg;
+      const t2=t*t, t3=t2*t, mt=1-t, mt2=mt*mt, mt3=mt2*mt;
+      const qx=mt3*p1.x+3*mt2*t*cp1x+3*mt*t2*cp2x+t3*p2.x;
+      const qy=mt3*p1.y+3*mt2*t*cp1y+3*mt*t2*cp2y+t3*p2.y;
+      out.push(v(qx,qy));
+    }
+  }
+  return out;
+}
+
 function gErase(x,y){
   const G=gGeom(), maps=gMaps(G), {step,P}=G;
   let best=null, bd=step*0.55;
@@ -1570,6 +2051,11 @@ function gErase(x,y){
     const g=gArcGeom(G,a,v(0,0)); if(!g) continue;
     for(const q of gArcPoints(g,48)){const d=Math.hypot(q.x-x,q.y-y);if(d<bd){bd=d;best={kind:'arc',a}}}
   }
+  for(const sp of gParseSplines(st.gSplines)){
+    const screenPts=sp.pts.map(p=>P(p[0],p[1]));
+    const poly=gSplinePoints(screenPts,st.gSplineTension,sp.closed,16);
+    for(const q of poly){const d=Math.hypot(q.x-x,q.y-y);if(d<bd){bd=d;best={kind:'spline',sp}}}
+  }
   if(!best) return false;
   gSnap();
   if(best.kind==='seg'){
@@ -1578,6 +2064,13 @@ function gErase(x,y){
   }else if(best.kind==='arc'){
     const A=best.a, drop=new Set(maps.map(f=>{const c=f(A[0],A[1]),a=f(A[2],A[3]),b=f(A[4],A[5]);return [c[0],c[1],a[0],a[1],b[0],b[1],A[6]].join()}));
     st.gArcs=gStr(gParse(st.gArcs).filter(t=>!drop.has(t.join())));
+  }else if(best.kind==='spline'){
+    const sp=best.sp;
+    const drop=new Set(maps.map(f=>{
+      const mapped=sp.pts.map(p=>f(p[0],p[1]));
+      return mapped.map(p=>`${Math.round(p[0]*100)/100},${Math.round(p[1]*100)/100}`).join(';');
+    }));
+    st.gSplines=gStrSplines(gParseSplines(st.gSplines).filter(t=>!drop.has(t.key)));
   }else{
     const drop=new Set(maps.map(f=>{const p=f(best.c[0],best.c[1]);return [p[0],p[1],best.c[2]].join()}));
     st.gCirc=gStr(gParse(st.gCirc).filter(c=>!drop.has(c.join())));
@@ -1638,10 +2131,154 @@ function gAddArc(C,A,B,flag){
   st.gArcs=gStr(arcs);
 }
 
+function gRenderSymmetryAxes(G, P, thumb=false){
+  const {P:node, FW, FH, iso, step} = G;
+  const sym = st.gSym;
+  if(!sym || sym === 'none') return '';
+
+  let out = '<g id="gp-sym-axes">';
+
+  // Helper to draw an on-grid or off-grid axis line
+  // onGrid: true -> amber/gold chain dash-dot + diamond intersection markers
+  // onGrid: false -> indigo/slate fine dash (passes between grid points)
+  const drawAxis = (p1, p2, onGrid, ptsOnAxis = [], tag = '') => {
+    let s = '';
+    const col = onGrid ? '#d97706' : '#6366f1';
+    const underlayCol = onGrid ? '#d97706' : '#6366f1';
+
+    // 1. Soft glow underlay for crisp contrast
+    s += `<line x1="${f(p1.x)}" y1="${f(p1.y)}" x2="${f(p2.x)}" y2="${f(p2.y)}" stroke="${underlayCol}" stroke-width="${onGrid ? 4.5 : 3.5}" stroke-opacity="${onGrid ? 0.25 : 0.18}" stroke-linecap="round"/>`;
+
+    // 2. Main contrasting patterned stroke
+    if(onGrid){
+      s += `<line x1="${f(p1.x)}" y1="${f(p1.y)}" x2="${f(p2.x)}" y2="${f(p2.y)}" stroke="${col}" stroke-width="2.2" stroke-dasharray="9 3 2 3" stroke-linecap="round"/>`;
+    } else {
+      s += `<line x1="${f(p1.x)}" y1="${f(p1.y)}" x2="${f(p2.x)}" y2="${f(p2.y)}" stroke="${col}" stroke-width="1.8" stroke-dasharray="4 4" stroke-linecap="round"/>`;
+    }
+
+    // 3. Crisp diamond intersection markers at every grid point the axis crosses
+    if(onGrid && ptsOnAxis.length){
+      for(const pt of ptsOnAxis){
+        s += `<polygon points="${f(pt.x)},${f(pt.y-4.5)} ${f(pt.x+4.5)},${f(pt.y)} ${f(pt.x)},${f(pt.y+4.5)} ${f(pt.x-4.5)},${f(pt.y)}" fill="#d97706" stroke="#ffffff" stroke-width="1.2"/>`;
+        s += `<circle cx="${f(pt.x)}" cy="${f(pt.y)}" r="1.5" fill="#ffffff"/>`;
+      }
+    }
+
+    // 4. Subtle tag pill badge at start of axis
+    if(tag && !thumb){
+      const tx = p1.x, ty = p1.y;
+      const bg = onGrid ? '#d97706' : '#6366f1';
+      s += `<g transform="translate(${f(tx)},${f(ty)})">`;
+      s += `<rect x="-18" y="-18" width="36" height="13" rx="3" fill="${bg}" fill-opacity="0.92" stroke="#ffffff" stroke-width="0.8"/>`;
+      s += `<text x="0" y="-8.5" text-anchor="middle" font-size="7.5" font-weight="700" fill="#ffffff" font-family="system-ui,sans-serif">${tag}</text>`;
+      s += `</g>`;
+    }
+
+    return s;
+  };
+
+  if(!iso){
+    // Square grid
+    const vHitsGrid = (FW % 2 === 0);
+    const hHitsGrid = (FH % 2 === 0);
+
+    // 1. Vertical mirror axis (mx, mxy, d4)
+    if(sym === 'mx' || sym === 'mxy' || sym === 'd4'){
+      const a = node(FW/2, 0), b = node(FW/2, FH);
+      const pts = [];
+      if(vHitsGrid){
+        const midI = FW / 2;
+        for(let j = 0; j <= FH; j++) pts.push(node(midI, j));
+      }
+      out += drawAxis(a, b, vHitsGrid, pts, vHitsGrid ? 'MIRROR' : 'HALF-GRID');
+    }
+
+    // 2. Horizontal mirror axis (my, mxy, d4)
+    if(sym === 'my' || sym === 'mxy' || sym === 'd4'){
+      const a = node(0, FH/2), b = node(FW, FH/2);
+      const pts = [];
+      if(hHitsGrid){
+        const midJ = FH / 2;
+        for(let i = 0; i <= FW; i++) pts.push(node(i, midJ));
+      }
+      out += drawAxis(a, b, hHitsGrid, pts, hHitsGrid ? 'MIRROR' : 'HALF-GRID');
+    }
+
+    // 3. Diagonal mirror axes (d4 only, requires FW === FH)
+    if(sym === 'd4' && FW === FH){
+      // Main diagonal: (0,0) to (FW, FH) - always hits grid points at (k, k)
+      const a1 = node(0, 0), b1 = node(FW, FH);
+      const pts1 = [];
+      for(let k = 0; k <= FW; k++) pts1.push(node(k, k));
+      out += drawAxis(a1, b1, true, pts1, 'DIAG');
+
+      // Anti-diagonal: (0, FH) to (FW, 0) - always hits grid points at (k, FH - k)
+      const a2 = node(0, FH), b2 = node(FW, 0);
+      const pts2 = [];
+      for(let k = 0; k <= FW; k++) pts2.push(node(k, FH - k));
+      out += drawAxis(a2, b2, true, pts2, 'DIAG');
+    }
+
+    // 4. Center of symmetry indicator for rot/dihedral
+    if(sym === 'r2' || sym === 'r4' || sym === 'd4' || sym === 'mxy'){
+      const c = node(FW/2, FH/2);
+      const centerHits = vHitsGrid && hHitsGrid;
+      const col = centerHits ? '#d97706' : '#6366f1';
+      out += `<circle cx="${f(c.x)}" cy="${f(c.y)}" r="8" fill="none" stroke="${col}" stroke-width="2.2" stroke-dasharray="3 2"/>`;
+      out += `<circle cx="${f(c.x)}" cy="${f(c.y)}" r="3" fill="${col}"/>`;
+      out += `<line x1="${f(c.x-11)}" y1="${f(c.y)}" x2="${f(c.x+11)}" y2="${f(c.y)}" stroke="${col}" stroke-width="1.3"/>`;
+      out += `<line x1="${f(c.x)}" y1="${f(c.y-11)}" x2="${f(c.x)}" y2="${f(c.y+11)}" stroke="${col}" stroke-width="1.3"/>`;
+    }
+  } else {
+    // Isometric (triangle) grid
+    const c = node(0, 0);
+    const R = FW * step * 0.95;
+
+    if(sym === 'r3m' || sym === 'd6'){
+      // In isometric: 3 primary axes (0°, 60°, 120°) lie along grid rows/diagonals and hit grid points!
+      const dirs = [
+        { angle: 0, pts: [] },
+        { angle: Math.PI / 3, pts: [] },
+        { angle: 2 * Math.PI / 3, pts: [] }
+      ];
+      for(let k = -FW; k <= FW; k++){
+        if(k === 0) continue;
+        dirs[0].pts.push(node(k, 0));
+        dirs[1].pts.push(node(0, k));
+        dirs[2].pts.push(node(k, -k));
+      }
+      dirs.forEach((d, idx) => {
+        const dx = R * Math.cos(d.angle), dy = R * Math.sin(d.angle);
+        const p1 = v(c.x - dx, c.y - dy), p2 = v(c.x + dx, c.y + dy);
+        out += drawAxis(p1, p2, true, d.pts, idx === 0 ? 'MIRROR' : '');
+      });
+
+      // If d6: 3 additional secondary mirror axes (angles 30°, 90°, 150°)
+      // These bisect the triangular lattice directions and pass between grid nodes!
+      if(sym === 'd6'){
+        const secAngles = [Math.PI / 6, Math.PI / 2, 5 * Math.PI / 6];
+        secAngles.forEach(ang => {
+          const dx = R * Math.cos(ang), dy = R * Math.sin(ang);
+          const p1 = v(c.x - dx, c.y - dy), p2 = v(c.x + dx, c.y + dy);
+          out += drawAxis(p1, p2, false, [], '');
+        });
+      }
+    }
+
+    if(sym !== 'none'){
+      out += `<circle cx="${f(c.x)}" cy="${f(c.y)}" r="8.5" fill="none" stroke="#d97706" stroke-width="2.2" stroke-dasharray="3 2"/>`;
+      out += `<circle cx="${f(c.x)}" cy="${f(c.y)}" r="3" fill="#d97706"/>`;
+    }
+  }
+
+  out += '</g>';
+  return out;
+}
+
 /* the picture: the stored set repeated by the two cell vectors */
 function renderGrid(thumb){
   const G=gGeom(), P=paletteOf(st), {P:node,step,Tx,Ty,FW,FH,iso}=G, w=st.width;
-  const segs=gParse(st.gData), circ=gParse(st.gCirc), arcs=gParse(st.gArcs);
+  const segs=gParse(st.gData), circ=gParse(st.gCirc), arcs=gParse(st.gArcs), splines=gParseSplines(st.gSplines);
   const cells=st.gFill?st.gFill.split(';').map(t=>t.split(',').map(Number)):[];
   /* which copies of the cell reach the panel */
   const cen=node(FW/2,FH/2), diag=Math.hypot(FW*step,FH*step)*1.3+step*4;
@@ -1668,7 +2305,12 @@ function renderGrid(thumb){
   }
   let da='';
   for(const o of offs)for(const a of arcs){const g=gArcGeom(G,a,o); if(g) da+=gArcPath(g)}
-  const both=dl+dc+da;
+  let ds='';
+  for(const o of offs)for(const sp of splines){
+    const pts=sp.pts.map(p=>v(node(p[0],p[1]).x+o.x, node(p[0],p[1]).y+o.y));
+    ds+=gSplinePath(pts,st.gSplineTension,sp.closed);
+  }
+  const both=dl+dc+da+ds;
   if(both){
     if(st.gBand){
       /* an outlined strap: a wide ink stroke with a narrower ground-coloured one inside */
@@ -1685,9 +2327,8 @@ function renderGrid(thumb){
   if(st.gShowCell){
     const c0=node(0,0),c1=node(FW,0),c2=node(FW,FH),c3=node(0,FH);
     s+=`<path d="M${f(c0.x)} ${f(c0.y)}L${f(c1.x)} ${f(c1.y)}L${f(c2.x)} ${f(c2.y)}L${f(c3.x)} ${f(c3.y)}Z" fill="${P.acc}" fill-opacity=".07" stroke="${P.acc}" stroke-width="1.5" stroke-dasharray="6 5"/>`;
-    /* mirror axes, so it is clear where the symmetry sits */
-    if(!iso&&(st.gSym==='mx'||st.gSym==='mxy'||st.gSym==='d4')){const a=node(FW/2,0),b=node(FW/2,FH);s+=`<line x1="${f(a.x)}" y1="${f(a.y)}" x2="${f(b.x)}" y2="${f(b.y)}" stroke="${P.acc}" stroke-width="1" stroke-dasharray="2 4"/>`}
-    if(!iso&&(st.gSym==='my'||st.gSym==='mxy'||st.gSym==='d4')){const a=node(0,FH/2),b=node(FW,FH/2);s+=`<line x1="${f(a.x)}" y1="${f(a.y)}" x2="${f(b.x)}" y2="${f(b.y)}" stroke="${P.acc}" stroke-width="1" stroke-dasharray="2 4"/>`}
+    /* active symmetry axes with distinct on-grid / half-grid color and intersection markers */
+    s+=gRenderSymmetryAxes(G, P, thumb);
   }
   if(st.gShowGrid){
     const M=Math.ceil(FW/2)+1; let dd='', n=0;
@@ -1720,8 +2361,11 @@ function renderGrid(thumb){
   }
   s+=`<line id="gp-prev" stroke="${P.acc}" stroke-width="2" stroke-dasharray="4 4" x1="0" y1="0" x2="0" y2="0" visibility="hidden"/>`;
   s+=`<path id="gp-arc" fill="none" stroke="${P.acc}" stroke-width="2" stroke-dasharray="4 4" d="M0 0" visibility="hidden"/>`;
+  s+=`<path id="gp-spline" fill="none" stroke="${P.acc}" stroke-width="2.2" stroke-dasharray="4 4" d="M0 0" visibility="hidden"/>`;
+  s+=`<g id="gp-spline-knots" visibility="hidden"></g>`;
   s+=`<circle id="gp-start" r="7" fill="none" stroke="${P.acc}" stroke-width="2.5" visibility="hidden"/>`;
   s+=`<circle id="gp-hover" r="6" fill="${P.acc}" fill-opacity=".85" visibility="hidden"/>`;
+  s+=`<g id="gp-smart-snap-badge" visibility="hidden"><circle r="11" fill="none" stroke="#e0653f" stroke-width="2.2" stroke-dasharray="3 2"/><polygon points="0,-5 5,0 0,5 -5,0" fill="#e0653f"/></g>`;
   s+=`</g>`;
   if(thumb){const k=s.indexOf('<g id="ov"');return k>0?s.slice(0,k):s}   /* no editing layer in a picture */
   document.getElementById('svg').innerHTML=s;
@@ -1730,24 +2374,71 @@ function renderGrid(thumb){
   const ex=[];
   for(const t of segs){const A=node(t[0],t[1]),B=node(t[2],t[3]);const pl=[A,B];pl.open=true;ex.push(pl)}
   for(const a of arcs){const g=gArcGeom(G,a,v(0,0)); if(g){const pl=gArcPoints(g,36);pl.open=true;ex.push(pl)}}
+  for(const sp of splines){
+    const pts=sp.pts.map(p=>node(p[0],p[1]));
+    const pl=gSplinePoints(pts,st.gSplineTension,sp.closed,24);
+    pl.open=!sp.closed;
+    ex.push(pl);
+  }
   for(const c of circ){const C=node(c[0],c[1]),r=c[2]*step,pl=[];
     for(let k=0;k<72;k++){const a=k*TAU/72;pl.push(v(C.x+r*Math.cos(a),C.y+r*Math.sin(a)))}ex.push(pl)}
   last={shapes:[],under:[],rays:[],dots:[],P,faces:null,gexport:ex};
   const symBad=(!iso&&(st.gSym==='r4'||st.gSym==='d4')&&FW!==FH);
   document.getElementById('info').innerHTML=[
     `<b>${iso?'Triangle grid':'Square grid'}</b>`,`repeat ${st.gW}${iso?'':' × '+st.gH}`,`square ${fmtU(st.gSize)} ${st.units}`,artBit(),
-    `${segs.length} lines`,arcs.length?`${arcs.length} arcs`:'',circ.length?`${circ.length} circles`:'',
+    `${segs.length} lines`,splines.length?`${splines.length} splines`:'',arcs.length?`${arcs.length} arcs`:'',circ.length?`${circ.length} circles`:'',
+    (()=>{
+      if(!st.gSym || st.gSym === 'none') return '';
+      if(!iso){
+        const vHits = (FW % 2 === 0);
+        const hHits = (FH % 2 === 0);
+        let desc = '';
+        if(st.gSym === 'd4') desc = (vHits && hHits) ? '4-fold + diagonals (on-grid)' : '4-fold (half-grid axes)';
+        else if(st.gSym === 'mxy') desc = (vHits && hHits) ? 'H+V mirrors (on-grid)' : 'H+V mirrors (half-grid)';
+        else if(st.gSym === 'mx') desc = vHits ? 'V-mirror (on-grid)' : 'V-mirror (half-grid)';
+        else if(st.gSym === 'my') desc = hHits ? 'H-mirror (on-grid)' : 'H-mirror (half-grid)';
+        else if(st.gSym === 'r4') desc = '4-fold rotation';
+        else if(st.gSym === 'r2') desc = '2-fold rotation';
+        return `<span style="color:#d97706;font-weight:600">🪞 ${st.gSym.toUpperCase()}: ${desc}</span>`;
+      } else {
+        let desc = '';
+        if(st.gSym === 'd6') desc = '6 mirrors (3 on-grid, 3 bisecting)';
+        else if(st.gSym === 'r3m') desc = '3 mirrors (on-grid)';
+        else if(st.gSym === 'r6') desc = '6-fold rotation';
+        else if(st.gSym === 'r3') desc = '3-fold rotation';
+        else if(st.gSym === 'r2') desc = '2-fold rotation';
+        return `<span style="color:#d97706;font-weight:600">🪞 ${st.gSym.toUpperCase()}: ${desc}</span>`;
+      }
+    })(),
+    st.gSmartSnap?'<span style="color:#2563eb;font-weight:600">🧲 Smart Snap</span>':'',
     symBad?'<span class="warn">4-fold symmetry needs equal width and height</span>':'',
     openEnds?(openEnds.length
       ?`<span class="warn">${openEnds.length} unclosed end${openEnds.length===1?'':'s'}${(()=>{const n=openEnds.filter(e=>e.gap<=1.0001).length;return n?`, ${n} within a grid step`:''})()}</span>`
       :'every line end closes'):'',
-    `tool: ${({line:'draw line',arc:'draw arc',arc3:'draw arc through 3 points',circle:'draw circle',fill:'fill square',erase:'erase'})[st.gTool]}`
+    `tool: ${({line:'draw line',spline:'draw spline curve',arc:'draw arc',arc3:'draw arc through 3 points',circle:'draw circle',fill:'fill square',erase:'erase'})[st.gTool]}`
   ].filter(Boolean).map(b=>`<span>${b}</span>`).join('');
 }
 function gShowStart(){
   const G=gGeom(), s=document.getElementById('gp-start'); if(!s) return;
   if(GP.start){const p=G.P(GP.start[0],GP.start[1]);s.setAttribute('cx',p.x);s.setAttribute('cy',p.y);s.setAttribute('visibility','visible')}
+  else if(st.gTool==='spline'&&GP.splinePts&&GP.splinePts.length){
+    const p=G.P(GP.splinePts[0][0],GP.splinePts[0][1]);
+    s.setAttribute('cx',p.x);s.setAttribute('cy',p.y);s.setAttribute('visibility','visible');
+  }
   else s.setAttribute('visibility','hidden');
+  const kn=document.getElementById('gp-spline-knots');
+  if(kn){
+    if(st.gTool==='spline'&&GP.splinePts&&GP.splinePts.length){
+      kn.innerHTML=GP.splinePts.map((pt,idx)=>{
+        const p=G.P(pt[0],pt[1]);
+        return `<circle cx="${p.x}" cy="${p.y}" r="${idx===0?5.5:4}" fill="${idx===0?'#e0653f':'var(--accent)'}" stroke="#fff" stroke-width="1.2"/>`;
+      }).join('');
+      kn.setAttribute('visibility','visible');
+    }else{
+      kn.innerHTML='';
+      kn.setAttribute('visibility','hidden');
+    }
+  }
 }
 
 /* pointer input: click two grid points for a line */
@@ -1761,26 +2452,248 @@ function gZone(G,ij){   /* only the editing region accepts clicks */
   if(G.iso){const p=G.P(ij[0],ij[1]);return Math.hypot(p.x-W/2,p.y-H/2)<=G.FW*G.step*0.95}
   return ij[0]>=-M&&ij[0]<=G.FW+M&&ij[1]>=-M&&ij[1]<=G.FH+M;
 }
+
+/* Smart Snap: structural intersections cache and magnetic alignment */
+let _gStructCache = null;
+let _gStructKey = '';
+
+function gGetStructuralPoints(G){
+  const key = `${st.gType}:${st.gW}:${st.gH}:${st.gSub}:${st.gSym}:${st.gData}:${st.gCirc}:${st.gSplines}`;
+  if(_gStructCache && _gStructKey === key) return _gStructCache;
+
+  const pts = [];
+  const ptMap = new Set();
+  const addPt = (i, j, type, priority = 1) => {
+    const k = `${Math.round(i*1000)/1000},${Math.round(j*1000)/1000}`;
+    if(ptMap.has(k)) return;
+    ptMap.add(k);
+    const p = G.P(i, j);
+    pts.push({ i, j, x: p.x, y: p.y, type, priority });
+  };
+
+  // 1. Existing line segments, endpoints, and midpoints
+  const segs = gParse(st.gData);
+  segs.forEach(s => {
+    addPt(s[0], s[1], 'endpoint', 3);
+    addPt(s[2], s[3], 'endpoint', 3);
+    addPt((s[0]+s[2])/2, (s[1]+s[3])/2, 'midpoint', 2);
+  });
+
+  const splines = gParseSplines(st.gSplines);
+  splines.forEach(sp => {
+    sp.pts.forEach(p => addPt(p[0], p[1], 'endpoint', 3));
+  });
+
+  // Calculate line-line intersections between all existing segments
+  for(let a = 0; a < segs.length; a++){
+    const s1 = segs[a];
+    const x1 = s1[0], y1 = s1[1], x2 = s1[2], y2 = s1[3];
+    for(let b = a + 1; b < segs.length; b++){
+      const s2 = segs[b];
+      const x3 = s2[0], y3 = s2[1], x4 = s2[2], y4 = s2[3];
+      const denom = (x1 - x2)*(y3 - y4) - (y1 - y2)*(x3 - x4);
+      if(Math.abs(denom) > 1e-5){
+        const t = ((x1 - x3)*(y3 - y4) - (y1 - y3)*(x3 - x4)) / denom;
+        const u = -((x1 - x2)*(y1 - y3) - (y1 - y2)*(x1 - x3)) / denom;
+        if(t >= -0.05 && t <= 1.05 && u >= -0.05 && u <= 1.05){
+          const ix = x1 + t*(x2 - x1);
+          const iy = y1 + t*(y2 - y1);
+          addPt(ix, iy, 'intersection', 4);
+        }
+      }
+    }
+  }
+
+  // 2. Structural centers and symmetry axes intersections
+  addPt(G.FW/2, G.FH/2, 'center', 4);
+  if(!G.iso){
+    const sym = st.gSym;
+    const vHits = (G.FW % 2 === 0);
+    const hHits = (G.FH % 2 === 0);
+    if(sym==='mx'||sym==='mxy'||sym==='d4'){
+      if(vHits){
+        const midI = G.FW/2;
+        for(let j=0; j<=G.FH; j++) addPt(midI, j, 'sym_intersection', 4);
+      }
+      addPt(G.FW/2, 0, 'sym_axis', 2);
+      addPt(G.FW/2, G.FH, 'sym_axis', 2);
+    }
+    if(sym==='my'||sym==='mxy'||sym==='d4'){
+      if(hHits){
+        const midJ = G.FH/2;
+        for(let i=0; i<=G.FW; i++) addPt(i, midJ, 'sym_intersection', 4);
+      }
+      addPt(0, G.FH/2, 'sym_axis', 2);
+      addPt(G.FW, G.FH/2, 'sym_axis', 2);
+    }
+    if(sym==='d4' && G.FW === G.FH){
+      for(let k=0; k<=G.FW; k++){
+        addPt(k, k, 'sym_intersection', 4);
+        addPt(k, G.FW-k, 'sym_intersection', 4);
+      }
+    }
+  } else {
+    addPt(0, 0, 'center', 4);
+    if(st.gSym==='r3m'||st.gSym==='d6'){
+      for(let k=-G.FW; k<=G.FW; k++){
+        addPt(k, 0, 'sym_intersection', 4);
+        addPt(0, k, 'sym_intersection', 4);
+        addPt(k, -k, 'sym_intersection', 4);
+      }
+    }
+  }
+
+  // 3. Primary lattice nodes within the cell and immediate border
+  const margin = Math.ceil(G.FW / 4) + 1;
+  const iMin = -margin, iMax = G.FW + margin;
+  const jMin = -margin, jMax = G.FH + margin;
+  for(let i = iMin; i <= iMax; i++){
+    for(let j = jMin; j <= jMax; j++){
+      addPt(i, j, 'grid_node', 1);
+    }
+  }
+
+  _gStructCache = pts;
+  _gStructKey = key;
+  return pts;
+}
+
+function gResolveSnap(q, G){
+  if(!st.gSmartSnap){
+    const ij = G.inv(q.x, q.y);
+    const p = G.P(ij[0], ij[1]);
+    return { ij, p, isSmartSnapped: false, type: 'grid' };
+  }
+
+  const rawIJ = G.inv(q.x, q.y);
+  const rawP = G.P(rawIJ[0], rawIJ[1]);
+  const structPoints = gGetStructuralPoints(G);
+
+  const snapRadius = Math.max(16, G.step * 0.48);
+  let best = null;
+  let minScore = Infinity;
+
+  for(const pt of structPoints){
+    const dist = Math.hypot(pt.x - q.x, pt.y - q.y);
+    if(dist <= snapRadius){
+      const score = dist / (pt.priority || 1);
+      if(score < minScore){
+        minScore = score;
+        best = pt;
+      }
+    }
+  }
+
+  if(best){
+    const finalIJ = [Math.round(best.i), Math.round(best.j)];
+    const finalP = G.P(finalIJ[0], finalIJ[1]);
+    const isSpecial = best.type === 'intersection' || best.type === 'sym_intersection' || best.type === 'endpoint' || best.type === 'center';
+    return {
+      ij: finalIJ,
+      p: finalP,
+      isSmartSnapped: isSpecial,
+      type: best.type,
+      rawPoint: best
+    };
+  }
+
+  return { ij: rawIJ, p: rawP, isSmartSnapped: false, type: 'grid' };
+}
+
+let gPointerIsDown = false;
+let gDragStarted = false;
+let gDownCoord = null;
+
 function gMove(e){
   if(st.engine!=='gridp') return;
-  const q=gEvt(e); if(!q) return; const G=gGeom(), ij=G.inv(q.x,q.y);
-  const h=document.getElementById('gp-hover'), pv=document.getElementById('gp-prev'); if(!h) return;
-  if(!gZone(G,ij)){h.setAttribute('visibility','hidden');pv.setAttribute('visibility','hidden');return}
-  const p=G.P(ij[0],ij[1]); h.setAttribute('cx',p.x);h.setAttribute('cy',p.y);h.setAttribute('visibility','visible');
+  const q=gEvt(e); if(!q) return;
+  const G=gGeom();
+  const snap=gResolveSnap(q,G);
+  const ij=snap.ij;
+  const h=document.getElementById('gp-hover'), pv=document.getElementById('gp-prev');
+  const badge=document.getElementById('gp-smart-snap-badge');
+  if(!h) return;
+
+  if(!gZone(G,ij)){
+    h.setAttribute('visibility','hidden');
+    pv.setAttribute('visibility','hidden');
+    if(badge) badge.setAttribute('visibility','hidden');
+    return;
+  }
+
+  const p=snap.p;
+  h.setAttribute('cx',p.x); h.setAttribute('cy',p.y); h.setAttribute('visibility','visible');
+
+  if(badge){
+    if(snap.isSmartSnapped){
+      badge.setAttribute('transform',`translate(${p.x},${p.y})`);
+      badge.setAttribute('visibility','visible');
+      h.setAttribute('fill','#e0653f');
+      h.setAttribute('r','7.5');
+    }else{
+      badge.setAttribute('visibility','hidden');
+      h.setAttribute('fill',last&&last.P?last.P.acc:'#2b3a8c');
+      h.setAttribute('r','6');
+    }
+  }
+
+  // Freehand drag-drawing: automatically connects lines when dragging across structural intersections
+  if(gPointerIsDown && (e.buttons===1 || e.which===1)){
+    const d=gDownCoord?Math.hypot(q.x-gDownCoord.x,q.y-gDownCoord.y):0;
+    if(d>7) gDragStarted=true;
+    if(gDragStarted && st.gTool==='line'){
+      if(GP.start && (ij[0]!==GP.start[0] || ij[1]!==GP.start[1])){
+        gSnap();
+        gAddSeg(GP.start, ij);
+        GP.start = ij;
+        render();
+        sync();
+        return;
+      }
+    }else if(gDragStarted && st.gTool==='spline'){
+      if(!GP.splinePts) GP.splinePts = [ij];
+      else {
+        const lastPt = GP.splinePts[GP.splinePts.length-1];
+        if(ij[0]!==lastPt[0] || ij[1]!==lastPt[1]){
+          GP.splinePts.push(ij);
+          gShowStart();
+        }
+      }
+    }else if(gDragStarted && st.gTool==='erase'){
+      if(gErase(q.x,q.y)){ render(); sync(); }
+    }
+  }
+
   const ap=document.getElementById('gp-arc'); if(ap) ap.setAttribute('visibility','hidden');
-  if(GP.start&&GP.mid&&(st.gTool==='arc'||st.gTool==='arc3')){
-    /* third click pending: show the arc that would be drawn */
+  const sp=document.getElementById('gp-spline'); if(sp) sp.setAttribute('visibility','hidden');
+  if(st.gTool==='spline'&&GP.splinePts&&GP.splinePts.length){
+    const pts=[...GP.splinePts, ij].map(p=>G.P(p[0],p[1]));
+    if(sp){
+      sp.setAttribute('d', gSplinePath(pts, st.gSplineTension, false));
+      sp.setAttribute('visibility','visible');
+    }
+    pv.setAttribute('visibility','hidden');
+  }else if(GP.start&&GP.mid&&(st.gTool==='arc'||st.gTool==='arc3')){
     const g=gArcGeom(G,[GP.start[0],GP.start[1],GP.mid[0],GP.mid[1],ij[0],ij[1],st.gTool==='arc3'?2:(st.gArcLong?1:0)],v(0,0));
-    if(g&&ap){ap.setAttribute('d',gArcPath(g));ap.setAttribute('visibility','visible')}   /* no arc when the points are in a line */
+    if(g&&ap){ap.setAttribute('d',gArcPath(g));ap.setAttribute('visibility','visible')}
     pv.setAttribute('visibility','hidden');
   }else if(GP.start&&(st.gTool==='line'||st.gTool==='circle'||st.gTool==='arc'||st.gTool==='arc3')){
     const a=G.P(GP.start[0],GP.start[1]);
     pv.setAttribute('x1',a.x);pv.setAttribute('y1',a.y);pv.setAttribute('x2',p.x);pv.setAttribute('y2',p.y);pv.setAttribute('visibility','visible');
   }else pv.setAttribute('visibility','hidden');
 }
+
 function gDown(e){
   if(st.engine!=='gridp'||e.button>0) return;
-  const q=gEvt(e); if(!q) return; const G=gGeom(), ij=G.inv(q.x,q.y);
+  const q=gEvt(e); if(!q) return;
+  const G=gGeom();
+  const snap=gResolveSnap(q,G);
+  const ij=snap.ij;
+
+  gPointerIsDown = true;
+  gDragStarted = false;
+  gDownCoord = q;
+
   const tool=st.gTool;
   if(tool==='erase'){ if(gErase(q.x,q.y)){render();sync()} return }
   if(!gZone(G,ij)) return;
@@ -1789,8 +2702,44 @@ function gDown(e){
     const i=Math.floor((q.x-G.ox)/G.step), j=Math.floor((q.y-G.oy)/G.step);
     gSnap(); gToggleCell(i,j); render(); sync(); return;
   }
+  if(tool==='spline'){
+    if(!GP.splinePts || !GP.splinePts.length){
+      GP.splinePts = [ij];
+      gShowStart();
+      render();
+      sync();
+      return;
+    }
+    const lastPt = GP.splinePts[GP.splinePts.length-1];
+    const firstPt = GP.splinePts[0];
+    if(ij[0]===lastPt[0] && ij[1]===lastPt[1]){
+      if(GP.splinePts.length>=2){
+        gSnap();
+        gAddSpline(GP.splinePts, false);
+      }
+      GP.splinePts = null;
+      gShowStart();
+      render();
+      sync();
+      return;
+    }
+    if(ij[0]===firstPt[0] && ij[1]===firstPt[1] && GP.splinePts.length>=2){
+      GP.splinePts.push([firstPt[0], firstPt[1]]);
+      gSnap();
+      gAddSpline(GP.splinePts, true);
+      GP.splinePts = null;
+      gShowStart();
+      render();
+      sync();
+      return;
+    }
+    GP.splinePts.push(ij);
+    gShowStart();
+    render();
+    sync();
+    return;
+  }
   if(tool==='arc'||tool==='arc3'){
-    /* arc: centre, start, end.  3-point arc: start, a point it passes through, end. */
     if(!GP.start){GP.start=ij;GP.mid=null;gShowStart();return}
     if(!GP.mid){
       if(GP.start[0]===ij[0]&&GP.start[1]===ij[1]) return;
@@ -1799,7 +2748,6 @@ function gDown(e){
     if(ij[0]===GP.start[0]&&ij[1]===GP.start[1]) return;
     if(tool==='arc3'&&ij[0]===GP.mid[0]&&ij[1]===GP.mid[1]) return;
     const flag=tool==='arc3'?2:(st.gArcLong?1:0);
-    /* three points in a straight line have no circle through them: wait for another point */
     if(!gArcGeom(G,[GP.start[0],GP.start[1],GP.mid[0],GP.mid[1],ij[0],ij[1],flag],v(0,0))) return;
     gSnap(); gAddArc(GP.start,GP.mid,ij,flag); GP.start=null; GP.mid=null; gShowStart(); render(); sync(); return;
   }
@@ -1816,14 +2764,66 @@ function gDown(e){
   }
   render();sync();
 }
+
+function gUp(e){
+  if(st.engine!=='gridp') return;
+  gPointerIsDown = false;
+  if(gDragStarted){
+    gDragStarted = false;
+    if(st.gTool==='spline' && GP.splinePts && GP.splinePts.length >= 2){
+      gSnap();
+      gAddSpline(GP.splinePts, false);
+      GP.splinePts = null;
+      render();
+      sync();
+    }else if(!st.gChain){
+      GP.start = null;
+    }
+    gShowStart();
+  }
+}
+
 (function(){
   const svg=document.getElementById('svg');
   svg.addEventListener('pointermove',gMove);
   svg.addEventListener('pointerdown',gDown);
-  svg.addEventListener('contextmenu',e=>{if(st.engine==='gridp'){e.preventDefault();GP.start=null;GP.mid=null;gShowStart()}});
+  svg.addEventListener('pointerup',gUp);
+  window.addEventListener('pointerup',gUp);
+  svg.addEventListener('contextmenu',e=>{
+    if(st.engine==='gridp'){
+      e.preventDefault();
+      if(st.gTool==='spline' && GP.splinePts && GP.splinePts.length >= 2){
+        gSnap();
+        gAddSpline(GP.splinePts, false);
+      }
+      GP.splinePts=null;
+      GP.start=null;
+      GP.mid=null;
+      gShowStart();
+      render();
+      sync();
+    }
+  });
   document.addEventListener('keydown',e=>{
     if(st.engine!=='gridp') return;
-    if(e.key==='Escape'){GP.start=null;GP.mid=null;gShowStart()}
+    if(e.key==='Enter' || e.key===' '){
+      if(st.gTool==='spline' && GP.splinePts && GP.splinePts.length >= 2){
+        e.preventDefault();
+        gSnap();
+        gAddSpline(GP.splinePts, false);
+        GP.splinePts = null;
+        gShowStart();
+        render();
+        sync();
+      }
+    }
+    if(e.key==='Escape'){
+      GP.splinePts=null;
+      GP.start=null;
+      GP.mid=null;
+      gShowStart();
+      render();
+    }
     if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();gUndo()}
   });
 })();
@@ -1831,7 +2831,7 @@ function gDown(e){
 /* a random symmetric drawing, for a quick start */
 function gRandom(){
   const G=gGeom(), R=rng(Math.floor(Math.random()*1e6)+1), n=4+Math.floor(R()*6);
-  gSnap(); st.gData=''; st.gCirc=''; st.gFill='';
+  gSnap(); st.gData=''; st.gCirc=''; st.gFill=''; st.gArcs=''; st.gSplines='';
   const pick=()=>{
     if(G.iso){const s=Math.floor(G.FW*0.8);return [Math.floor(R()*(2*s+1))-s,Math.floor(R()*(s+1))]}
     return [Math.floor(R()*(G.FW+1)),Math.floor(R()*(G.FH+1))];
@@ -1840,7 +2840,7 @@ function gRandom(){
   for(let k=0;k<n;k++){const nx=pick(); if(nx[0]!==cur[0]||nx[1]!==cur[1]) gAddSeg(cur,nx); cur=R()<0.5?nx:pick()}
   GP.start=null; render(); sync();
 }
-const GACT={undo:gUndo,clear:gClear,random:gRandom,closeEnds:gCloseEnds};
+const GACT={undo:gUndo,clear:gClear,random:gRandom,closeEnds:gCloseEnds,aiImage:()=>openAiModal(),finishSpline:()=>{if(GP.splinePts&&GP.splinePts.length>=2){gSnap();gAddSpline(GP.splinePts,false);GP.splinePts=null;gShowStart();render();sync()}}};
 
 /* the drawing is saved into the link as text, and library entries are just this text */
 /*LIB-START*/
@@ -1985,8 +2985,7 @@ function gridThumb(spec,w,h,opts){
       /* the repeat cell and the mirror axes, so the text can point at them */
       const G=gGeom(), c0=G.P(0,0), c1=G.P(G.FW,0), c2=G.P(G.FW,G.FH), c3=G.P(0,G.FH), sw=Math.max(1.2,1.6*k);
       inner+=`<path d="M${f(c0.x)} ${f(c0.y)}L${f(c1.x)} ${f(c1.y)}L${f(c2.x)} ${f(c2.y)}L${f(c3.x)} ${f(c3.y)}Z" fill="#b98a2e" fill-opacity=".10" stroke="#b98a2e" stroke-width="${sw}" stroke-dasharray="6 5"/>`;
-      if(!G.iso&&(st.gSym==='mx'||st.gSym==='mxy'||st.gSym==='d4')){const u=G.P(G.FW/2,0),d=G.P(G.FW/2,G.FH);inner+=`<line x1="${f(u.x)}" y1="${f(u.y)}" x2="${f(d.x)}" y2="${f(d.y)}" stroke="#b98a2e" stroke-width="${Math.max(1,k)}" stroke-dasharray="2 4"/>`}
-      if(!G.iso&&(st.gSym==='my'||st.gSym==='mxy'||st.gSym==='d4')){const u=G.P(0,G.FH/2),d=G.P(G.FW,G.FH/2);inner+=`<line x1="${f(u.x)}" y1="${f(u.y)}" x2="${f(d.x)}" y2="${f(d.y)}" stroke="#b98a2e" stroke-width="${Math.max(1,k)}" stroke-dasharray="2 4"/>`}
+      inner+=gRenderSymmetryAxes(G, { acc: '#b98a2e' }, true);
     }
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="100%" role="img" aria-label="${(opts.label||'pattern').replace(/"/g,'')}">${inner}</svg>`;
   });
@@ -2220,7 +3219,9 @@ function updateInfo(shapes,measured){
   if(st.mode==='jali'&&st.width<2) bits.push('<span class="warn">rib below min bridge</span>');
   bits.push(artBit());
   bits.push(eng.note||(eng.tag==='doc'?'Documented construction':'Contemporary — not a historic reconstruction'));
-  document.getElementById('info').innerHTML=bits.map(b=>`<span>${b}</span>`).join('');
+  document.getElementById('info').innerHTML=bits.map(b=>`<span>${b}</span>`).join(' <span style="opacity:0.35">·</span> ');
+  const ab = $('artDimBadge');
+  if(ab) ab.textContent = `${st.artW} × ${st.artH} ${st.units}`;
 }
 
 /* ============================================================ UI */
@@ -2236,7 +3237,7 @@ function loadGridPattern(i){
   const e=GRID_LIB[i]; if(!e) return;
   GP.lib=i;
   st=Object.assign({},DEF,ENGINES.find(x=>x.id==='gridp').def,{engine:'gridp'},e.s);
-  GP.start=null; GP.hist=[];
+  GP.start=null; GP.hist=[]; GP.splinePts=null;
   clampAll(); buildLists(); buildParams(); render(); sync();
 }
 function buildGridLib(){
@@ -2252,7 +3253,16 @@ function buildGridLib(){
     opts+=`<option value="${i}"${i===GP.lib?' selected':''}>${e.name} · ${size(e)}</option>`;
   });
   if(open) opts+='</optgroup>';
-  $('glib').innerHTML=`<select id="glibSel" aria-label="Numbered patterns by complexity">${opts}</select>
+  $('glib').innerHTML=`
+    <div style="margin-bottom:12px;padding:10px;border-radius:8px;background:var(--bg);border:1px solid var(--line)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <span style="font-weight:600;font-size:12px;display:flex;align-items:center;gap:5px"><span>✨</span> AI Pattern Generator</span>
+        <span class="tag doc" style="font-size:9.5px">Gemini</span>
+      </div>
+      <p style="margin:0 0 8px;font-size:11px;color:var(--mute);line-height:1.4">Upload or paste an ornament image to auto-detect grid and lines.</p>
+      <button class="btn pri" id="openAiPatternModal" style="width:100%;font-size:12px;padding:6px 10px;display:flex;align-items:center;justify-content:center;gap:6px"><span>✨</span> Generate from Image</button>
+    </div>
+    <select id="glibSel" aria-label="Numbered patterns by complexity">${opts}</select>
     <div style="display:flex;gap:6px;margin-top:8px">
       <button class="btn" id="glibPrev" style="flex:1">‹ Previous</button>
       <button class="btn" id="glibNext" style="flex:1">Next ›</button></div>
@@ -2261,30 +3271,128 @@ function buildGridLib(){
   const step=d=>{ const n=GRID_LIB.length; loadGridPattern(GP.lib===undefined||GP.lib===null?(d>0?0:n-1):(GP.lib+d+n)%n) };
   $('glibPrev').onclick=()=>step(-1); $('glibNext').onclick=()=>step(1);
   $('glib').querySelectorAll('[data-go]').forEach(a=>a.onclick=ev=>{ev.preventDefault();document.querySelector('#nav [data-p='+a.dataset.go+']').click()});
+  const btnAi = $('openAiPatternModal');
+  if(btnAi) btnAi.onclick = () => openAiModal();
 }
+let paramTab = 'geo'; // 'geo' | 'color' | 'art'
+
+function renderCtrlRow(c){
+  let h = '';
+  if(c.type==='seg'){
+    h+=`<div class="row"><div class="rlab"><span>${cv(c.label)}</span></div><div class="seg" style="width:100%;flex-wrap:wrap">`+
+      c.opts.map(([val,lab])=>`<button data-seg="${c.k}" data-v="${val}" class="${st[c.k]===val?'on':''}" style="flex:1 1 30%;border-bottom:1px solid var(--line)">${lab}</button>`).join('')+`</div></div>`;
+  }else if(c.type==='acts'){
+    h+=`<div class="row" style="display:flex;gap:6px">`+c.acts.map(([id,lab])=>`<button class="btn" data-act="${id}" style="flex:1">${lab}</button>`).join('')+`</div>`;
+  }else if(c.type==='sel'){
+    h+=`<div class="row"><div class="rlab"><span>${cv(c.label)}</span></div>
+      <select data-k="${c.k}">${cv(c.opts).map(([val,lab])=>
+        `<option value="${val}"${st[c.k]===val?' selected':''}>${lab}</option>`).join('')}</select></div>`;
+  }else if(c.type==='chk'){
+    h+=`<label class="chk"><input type="checkbox" data-k="${c.k}" ${st[c.k]?'checked':''}> ${cv(c.label)}</label>`;
+  }else{
+    const mn=cv(c.min), mx=cv(c.max), lbl=cv(c.label);
+    const K=Kpx();
+    const lo=c.pct?0:(c.len?+(mn/K).toPrecision(3):mn), hi=c.pct?100:(c.len?+(mx*8/K).toPrecision(3):mx), sp=c.pct?1:(c.len?'any':c.step);
+    const unit=c.pct?'%':(c.len?st.units:(c.unit||'').trim());
+    h+=`<div class="row"><div class="rlab"><span>${lbl}</span>
+      <span class="val"><input type="number" class="num" data-k="${c.k}" min="${lo}" max="${hi}" step="${sp}"
+        aria-label="${lbl}">${unit?`<u>${unit}</u>`:''}</span></div>
+    <input type="range" data-k="${c.k}" min="${mn}" max="${mx}" step="${c.step}" value="${st[c.k]}"></div>`;
+  }
+  return h;
+}
+
 function buildLists(){
   buildGridLib();
-  $('presets').innerHTML=PRESETS.map((p,i)=>
-    `<div class="item" data-pre="${i}"><span>${p.name}<br><small>${p.note}</small></span></div>`).join('');
+
+  // Tab switching in Left Drawer
+  const tp = $('tabPresets'), te = $('tabEngines');
+  const pp = $('panePresets'), pe = $('paneEngines');
+  if(tp && te && pp && pe){
+    tp.onclick = () => {
+      tp.classList.add('on'); te.classList.remove('on');
+      pp.style.display = ''; pe.style.display = 'none';
+    };
+    te.onclick = () => {
+      te.classList.add('on'); tp.classList.remove('on');
+      pe.style.display = ''; pp.style.display = 'none';
+    };
+  }
+
+  // Drawer collapse toggle
+  const tb = $('btnToggleDrawer'), pDes = $('p-designer');
+  if(tb && pDes){
+    tb.onclick = () => {
+      pDes.classList.toggle('drawer-collapsed');
+      tb.classList.toggle('on', !pDes.classList.contains('drawer-collapsed'));
+    };
+  }
+
+  // Quick randomise on stage bar
+  const sr = $('stageRnd');
+  if(sr) sr.onclick = () => $('rnd').click();
+
+  // Stage bar AI from image button
+  const btnStageAi = $('btnStageAiImage');
+  if(btnStageAi){
+    btnStageAi.style.display = st.engine === 'gridp' ? 'inline-flex' : 'none';
+    btnStageAi.onclick = () => openAiModal();
+  }
+
+  // Stage bar Smart Snap button
+  const btnSnap = $('btnSmartSnap');
+  if(btnSnap){
+    btnSnap.style.display = st.engine === 'gridp' ? 'inline-flex' : 'none';
+    btnSnap.classList.toggle('on', !!st.gSmartSnap);
+    btnSnap.title = st.gSmartSnap
+      ? 'Smart Snap ON: aligning to nearest structural intersections'
+      : 'Smart Snap OFF: click to enable magnetic alignment';
+    btnSnap.onclick = () => {
+      st.gSmartSnap = !st.gSmartSnap;
+      btnSnap.classList.toggle('on', !!st.gSmartSnap);
+      btnSnap.title = st.gSmartSnap
+        ? 'Smart Snap ON: aligning to nearest structural intersections'
+        : 'Smart Snap OFF: click to enable magnetic alignment';
+      buildParams();
+      sync();
+    };
+  }
+
+  // Presets cards
+  $('presets').innerHTML=PRESETS.map((p,i)=>{
+    const isCur = st.engine===p.s.engine && (p.s.tiling ? st.tiling===p.s.tiling : true);
+    return `<div class="pcard${isCur?' on':''}" data-pre="${i}">
+      <div class="pcard-hdr">
+        <span class="pcard-title">${p.name}</span>
+        <span class="tag">${p.s.mode}</span>
+      </div>
+      <div class="pcard-note">${p.note}</div>
+    </div>`;
+  }).join('');
   $('presets').querySelectorAll('[data-pre]').forEach(el=>el.onclick=()=>applyPreset(+el.dataset.pre));
+
+  // Engines cards
   $('engines').innerHTML=ENGINES.map(e=>
-    `<div class="item${e.id===st.engine?' on':''}" data-e="${e.id}"><span>${e.name}<br><small>${e.sub}</small></span><span class="tag ${e.tag}">${e.tagText||(e.tag==='doc'?'documented':'contemporary')}</span></div>`).join('');
+    `<div class="ecard${e.id===st.engine?' on':''}" data-e="${e.id}">
+      <div class="ecard-hdr">
+        <span class="ecard-title">${e.name}</span>
+        <span class="tag ${e.tag}">${e.tagText||(e.tag==='doc'?'Documented':'Contemporary')}</span>
+      </div>
+      <div class="ecard-sub">${e.sub}</div>
+    </div>`).join('');
   $('engines').querySelectorAll('[data-e]').forEach(el=>el.onclick=()=>{
     if(st.engine!==el.dataset.e){
       st.engine=el.dataset.e;
-      /* each engine wants its own working scale and line weight — inheriting a
-         37 px edge and a 1 px line from the previous one just looks broken */
       const d=(ENGINES.find(x=>x.id===st.engine)||{}).def;
       if(d) Object.assign(st,d);
       clampAll();
     }
     buildLists();buildParams();render();sync();
   });
+
   const showTil=st.engine==='pic';
   $('h-tiling').style.display=showTil?'':'none';
   $('tilings').style.display=showTil?'':'none';
-  /* grouped into families rather than one flat list, and rendered group by
-     group so the order never depends on how TILINGS happens to be written */
   $('tilings').innerHTML=showTil?TILING_GROUPS.map(([gname,gnote])=>{
     const rows=Object.entries(TILINGS).filter(([,t])=>t.g===gname);
     if(!rows.length) return '';
@@ -2292,19 +3400,25 @@ function buildLists(){
       `<div class="item${k===st.tiling?' on':''}" data-t="${k}"><span>${t.label}</span><small>${t.vf}</small></div>`).join('');
   }).join('')+`<div class="card" style="margin-top:10px"><b>Dual (Laves)</b>Each of these can also be shown as its dual — 18 tessellations in all. Two of the eight Archimedean tilings, the snub square 3.3.4.3.4 and snub hexagonal 3.3.3.3.6, are not yet built.</div>`:'';
   $('tilings').querySelectorAll('[data-t]').forEach(el=>el.onclick=()=>{st.tiling=el.dataset.t;buildLists();render();sync()});
+
   const e=ENGINES.find(x=>x.id===st.engine);
   $('srcCard').innerHTML=`<b>Source</b>${e.src}${e.id==='gridp'?' <a href="#" data-go="guide">How to use it: read the guide</a>':''}`;
   $('srcCard').querySelectorAll('[data-go]').forEach(a=>a.onclick=ev=>{ev.preventDefault();document.querySelector('#nav [data-p='+a.dataset.go+']').click()});
+
   $('modes').style.display=(st.engine==='gridp')?'none':'';
   $('modes').innerHTML=MODES.map(([k,n])=>`<button data-m="${k}" class="${k===st.mode?'on':''}">${n}</button>`).join('');
   $('modes').querySelectorAll('button').forEach(b=>b.onclick=()=>{st.mode=b.dataset.m;buildLists();render();sync()});
+
+  const ab = $('artDimBadge');
+  if(ab) ab.textContent = `${st.artW} × ${st.artH} ${st.units}`;
 }
+
 function sizeBlock(){
   const cur=SIZES.find(z=>z[4]===st.units&&Math.abs(z[2]-st.artW)<1e-6&&Math.abs(z[3]-st.artH)<1e-6);
   const u=st.units;
-  return `<h3>Artwork size</h3>
-    <div class="row"><div class="rlab"><span>Size</span></div>
-      <select id="artPre"><option value="custom"${cur?'':' selected'}>Custom</option>${SIZES.map(z=>
+  return `
+    <div class="row"><div class="rlab"><span>Preset Size</span></div>
+      <select id="artPre"><option value="custom"${cur?'':' selected'}>Custom Dimensions</option>${SIZES.map(z=>
         `<option value="${z[0]}"${cur&&cur[0]===z[0]?' selected':''}>${z[1]}</option>`).join('')}</select></div>
     <div class="row"><div class="rlab"><span>Units</span></div>
       <select id="artUnits">${Object.entries(UNITS).map(([k,x])=>
@@ -2316,53 +3430,108 @@ function sizeBlock(){
         <input class="numbox" id="artH" type="number" step="any" min="0.001" value="${st.artH}" aria-label="Artwork height"></div>
     </div>`;
 }
+
 function buildParams(){
   fitViewBox();
   const rows=visibleCtrls();
-  let h=sizeBlock()+'<h3>Construction</h3>';
-  for(const c of rows){
-    if(c.k==='width') h+='<h3>Line &amp; frame</h3>';
-    if(c.k==='palMode') h+='<h3>Colour</h3>';
-    if(c.type==='seg'){
-      h+=`<div class="row"><div class="rlab"><span>${cv(c.label)}</span></div><div class="seg" style="width:100%;flex-wrap:wrap">`+
-        c.opts.map(([val,lab])=>`<button data-seg="${c.k}" data-v="${val}" class="${st[c.k]===val?'on':''}" style="flex:1 1 30%;border-bottom:1px solid var(--line)">${lab}</button>`).join('')+`</div></div>`;
-    }else if(c.type==='acts'){
-      h+=`<div class="row" style="display:flex;gap:6px">`+c.acts.map(([id,lab])=>`<button class="btn" data-act="${id}" style="flex:1">${lab}</button>`).join('')+`</div>`;
-    }else if(c.type==='sel'){
-      h+=`<div class="row"><div class="rlab"><span>${cv(c.label)}</span></div>
-        <select data-k="${c.k}">${cv(c.opts).map(([val,lab])=>
-          `<option value="${val}"${st[c.k]===val?' selected':''}>${lab}</option>`).join('')}</select></div>`;
-    }else if(c.type==='chk'){
-      h+=`<label class="chk"><input type="checkbox" data-k="${c.k}" ${st[c.k]?'checked':''}> ${cv(c.label)}</label>`;
-    }else{
-      /* percentages are stored 0–1 but typed and shown as 0–100 */
-      const mn=cv(c.min), mx=cv(c.max), lbl=cv(c.label);
-      const K=Kpx();
-      const lo=c.pct?0:(c.len?+(mn/K).toPrecision(3):mn), hi=c.pct?100:(c.len?+(mx*8/K).toPrecision(3):mx), sp=c.pct?1:(c.len?'any':c.step);
-      const unit=c.pct?'%':(c.len?st.units:(c.unit||'').trim());
-      h+=`<div class="row"><div class="rlab"><span>${lbl}</span>
-        <span class="val"><input type="number" class="num" data-k="${c.k}" min="${lo}" max="${hi}" step="${sp}"
-          aria-label="${lbl}">${unit?`<u>${unit}</u>`:''}</span></div>
-      <input type="range" data-k="${c.k}" min="${mn}" max="${mx}" step="${c.step}" value="${st[c.k]}"></div>`;
-    }
+
+  let h = `<div class="insp-nav">
+    <button class="insp-tab ${paramTab==='geo'?'on':''}" data-ptab="geo" type="button">📐 Geometry</button>
+    <button class="insp-tab ${paramTab==='color'?'on':''}" data-ptab="color" type="button">🎨 Style &amp; Color</button>
+    <button class="insp-tab ${paramTab==='art'?'on':''}" data-ptab="art" type="button">📄 Artboard</button>
+  </div>`;
+
+  if(paramTab === 'geo'){
+    const eng = ENGINES.find(x => x.id === st.engine) || ENGINES[0];
+    h += `<div class="insp-sec">
+      <div class="insp-hdr">
+        <span>${eng.name}</span>
+        <button class="btn btn-sm" id="btnChangeEngine" type="button" style="font-size:10.5px;padding:2px 7px">Engines &amp; Tilings ▾</button>
+      </div>
+      <div style="font-size:11.5px;color:var(--mute);margin-bottom:10px">${eng.sub}</div>`;
+
+    const geoRows = rows.filter(c => c.k !== 'width' && c.k !== 'frame' && c.k !== 'palMode' && c.k !== 'cHue' && c.k !== 'cSpread' && c.k !== 'cSat' && c.k !== 'cLight' && c.k !== 'cContrast' && c.k !== 'cReverse' && c.k !== 'colourBy');
+    for(const c of geoRows) h += renderCtrlRow(c);
+    h += `</div>`;
+    h += `<div class="card reading-card"><b>Construction Insight</b><span id="read"></span></div>`;
   }
-  h+='<div id="swWrap"><div class="sw" id="sw"></div></div>';
-  h+=`<div class="card"><b>Reading</b><span id="read"></span></div>`;
+  else if(paramTab === 'color'){
+    h += `<div class="insp-sec">
+      <div class="insp-hdr">Line &amp; Frame Stroke</div>`;
+    const lineRows = rows.filter(c => c.k === 'width' || c.k === 'frame');
+    for(const c of lineRows) h += renderCtrlRow(c);
+    h += `</div>`;
+
+    h += `<div class="insp-sec">
+      <div class="insp-hdr">Palette &amp; Color Ramp</div>`;
+    const colRows = rows.filter(c => c.k === 'palMode' || c.k === 'cHue' || c.k === 'cSpread' || c.k === 'cSat' || c.k === 'cLight' || c.k === 'cContrast' || c.k === 'cReverse' || c.k === 'colourBy');
+    for(const c of colRows) h += renderCtrlRow(c);
+    h += `<div id="swWrap" style="margin-top:8px"><div class="sw" id="sw"></div></div>`;
+    h += `</div>`;
+
+    h += `<div id="contrastTool"></div>`;
+  }
+  else {
+    h += `<div class="insp-sec">
+      <div class="insp-hdr">Artboard Setup</div>
+      ${sizeBlock()}
+    </div>`;
+
+    h += `<div class="insp-sec">
+      <div class="insp-hdr">Vector Export Hub</div>
+      <div class="export-card">
+        <div style="font-size:11px;color:var(--mute);margin-bottom:8px">Export clean vector files at full fidelity:</div>
+        <button class="export-btn" id="artExpSvg" type="button">
+          <span>Scalable Vector (.svg)</span>
+          <small>Web / Lasercut</small>
+        </button>
+        <button class="export-btn" id="artExpPdf" type="button">
+          <span>Vector PDF (.pdf)</span>
+          <small>Adobe Illustrator</small>
+        </button>
+        <button class="export-btn" id="artExpDxf" type="button">
+          <span>CAD DXF R12 (.dxf)</span>
+          <small>AutoCAD / CNC</small>
+        </button>
+      </div>
+      <button class="btn" id="artCopyLink" style="width:100%;margin-top:10px;padding:8px" type="button">
+        🔗 Copy Shareable Design Link
+      </button>
+    </div>`;
+  }
+
   $('params').innerHTML=h;
+
+  // Bind tab navigation
+  $('params').querySelectorAll('button[data-ptab]').forEach(b=>{
+    b.onclick = () => {
+      paramTab = b.dataset.ptab;
+      buildParams();
+      outs();
+    };
+  });
+
+  const bce = $('btnChangeEngine');
+  if(bce) bce.onclick = () => {
+    $('p-designer').classList.remove('drawer-collapsed');
+    const te = $('tabEngines'); if(te) te.click();
+  };
+
+  const es = $('artExpSvg'), ep = $('artExpPdf'), ed = $('artExpDxf'), cl = $('artCopyLink');
+  if(es) es.onclick = () => $('exp').click();
+  if(ep) ep.onclick = () => $('expPdf').click();
+  if(ed) ed.onclick = () => $('expDxf').click();
+  if(cl) cl.onclick = () => $('copy').click();
+
   $('params').querySelectorAll('input[type=range]').forEach(i=>{
     i.oninput=()=>{st[i.dataset.k]=parseFloat(i.value);outs();render();sync()};
   });
   $('params').querySelectorAll('input.num').forEach(i=>{
     const c=ctrlOf(i.dataset.k); if(!c) return;
-    /* Apply as they type, but never rewrite the box mid-edit: typing "400" into a
-       field whose minimum is 12 passes through "4", and snapping the text back
-       would make the rest of the number impossible to enter. The box is only
-       normalised once the edit is committed. */
     const apply=commit=>{
       const raw=parseFloat(i.value);
       if(isFinite(raw)){
         let x=c.pct?raw/100:(c.len?raw*Kpx():raw);
-        /* a typed length may go well past the slider, so any real size can be entered */
         st[c.k]=Math.min(cv(c.max)*(c.len?8:1),Math.max(c.len?Math.min(cv(c.min),0.2):cv(c.min),x));
         const rg=$('params').querySelector(`input[type=range][data-k="${c.k}"]`);
         if(rg) rg.value=st[c.k];
@@ -2375,14 +3544,20 @@ function buildParams(){
     i.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();i.blur()}};
   });
   $('params').querySelectorAll('input[type=checkbox]').forEach(i=>{
-    i.onchange=()=>{st[i.dataset.k]=i.checked;render();sync()};
+    i.onchange=()=>{st[i.dataset.k]=i.checked;render();outs();sync()};
   });
-  $('artPre').onchange=e=>{const z=SIZES.find(q=>q[0]===e.target.value); if(z) setArtwork(z[4],z[2],z[3])};
-  $('artUnits').onchange=e=>setUnits(e.target.value);
+
+  const ap = $('artPre');
+  if(ap) ap.onchange=e=>{const z=SIZES.find(q=>q[0]===e.target.value); if(z) setArtwork(z[4],z[2],z[3])};
+  const au = $('artUnits');
+  if(au) au.onchange=e=>setUnits(e.target.value);
   const aw=$('artW'), ah=$('artH');
-  const sizeChange=()=>{const w=numOf(aw.value),hh=numOf(ah.value); if(w>0&&hh>0) setArtwork(st.units,w,hh)};
-  aw.onchange=sizeChange; ah.onchange=sizeChange;
-  aw.onkeydown=ah.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();e.target.blur()}};
+  if(aw && ah){
+    const sizeChange=()=>{const w=numOf(aw.value),hh=numOf(ah.value); if(w>0&&hh>0) setArtwork(st.units,w,hh)};
+    aw.onchange=sizeChange; ah.onchange=sizeChange;
+    aw.onkeydown=ah.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();e.target.blur()}};
+  }
+
   $('params').querySelectorAll('button[data-seg]').forEach(b=>b.onclick=()=>{
     st[b.dataset.seg]=b.dataset.v; GP.start=null; GP.mid=null; buildParams(); render(); sync();
   });
@@ -2392,15 +3567,23 @@ function buildParams(){
       if(i.dataset.k==='gType'){st.gSym='none';st.gW=Math.min(st.gW,8)}
       GP.start=null;clampAll();buildParams();render();sync()};
   });
-  if(st.palMode==='custom'){
-    const g=genPalette(st);
-    $('sw').innerHTML=g.fills.map(c=>`<i style="background:${c}" title="${c}"></i>`).join('');
-    $('sw').onclick=null;
-  }else{
-    $('sw').innerHTML=PALETTES.map((p,i)=>
-      `<i title="${p.name}" data-i="${i}" class="${i===st.pal?'on':''}" style="background:linear-gradient(135deg,${p.bg} 0 34%,${p.ink} 34% 67%,${p.acc} 67% 100%)"></i>`).join('');
-    $('sw').onclick=e=>{const i=e.target.dataset.i;if(i!==undefined){st.pal=+i;buildParams();render();sync()}};
+
+  if(paramTab === 'color' && $('sw')){
+    if(st.palMode==='custom'){
+      const g=genPalette(st);
+      $('sw').innerHTML=g.fills.map(c=>`<i style="background:${c}" title="${c}"></i>`).join('');
+      $('sw').onclick=null;
+    }else{
+      $('sw').innerHTML=PALETTES.map((p,i)=>
+        `<i title="${p.name}" data-i="${i}" class="${i===st.pal?'on':''}" style="background:linear-gradient(135deg,${p.bg} 0 34%,${p.ink} 34% 67%,${p.acc} 67% 100%)"></i>`).join('');
+      $('sw').onclick=e=>{const i=e.target.dataset.i;if(i!==undefined){st.pal=+i;buildParams();render();sync()}};
+    }
   }
+
+  if(paramTab === 'color'){
+    renderContrastMatrix();
+  }
+
   outs();
 }
 const visibleCtrls=()=>[...(CTRL[st.engine]||[]),...COMMON].filter(c=>!c.when||c.when(st));
@@ -2431,6 +3614,13 @@ function outs(){
       :'Lines read as physical ribs; everything between them is an opening.',
     mosaic:'Closed pieces filled from the palette and separated by grout.'}[st.mode];
   const el=$('read'); if(el) el.textContent=R;
+  if(st.palMode==='custom'&&$('sw')){
+    const g=genPalette(st);
+    $('sw').innerHTML=g.fills.map(c=>`<i style="background:${c}" title="${c}"></i>`).join('');
+  }
+  if(paramTab==='color') renderContrastMatrix();
+  const ab = $('artDimBadge');
+  if(ab) ab.textContent = `${st.artW} × ${st.artH} ${st.units}`;
 }
 
 /* URL state */
@@ -2695,6 +3885,368 @@ const SRC_ALL=[
 $('srcMain').innerHTML='<tr><th>Reference</th><th>Access verified</th><th>Use here</th></tr>'+
   SRC_MAIN.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');
 $('srcAll').innerHTML=SRC_ALL.map(r=>`<tr><td>${r}</td><td>Open source</td></tr>`).join('');
+
+/* ============================================================ AI Pattern Generator from Image */
+let aiSelectedImage = null; // dataURL
+let aiGeneratedPattern = null;
+
+const AI_SAMPLES = [
+  {
+    name: 'Cairo Star Lattice',
+    desc: 'Square 8-fold star',
+    svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#d8ac4d" stroke-width="2.5"><rect width="100" height="100" fill="#141824"/><rect x="15" y="15" width="70" height="70"/><polygon points="50,15 75,25 85,50 75,75 50,85 25,75 15,50 25,25"/><line x1="15" y1="15" x2="85" y2="85"/><line x1="85" y1="15" x2="15" y2="85"/><rect x="32" y="32" width="36" height="36" transform="rotate(45 50 50)"/></svg>`
+  },
+  {
+    name: 'Cordoba Rosette',
+    desc: 'Hexagonal 6-fold',
+    svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#e5d5b5" stroke-width="2.5"><rect width="100" height="100" fill="#0f2b26"/><polygon points="50,10 85,30 85,70 50,90 15,70 15,30"/><polygon points="50,22 74,36 74,64 50,78 26,64 26,36"/><line x1="50" y1="10" x2="50" y2="90"/><line x1="15" y1="30" x2="85" y2="70"/><line x1="15" y1="70" x2="85" y2="30"/><circle cx="50" cy="50" r="14"/></svg>`
+  },
+  {
+    name: 'Diamond Lattice',
+    desc: 'Barred 4-fold',
+    svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#8fa0ff" stroke-width="2.5"><rect width="100" height="100" fill="#1c1a24"/><path d="M 0,50 L 50,0 L 100,50 L 50,100 Z"/><path d="M 25,25 L 75,25 L 75,75 L 25,75 Z"/><line x1="0" y1="0" x2="100" y2="100"/><line x1="100" y1="0" x2="0" y2="100"/></svg>`
+  },
+  {
+    name: 'Damascus 12-Star',
+    desc: '12-pointed star',
+    svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#e9c878" stroke-width="2.2"><rect width="100" height="100" fill="#221e33"/><circle cx="50" cy="50" r="38"/><polygon points="50,12 68,17 82,31 88,50 82,68 68,82 50,88 31,82 17,68 12,50 17,31 31,17"/><circle cx="50" cy="50" r="15"/></svg>`
+  }
+];
+
+function svgToDataUrl(svgStr){
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr);
+}
+
+function openAiModal(presetImgData){
+  const modal = $('aiModal');
+  if(!modal) return;
+  modal.style.display = 'flex';
+  aiGeneratedPattern = null;
+  if(presetImgData){
+    setAiImage(presetImgData);
+  } else {
+    renderAiModalContent();
+  }
+}
+
+function closeAiModal(){
+  const modal = $('aiModal');
+  if(modal) modal.style.display = 'none';
+}
+
+function setAiImage(dataUrl){
+  aiSelectedImage = dataUrl;
+  aiGeneratedPattern = null;
+  renderAiModalContent();
+}
+
+function renderAiModalContent(){
+  const body = $('aiModalBody');
+  const footer = $('aiModalFooter');
+  if(!body || !footer) return;
+
+  const btnClose = $('aiBtnClose');
+  if(btnClose) btnClose.onclick = closeAiModal;
+
+  if(aiGeneratedPattern){
+    // Result View
+    const p = aiGeneratedPattern;
+    const segCount = p.gData ? p.gData.split(';').filter(Boolean).length : 0;
+    const gridLabel = p.gType === 'iso' ? `Triangle (Isometric) ${p.gW} units` : `Square ${p.gW}×${p.gH} (Sub: ${p.gSub||1})`;
+    body.innerHTML = `
+      <div style="padding:10px 12px;border-radius:8px;background:rgba(31,122,77,0.12);border:1px solid var(--ok);margin-bottom:8px">
+        <div style="font-weight:600;color:var(--ok);font-size:13px;display:flex;align-items:center;gap:6px">
+          <span>✓</span> Pattern Successfully Generated!
+        </div>
+        <div style="font-size:12.5px;margin-top:4px">
+          <b>${p.name || 'AI Generated Geometric Pattern'}</b>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
+        <div style="padding:8px 10px;border-radius:6px;background:var(--panel-sub);border:1px solid var(--line)">
+          <span style="color:var(--mute);font-size:11px;display:block">Grid Lattice</span>
+          <b>${gridLabel}</b>
+        </div>
+        <div style="padding:8px 10px;border-radius:6px;background:var(--panel-sub);border:1px solid var(--line)">
+          <span style="color:var(--mute);font-size:11px;display:block">Symmetry &amp; Segments</span>
+          <b>${p.gSym || 'none'}</b> · ${segCount} lines
+        </div>
+      </div>
+
+      ${p.explanation ? `<div style="font-size:12px;line-height:1.5;color:var(--mute);background:var(--panel-sub);padding:9px 12px;border-radius:6px;border:1px solid var(--line)">
+        <b style="color:var(--ink)">Analysis:</b> ${p.explanation}
+      </div>` : ''}
+
+      <div style="font-size:11.5px;color:var(--mute)">
+        Click <b>Load into Drawing Grid</b> to start drawing and editing this pattern directly on the active canvas.
+      </div>
+    `;
+
+    footer.innerHTML = `
+      <button class="btn" id="aiBtnReset">← Try Another Image</button>
+      <span class="spacer"></span>
+      <button class="btn" id="aiBtnSaveLib">➕ Add to Collection</button>
+      <button class="btn pri" id="aiBtnApply">🎯 Load into Drawing Grid</button>
+    `;
+
+    $('aiBtnReset').onclick = () => { aiGeneratedPattern = null; aiSelectedImage = null; renderAiModalContent(); };
+    $('aiBtnApply').onclick = () => { applyAIGeneratedPattern(aiGeneratedPattern, false); closeAiModal(); };
+    $('aiBtnSaveLib').onclick = () => { applyAIGeneratedPattern(aiGeneratedPattern, true); closeAiModal(); };
+    return;
+  }
+
+  // Input View
+  let previewHtml = '';
+  if(aiSelectedImage){
+    previewHtml = `
+      <div class="ai-preview-box">
+        <img src="${aiSelectedImage}" alt="Pattern reference">
+        <button class="btn btn-sm" id="aiBtnRemoveImg" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.7);color:#fff;border-color:rgba(255,255,255,0.3)">✕ Remove</button>
+      </div>
+    `;
+  } else {
+    previewHtml = `
+      <div class="ai-dropzone" id="aiDropzone">
+        <div style="font-size:26px">🖼️</div>
+        <div style="font-weight:600;font-size:13px">Drop image here, paste from clipboard, or click to browse</div>
+        <div style="font-size:11px;color:var(--mute)">Supports architectural photos, tile scans, engravings, line diagrams (PNG, JPG, WebP, SVG)</div>
+        <input type="file" id="aiFileInput" accept="image/*" style="display:none">
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input type="url" id="aiUrlInput" class="numbox" placeholder="Or paste image URL (https://...)" style="flex:1;font-size:12px">
+        <button class="btn btn-sm" id="aiBtnFetchUrl">Fetch URL</button>
+      </div>
+
+      <div>
+        <div style="font-size:11px;font-weight:600;color:var(--mute);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">
+          Or try a specimen architectural pattern:
+        </div>
+        <div class="ai-samples-grid">
+          ${AI_SAMPLES.map((s, i) => `
+            <div class="ai-sample-item" data-sample="${i}" title="${s.desc}">
+              ${s.svg}
+              <span style="font-weight:600">${s.name}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  body.innerHTML = `
+    ${previewHtml}
+    <div>
+      <div class="rlab"><span>Guidance notes (optional)</span></div>
+      <input type="text" id="aiPromptInput" class="numbox" placeholder="e.g. Focus on the 8-pointed star in the center, preserve 4-fold symmetry..." style="font-size:12.5px">
+    </div>
+    <div id="aiErrorBanner" style="display:none;padding:8px 12px;border-radius:6px;background:rgba(220,38,38,0.12);border:1px solid #dc2626;color:var(--ink);font-size:12px"></div>
+  `;
+
+  footer.innerHTML = `
+    <button class="btn" id="aiBtnCancel">Cancel</button>
+    <button class="btn pri" id="aiBtnGenerate" ${!aiSelectedImage ? 'disabled' : ''}>✨ Generate Pattern</button>
+  `;
+
+  $('aiBtnCancel').onclick = closeAiModal;
+  const dz = $('aiDropzone');
+  const fileInp = $('aiFileInput');
+  if(dz && fileInp){
+    dz.onclick = () => fileInp.click();
+    fileInp.onchange = e => {
+      const file = e.target.files && e.target.files[0];
+      if(file){
+        const r = new FileReader();
+        r.onload = ev => setAiImage(ev.target.result);
+        r.readAsDataURL(file);
+      }
+    };
+    dz.ondragover = e => { e.preventDefault(); dz.classList.add('dragover'); };
+    dz.ondragleave = () => dz.classList.remove('dragover');
+    dz.ondrop = e => {
+      e.preventDefault();
+      dz.classList.remove('dragover');
+      if(e.dataTransfer.files && e.dataTransfer.files[0]){
+        const r = new FileReader();
+        r.onload = ev => setAiImage(ev.target.result);
+        r.readAsDataURL(e.dataTransfer.files[0]);
+      }
+    };
+  }
+
+  const fetchBtn = $('aiBtnFetchUrl');
+  if(fetchBtn){
+    fetchBtn.onclick = () => {
+      const url = $('aiUrlInput').value.trim();
+      if(url){
+        setAiImage(url);
+      }
+    };
+  }
+
+  body.querySelectorAll('[data-sample]').forEach(el => {
+    el.onclick = () => {
+      const idx = +el.dataset.sample;
+      const s = AI_SAMPLES[idx];
+      if(s) setAiImage(svgToDataUrl(s.svg));
+    };
+  });
+
+  const rmvBtn = $('aiBtnRemoveImg');
+  if(rmvBtn){
+    rmvBtn.onclick = () => {
+      aiSelectedImage = null;
+      renderAiModalContent();
+    };
+  }
+
+  const genBtn = $('aiBtnGenerate');
+  if(genBtn){
+    genBtn.onclick = startAiGeneration;
+  }
+}
+
+async function startAiGeneration(){
+  if(!aiSelectedImage) return;
+  const genBtn = $('aiBtnGenerate');
+  const promptInput = $('aiPromptInput');
+  const errBanner = $('aiErrorBanner');
+  if(errBanner) errBanner.style.display = 'none';
+
+  if(genBtn){
+    genBtn.disabled = true;
+    genBtn.innerHTML = '<span class="ai-spinner"></span> Analyzing with Gemini Vision...';
+  }
+
+  try {
+    const payload = {
+      prompt: promptInput ? promptInput.value.trim() : ''
+    };
+    if(aiSelectedImage.startsWith('http')){
+      payload.imageUrl = aiSelectedImage;
+    } else {
+      payload.image = aiSelectedImage;
+    }
+
+    const res = await fetch('/api/generate-pattern-from-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    if(!res.ok || !data.success){
+      throw new Error(data.error || 'Failed to analyze pattern.');
+    }
+
+    aiGeneratedPattern = data.pattern;
+    renderAiModalContent();
+  } catch(err){
+    console.error('AI Generation Error:', err);
+    if(errBanner){
+      errBanner.style.display = 'block';
+      errBanner.innerHTML = `<b>Error:</b> ${err.message || 'Could not generate pattern. Please check your network and Gemini API key.'}`;
+    }
+    if(genBtn){
+      genBtn.disabled = false;
+      genBtn.innerHTML = '✨ Generate Pattern';
+    }
+  }
+}
+
+function applyAIGeneratedPattern(p, saveToLib){
+  if(!p) return;
+  const gType = p.gType === 'iso' ? 'iso' : 'square';
+  const gW = Math.max(2, Math.min(32, parseInt(p.gW) || 8));
+  const gH = gType === 'iso' ? gW : Math.max(2, Math.min(32, parseInt(p.gH) || 8));
+  const gSub = Math.max(1, Math.min(4, parseInt(p.gSub) || 1));
+  const gSym = p.gSym || (gType === 'iso' ? 'd6' : 'd4');
+  const gData = p.gData || '';
+
+  const patternState = {
+    engine: 'gridp',
+    gType,
+    gW,
+    gH,
+    gSub,
+    gSym,
+    gData,
+    gCirc: p.gCirc || '',
+    gArcs: p.gArcs || '',
+    gSplines: p.gSplines || '',
+    gSplineTension: 0.5,
+    gSize: Math.max(28, Math.min(80, Math.round(360 / gW))),
+    gShowGrid: false,
+    gShowCell: true,
+    pal: 1,
+    width: 2.2
+  };
+
+  if(saveToLib){
+    const newId = 'ai-' + Date.now();
+    const newName = p.name || 'AI Generated Pattern';
+    GRID_LIB.push({
+      id: newId,
+      name: newName,
+      group: 'AI Generated',
+      note: p.explanation || 'Reverse-engineered from image with Gemini Vision',
+      s: patternState
+    });
+    GP.lib = GRID_LIB.length - 1;
+  } else {
+    GP.lib = null;
+  }
+
+  st = Object.assign({}, DEF, ENGINES.find(x => x.id === 'gridp').def, patternState);
+  GP.start = null;
+  GP.hist = [];
+  GP.splinePts = null;
+  clampAll();
+  buildLists();
+  buildParams();
+  render();
+  sync();
+}
+
+// Global paste and drop listeners
+window.addEventListener('paste', e => {
+  if(st.engine !== 'gridp') return;
+  const items = e.clipboardData && e.clipboardData.items;
+  if(!items) return;
+  for(let i = 0; i < items.length; i++){
+    if(items[i].type.startsWith('image/')){
+      const file = items[i].getAsFile();
+      if(file){
+        const r = new FileReader();
+        r.onload = ev => openAiModal(ev.target.result);
+        r.readAsDataURL(file);
+        break;
+      }
+    }
+  }
+});
+
+window.addEventListener('keydown', e => {
+  if(e.key === 'Escape') closeAiModal();
+});
+
+const canvasEl = document.querySelector('.canvas');
+if(canvasEl){
+  canvasEl.addEventListener('dragover', e => {
+    if(st.engine === 'gridp') e.preventDefault();
+  });
+  canvasEl.addEventListener('drop', e => {
+    if(st.engine === 'gridp' && e.dataTransfer.files && e.dataTransfer.files[0]){
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if(file.type.startsWith('image/')){
+        const r = new FileReader();
+        r.onload = ev => openAiModal(ev.target.result);
+        r.readAsDataURL(file);
+      }
+    }
+  });
+}
 
 /* go */
 load();buildLists();buildParams();render();sync();

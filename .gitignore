@@ -4,6 +4,12 @@ Thumbs.db
 desktop.ini
 *~
 
+# Dependencies and environment
+node_modules/
+.env
+.aistudio/
+
 # OneDrive conflict copies
 *-Copy*.html
 *conflicted*
+
