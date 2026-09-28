@@ -1605,12 +1605,15 @@ function tilePlane(key,scale,rotation,W,H,padMul){
   const idx=pointIndex(scale*0.02), tiles=[];
   for(let i=-N;i<=N;i++)for(let j=-N;j<=N;j++){
     const off=add(mul(T1,i),mul(T2,j));
-    for(const pr of protos){
+    for(let pk=0;pk<protos.length;pk++){
+      const pr=protos[pk];
       const pts=pr.map(p=>{const q=rot(add(mul(p,scale),off),rotation);return v(q.x+cx,q.y+cy)});
       const c=centroid(pts);
       if(c.x<-pad||c.x>W+pad||c.y<-pad||c.y>H+pad) continue;
       if(idx.get(c)) continue; idx.add(c,1);
-      tiles.push({pts,n:pr.length,c});
+      /* lattice parity — which "colour" this cell/proto would take in a checkerboard
+         2-colouring, used to mirror-alternate motifs so neighbours don't all spin the same way */
+      tiles.push({pts,n:pr.length,c,parity:((i+j+pk)%2+2)%2});
     }
   }
   return tiles;
@@ -1922,10 +1925,22 @@ function multigrid(st,W,H){
   const N=Math.max(3,Math.round(st.mN)), R=rng(st.seed), s=st.scale;
   const rot0=st.rotation*Math.PI/180;
   const th=[],e=[],g=[];
+  /* an even N of equal-offset families is exactly invariant under rotation by
+     π/N about the centre (family i's lines map onto family i+1's), which packs
+     a cluster of near-parallel, near-coincident crossings into one region —
+     a fan of sliver tiles. Odd N never closes up this way, so it's unaffected.
+     A *regular* stagger (e.g. linear in i) isn't enough: it shifts where the
+     near-coincidences fall but keeps them just as clustered. What breaks it up
+     is irregularity, so families are scrambled with an irrational (golden-ratio)
+     step — deterministic and reproducible, but with no small-integer resonance
+     between any two families for the crossing math to line up on. */
+  const evenStagger = (N%2===0);
+  const GOLDEN=0.6180339887498949;
   for(let i=0;i<N;i++){
     const t=Math.PI*i/N+rot0;
     th.push(t); e.push(v(Math.cos(t),Math.sin(t)));
-    g.push(st.mOffset+(st.mDisorder/100)*(R()-0.5));
+    const stag = evenStagger ? (((i*GOLDEN)%1)-0.5)*0.5 : 0;
+    g.push(st.mOffset+stag+(st.mDisorder/100)*(R()-0.5));
   }
   /* V is about (N/2)·P, so this many lines each way covers the panel */
   const D=Math.hypot(W,H)/2, K=Math.ceil(2*D/(s*N))+2, cx=W/2, cy=H/2;
@@ -2234,7 +2249,8 @@ function generateFractalTessellation(st, W, H, rotr){
   const shapes = [];
   const under = [];
   const fam = st.subFam || 'sierpinski';
-  const reqDepth = Math.max(0, Math.min(5, Math.round(st.subDepth !== undefined ? st.subDepth : 3)));
+  const depthCap = fam === 'rosette' ? 24 : 5;
+  const reqDepth = Math.max(0, Math.min(depthCap, Math.round(st.subDepth !== undefined ? st.subDepth : 3)));
   const scaleRatio = Math.max(0.2, Math.min(0.9, st.subScale || 0.5));
   const twist = (st.subTwist || 0) * Math.PI / 180;
   const mask = st.subMask || 'all';
@@ -2279,14 +2295,21 @@ function generateFractalTessellation(st, W, H, rotr){
   }
 
   if (fam === 'rosette') {
-    const sides = Math.max(3, Math.min(20, Math.round(st.subSegments !== undefined ? st.subSegments : 6)));
-    const baseTilingKey = (sides % 4 === 0) ? 'square' : 'hex';
+    /* only 3, 4 or 6 sides can tile the plane edge-to-edge with no gap or overlap;
+       snap anything else (stray preset/URL values) to the nearest of those */
+    const rawSides = Math.round(st.subSegments !== undefined ? st.subSegments : 6);
+    const sides = [3,4,6].reduce((a,b)=>Math.abs(b-rawSides)<Math.abs(a-rawSides)?b:a);
+    const baseTilingKey = sides === 3 ? 'tri' : sides === 4 ? 'square' : 'hex';
     const baseTiles = tilePlane(baseTilingKey, st.scale * 1.4, rotr, W, H, 0.6);
+    const mirrorOn = !!st.subMirror;
     for (const t of baseTiles) {
       under.push(t.pts);
       const c = t.c;
       const baseR = len(sub(t.pts[0], c)) || (st.scale * 1.4);
       const a0 = len(sub(t.pts[0], c)) > 1e-4 ? Math.atan2(t.pts[0].y - c.y, t.pts[0].x - c.x) : rotr;
+      /* alternate tiles spin the deflation the other way, so neighbours mirror
+         each other instead of every motif rotating in lockstep */
+      const twistSign = (mirrorOn && t.parity) ? -1 : 1;
 
       let prevRing = [];
       if (t.pts.length === sides) {
@@ -2300,7 +2323,7 @@ function generateFractalTessellation(st, W, H, rotr){
 
       for (let d = 0; d <= reqDepth; d++) {
         const curR = baseR * Math.pow(scaleRatio, d);
-        const curAng = a0 + d * twist;
+        const curAng = a0 + d * twist * twistSign;
         const curRing = [];
         for (let i = 0; i < sides; i++) {
           const a = curAng + (2 * Math.PI * i) / sides;
@@ -2835,21 +2858,25 @@ const PRESETS=[
    s:{engine:'tess',tessFam:'fractal',subFam:'sierpinski',subDepth:3,subScale:0.5,scale:120,dualGrid:false,tessDual:false,width:2,mode:'mosaic',pal:'verde',colourBy:'type',frame:true}},
   {name:'Archimedean Dual Kagome Lattice',note:'3.6.3.6 trihexagonal tiling with dual rhombille grid overlay and edge chamfer',
    s:{engine:'tess',tessFam:'regular',tessType:'trihex',dualGrid:true,tessDual:true,tessDualBlend:0.75,tessDualWidth:2.5,tessDualCol:'accent',tessKerf:3,tessEdge:'straight',scale:75,width:2.5,mode:'line',pal:'indigo',frame:true}},
-  {name:'Concentric Star Deflation',note:'Recursive 8-point rosette deflation in Calacatta Gold palette with 22.5° twist and tile gap',
-   s:{engine:'tess',tessFam:'fractal',subFam:'rosette',subDepth:3,subScale:0.58,subTwist:22.5,tessKerf:2,scale:140,width:2,mode:'mosaic',pal:'calacatta',colourBy:'type',frame:true}},
+  {name:'Concentric Star Deflation',note:'Recursive 6-point rosette deflation, full edge-to-edge hex tiling with mirrored alternating spirals, in Calacatta Gold palette with 22.5° twist and tile gap',
+   s:{engine:'tess',tessFam:'fractal',subFam:'rosette',subSegments:6,subMirror:true,subDepth:3,subScale:0.58,subTwist:22.5,tessKerf:2,scale:140,width:2,mode:'mosaic',pal:'calacatta',colourBy:'type',frame:true}},
   {name:'Interlaced 12-fold stars',note:'Polygons in contact on 4.6.12, woven ribbon',
    s:{engine:'pic',tiling:'trunctrihex',angle:38,scale:58,width:4,mode:'interlace',pal:'copper',frame:false}},
   {name:'Thin-line 8-point stars',note:'Polygons in contact on 4.8.8, fine line',
    s:{engine:'pic',tiling:'octasq',angle:45,scale:64,width:1.5,mode:'line',pal:'ivory',frame:false}},
   {name:'8-point star mosaic',note:'4.8.8 filled by region, coloured in rings around each star',
    s:{engine:'pic',tiling:'octasq',angle:67,scale:96,width:6,mode:'mosaic',pal:'ivory',colourBy:'ring',frame:false}},
-  {name:'16-point star lattice',note:'Compass stars {16/6}. Not a full rosette medallion',
-   s:{engine:'star',sn:16,sd:6,scell:230,width:2,mode:'line',pal:'ivory',ssec:true,frame:false}},
   {name:'Ten-fold Penrose stars',note:'Star motif over the Penrose tiling',
    s:{engine:'multi',mN:5,mOffset:0,scale:58,mMotif:true,angle:54,width:3,mode:'line',
       palMode:'custom',cHue:42,cSpread:60,cSat:55,cLight:55,cContrast:40,colourBy:'type',frame:true}},
   {name:'Repeating jali panel',note:'Voronoi hex repeat, cut out and rounded in Tuscan Terracotta palette',
-   s:{engine:'voro',vlayout:'hex',vrepeat:2,vcount:12,vjitter:40,vrelax:3,round:0.7,width:6,mode:'jali',pal:'terracotta',frame:true}}
+   s:{engine:'voro',vlayout:'hex',vrepeat:2,vcount:12,vjitter:40,vrelax:3,round:0.7,width:6,mode:'jali',pal:'terracotta',frame:true}},
+  {name:'Penrose Rhomb Substitution',note:'Robinson triangle deflation into golden-ratio rhombi, depth 6, Titanium & Slate palette',
+   s:{engine:'subst',subRule:'penrose',subDepth:6,width:2,mode:'mosaic',pal:'titanium',colourBy:'type',frame:true}},
+  {name:'Rhombitrihexagonal Contact Lattice',note:'3.4.6.4 semi-regular tiling in Emerald & Gold contact polygons',
+   s:{engine:'pic',tiling:'rhombitri',angle:55,scale:70,width:3,mode:'mosaic',pal:'emerald',colourBy:'type',frame:true}},
+  {name:'Radial Voronoi Mandala',note:'10-fold radial Voronoi mandala, Lloyd-relaxed, in Rosso Levanto palette',
+   s:{engine:'voro',vlayout:'radial',vsym:10,vmirror:true,vcount:60,vrelax:3,round:0.35,width:4,mode:'mosaic',pal:'rosso',colourBy:'position',frame:true}}
 ];
 
 /* ============================================================ state */
@@ -2858,7 +2885,7 @@ const DEF={engine:'pic',tiling:'octasq',mode:'line',
   dualGrid:false,tessDual:false,tessDualBlend:0.65,tessDualWidth:2.5,tessDualCol:'accent',tessDualStyle:'dashed',tessDualNodes:true,
   tessFam:'regular',tessType:'hex',tessKerf:0,tessEdge:'straight',tessStarMod:0.25,
   tessKochBase:'hex',
-  subFam:'sierpinski',subDepth:3,subScale:0.5,subTwist:0,subMask:'all',
+  subFam:'sierpinski',subDepth:3,subScale:0.5,subTwist:0,subMask:'all',subSegments:6,subMirror:true,
   sn:12,sd:5,scell:150,ssec:true,
   mN:5,mOffset:0.2,mDisorder:0,mMotif:false,
   subRule:'penrose',subDepth:4,
@@ -2928,7 +2955,11 @@ const CTRL={
   {k:'tessKochBase', label:'Snowflake geometry', type:'sel', opts:[
     ['hex','Interlocking Hexagonal Crystals'],['tri','Classic Star Snowflake (Triangular)'],['grand','Grand Centered Koch Medallion']],
     when:s=>s.tessFam==='fractal'&&s.subFam==='koch'},
-  {k:'subDepth', label:'Recursion depth', min:0, max:5, step:1, unit:'levels', when:s=>s.tessFam==='fractal'},
+  {k:'subSegments', label:'Base shape (edge-to-edge tiling only)', type:'seg', opts:[[3,'Triangle'],[4,'Square'],[6,'Hexagon']],
+    when:s=>s.tessFam==='fractal'&&s.subFam==='rosette'},
+  {k:'subMirror', label:'Mirror alternate tiles', type:'chk',
+    when:s=>s.tessFam==='fractal'&&s.subFam==='rosette'},
+  {k:'subDepth', label:'Recursion depth', min:0, max:s=>s.subFam==='rosette'?24:5, step:1, unit:'levels', when:s=>s.tessFam==='fractal'},
   {k:'subScale', label:'Inward scale ratio', min:0.25, max:0.9, step:0.01, pct:true,
     when:s=>s.tessFam==='fractal'&&(s.subFam==='rosette'||s.subFam==='sierpinski')},
   {k:'subTwist', label:'Twist angle per step', min:0, max:90, step:1, unit:'°', deg:true,
@@ -6307,7 +6338,12 @@ function applyAIGeneratedPattern(p, saveToLib){
 // ==================== PATTERN DRAW MODAL & CONVERSION ====================
 let selectedPatSpec = null;
 let patModalTab = 'pic'; // 'pic' | 'field' | 'current'
-let patIncludeMode = 'both'; // 'both' | 'star' | 'poly'
+let patIncludeMode = 'poly'; // 'both' | 'star' | 'poly'
+/* 'poly' (contact-polygon outlines only) is the default because it's the only
+   mode verified clean at every tiling. The Hankin star rays ('star'/'both')
+   read fine in the live render but still show real tangled artifacts once
+   forced onto integer grid coordinates for oblique (hex-family) tilings —
+   still available from the modal for anyone who wants them anyway. */
 let patLoadAction = 'replace'; // 'replace' | 'merge'
 
 function openAddPatternModal(tab = 'pic'){
@@ -6517,58 +6553,116 @@ function getCurrentPatternSpec(opts = {}){
     const include = opts.include || patIncludeMode || 'both';
     const T = TILINGS[tilingKey];
     if(!T) return null;
-    const { protos, t1, t2 } = T.build();
+    const { protos: protosRaw, t1: t1raw, t2: t2raw } = T.build();
+    // picTile's contact-angle ray construction is numerically sensitive at tiny
+    // scale — at the raw ~1-unit lattice size its rays come out visibly tangled
+    // (confirmed: identical geometry at real pixel scale is clean). Scale the
+    // whole cell up to the size it's actually drawn at before computing stars.
+    const S = st.scale || 76;
+    const t1 = mul(t1raw, S), t2 = mul(t2raw, S);
+    const protos = protosRaw.map(proto => proto.map(p => mul(p, S)));
     const isIso = !!(tilingKey === 'hex' || tilingKey === 'tri' || tilingKey === 'trihex' || tilingKey === 'trunctrihex' || tilingKey === 'rhombitri' || tilingKey === 'trunchex');
     const gType = isIso ? 'iso' : 'square';
-    const gridW = opts.gridW || 12;
+    // A fixed 12x12 crushes anything with lots of sub-polygons per cell (e.g.
+    // trunctrihex: a dodecagon plus 6 squares plus 6 hexagons, 72 vertices —
+    // each small square/hexagon collapses into 1-2 grid cells and the contact
+    // star construction on them turns to noise). Scale resolution with how much
+    // is actually in the cell.
+    const usingFaces = st.mode === 'mosaic' && last && last.faces && last.faces.length;
+    const totalVerts = protos.reduce((n, p) => n + p.length, 0);
+    // The Hankin construction places ray endpoints using a free-angle contact
+    // construction (angle is a continuous 15-80° slider, not tied to the
+    // lattice), so they essentially never land exactly on integer grid points
+    // at any resolution — this is rounded to the nearest available point, not
+    // reconstructed exactly. gW alone maxes out at 64 (the grid tool's own
+    // limit); gSub (1-4, "points per square") multiplies that further, so use
+    // both for the highest addressable precision the tool actually supports.
+    const gSubOut = usingFaces ? 4 : 1;
+    const effRes = opts.gridW || (usingFaces ? 208 : Math.max(12, Math.min(32, Math.round(totalVerts * 1.5))));
+    const gridW = Math.round(effRes / gSubOut) * gSubOut;
     const gridH = gridW;
-    const L1 = len(t1), L2 = len(t2);
     const unique = new Map();
-    const c0 = centroid(protos[0]);
-    const ox = c0.x, oy = c0.y;
+    // t1,t2 are the tiling's own repeat vectors, and for every hex/tri-family
+    // tiling (isIso above) they are NOT perpendicular — t1 has both x and y
+    // components. Normalizing x by |t1| and y by |t2| independently (as if they
+    // were an axes-aligned box) only happens to work for square-like tilings;
+    // for the oblique ones it throws points far outside [0,gridW] and almost
+    // everything gets clipped. Inverting the real 2×2 basis [t1 t2] gives the
+    // point's true (u,v) lattice coordinates, valid for any tiling.
+    const det = t1.x * t2.y - t2.x * t1.y;
+    const toUV = p => ({ u: (p.x * t2.y - p.y * t2.x) / det, v: (p.y * t1.x - p.x * t1.y) / det });
+    let uMin = Infinity, uMax = -Infinity, vMin = Infinity, vMax = -Infinity;
+    for(const proto of protos) for(const p of proto){
+      const { u, v: vv } = toUV(p);
+      uMin = Math.min(uMin, u); uMax = Math.max(uMax, u);
+      vMin = Math.min(vMin, vv); vMax = Math.max(vMax, vv);
+    }
+    const uSpan = uMax - uMin || 1, vSpan = vMax - vMin || 1;
+    const toGrid = p => { const { u, v: vv } = toUV(p);
+      return [Math.round((u - uMin) / uSpan * gridW), Math.round((vv - vMin) / vSpan * gridH)]; };
 
-    for(let a = -1; a <= 1; a++){
-      for(let b = -1; b <= 1; b++){
-        const shift = add(mul(t1, a), mul(t2, b));
+    const tryAddEdge = (p1, p2) => {
+      const g1 = toGrid(p1), g2 = toGrid(p2);
+      if(g1[0] >= 0 && g1[0] <= gridW && g1[1] >= 0 && g1[1] <= gridH &&
+         g2[0] >= 0 && g2[0] <= gridW && g2[1] >= 0 && g2[1] <= gridH &&
+         (g1[0] !== g2[0] || g1[1] !== g2[1])){
+        const canon = gCanon([...g1, ...g2]);
+        unique.set(canon.join(','), canon);
+      }
+    };
+    if(usingFaces){
+      // Mosaic mode's actual visual identity is the coloured FACES (the star
+      // medallions plus the small connector pieces makeFaces carves between
+      // them) — not the raw contact-polygon outline, and not a single tile's
+      // own star ray in isolation. Those give a completely different, much
+      // plainer shape (confirmed: side-by-side against the live render they
+      // don't match). last.faces is exactly what the live mosaic already
+      // built, in real canvas coordinates, so use that directly — just undo
+      // the canvas's own centring/rotation to get back to this function's
+      // lattice frame before handing points to toGrid.
+      const center = v(W / 2, H / 2), rotr = (st.rotation || 0) * Math.PI / 180;
+      const toLocal = p => rot(sub(p, center), -rotr);
+      for(const f of last.faces){
+        const pts = f.pts; if(!pts || pts.length < 2) continue;
+        for(let i = 0; i < pts.length; i++)
+          tryAddEdge(toLocal(pts[i]), toLocal(pts[(i + 1) % pts.length]));
+      }
+    } else {
+      // The star rays are computed per-tile and run edge-midpoint-to-centre, so
+      // they're self-contained within that one tile's own footprint — one pass
+      // over the unshifted protos already covers a full repeat cell. Sweeping the
+      // neighbour shifts too (needed below for plain edges, which ARE shared
+      // between tiles and can clip at the cell boundary) instead made each ray
+      // get computed 9 times over, each copy rounding to grid points a fraction
+      // differently, which showed up as extra tangled loops.
+      if(include === 'star' || include === 'both'){
         for(const proto of protos){
-          const poly = proto.map(p => sub(add(p, shift), v(ox - L1/2, oy - L2/2)));
-          if(include === 'star' || include === 'both'){
-            const res = picTile(poly, angle);
-            for(let i = 0; i < res.path.length; i++){
-              const p1 = res.path[i], p2 = res.path[(i + 1) % res.path.length];
-              const g1 = [Math.round((p1.x / L1) * gridW), Math.round((p1.y / L2) * gridH)];
-              const g2 = [Math.round((p2.x / L1) * gridW), Math.round((p2.y / L2) * gridH)];
-              if(g1[0] >= 0 && g1[0] <= gridW && g1[1] >= 0 && g1[1] <= gridH &&
-                 g2[0] >= 0 && g2[0] <= gridW && g2[1] >= 0 && g2[1] <= gridH &&
-                 (g1[0] !== g2[0] || g1[1] !== g2[1])){
-                const canon = gCanon([...g1, ...g2]);
-                unique.set(canon.join(','), canon);
-              }
-            }
-          }
-          if(include === 'poly' || include === 'both'){
-            for(let i = 0; i < poly.length; i++){
-              const p1 = poly[i], p2 = poly[(i + 1) % poly.length];
-              const g1 = [Math.round((p1.x / L1) * gridW), Math.round((p1.y / L2) * gridH)];
-              const g2 = [Math.round((p2.x / L1) * gridW), Math.round((p2.y / L2) * gridH)];
-              if(g1[0] >= 0 && g1[0] <= gridW && g1[1] >= 0 && g1[1] <= gridH &&
-                 g2[0] >= 0 && g2[0] <= gridW && g2[1] >= 0 && g2[1] <= gridH &&
-                 (g1[0] !== g2[0] || g1[1] !== g2[1])){
-                const canon = gCanon([...g1, ...g2]);
-                unique.set(canon.join(','), canon);
-              }
+          const res = picTile(proto, angle);
+          for(let i = 0; i < res.path.length; i++)
+            tryAddEdge(res.path[i], res.path[(i + 1) % res.path.length]);
+        }
+      }
+      if(include === 'poly' || include === 'both'){
+        for(let a = -1; a <= 1; a++){
+          for(let b = -1; b <= 1; b++){
+            const shift = add(mul(t1, a), mul(t2, b));
+            for(const proto of protos){
+              const poly = proto.map(p => add(p, shift));
+              for(let i = 0; i < poly.length; i++)
+                tryAddEdge(poly[i], poly[(i + 1) % poly.length]);
             }
           }
         }
       }
     }
     const segs = [...unique.values()];
+    const gW = gridW / gSubOut;
     return {
       gType,
-      gW: gridW,
-      gH: gridH,
-      gSub: 1,
-      gSize: Math.round(360 / gridW),
+      gW,
+      gH: gridH / gSubOut,
+      gSub: gSubOut,
+      gSize: Math.round(360 / gW),
       gSym: 'none',
       gData: gStr(segs),
       gCirc: '',
@@ -6580,7 +6674,130 @@ function getCurrentPatternSpec(opts = {}){
     };
   }
 
-  // Fallback default
+  if(st.engine === 'tess' && st.tessFam === 'regular'){
+    // Same idea as the 'pic' branch above: extract exactly one repeat cell from
+    // the tiling's own lattice (t1,t2) rather than a crop of the viewport, so the
+    // Drawing Grid's own repeat tiles it seamlessly instead of showing seams.
+    const tilingKey = st.tessType || 'hex';
+    const T = TILINGS[tilingKey];
+    if(T){
+      const { protos, t1: t1u, t2: t2u } = T.build();
+      const isIso = !!(tilingKey === 'hex' || tilingKey === 'tri' || tilingKey === 'trihex' || tilingKey === 'trunctrihex' || tilingKey === 'rhombitri' || tilingKey === 'trunchex');
+      const gType = isIso ? 'iso' : 'square';
+      // same reasoning as the 'pic' branch: scale resolution with cell complexity
+      const totalVerts = protos.reduce((n, p) => n + p.length, 0);
+      const gridW = opts.gridW || Math.max(16, Math.min(32, Math.round(totalVerts * 1.5)));
+      const gridH = gridW;
+      const s = st.scale || 76;
+      const deformEdge = st.tessEdge || 'straight';
+      const mod = st.tessStarMod || 0.25;
+      const kerf = st.tessKerf || 0;
+      // real pixel-scale basis: applyTileDeformation's kerf is an absolute pixel
+      // inset, so deformation has to happen at true scale, not raw unit lattice
+      const t1 = mul(t1u, s), t2 = mul(t2u, s);
+      // same oblique-lattice fix as the 'pic' branch above: invert the real
+      // basis instead of normalizing x,y independently by |t1|,|t2|
+      const det = t1.x * t2.y - t2.x * t1.y;
+      const toUV = p => ({ u: (p.x * t2.y - p.y * t2.x) / det, v: (p.y * t1.x - p.x * t1.y) / det });
+      // bounds from the centre copy's own (deformed) footprint, so that one
+      // true repeat cell maps exactly onto [0,gridW]x[0,gridH]
+      let uMin = Infinity, uMax = -Infinity, vMin = Infinity, vMax = -Infinity;
+      for(const proto of protos){
+        const centrePoly = applyTileDeformation(proto.map(p => mul(p, s)), deformEdge, mod, kerf);
+        for(const p of centrePoly){
+          const { u, v: vv } = toUV(p);
+          uMin = Math.min(uMin, u); uMax = Math.max(uMax, u);
+          vMin = Math.min(vMin, vv); vMax = Math.max(vMax, vv);
+        }
+      }
+      const uSpan = uMax - uMin || 1, vSpan = vMax - vMin || 1;
+      const unique = new Map();
+
+      for(let a = -1; a <= 1; a++){
+        for(let b = -1; b <= 1; b++){
+          const shift = add(mul(t1, a), mul(t2, b));
+          for(const proto of protos){
+            let poly = proto.map(p => add(mul(p, s), shift));
+            poly = applyTileDeformation(poly, deformEdge, mod, kerf);
+            for(let i = 0; i < poly.length; i++){
+              const p1 = poly[i], p2 = poly[(i + 1) % poly.length];
+              const uv1 = toUV(p1), uv2 = toUV(p2);
+              const g1 = [Math.round((uv1.u - uMin) / uSpan * gridW), Math.round((uv1.v - vMin) / vSpan * gridH)];
+              const g2 = [Math.round((uv2.u - uMin) / uSpan * gridW), Math.round((uv2.v - vMin) / vSpan * gridH)];
+              if(g1[0] >= 0 && g1[0] <= gridW && g1[1] >= 0 && g1[1] <= gridH &&
+                 g2[0] >= 0 && g2[0] <= gridW && g2[1] >= 0 && g2[1] <= gridH &&
+                 (g1[0] !== g2[0] || g1[1] !== g2[1])){
+                const canon = gCanon([...g1, ...g2]);
+                unique.set(canon.join(','), canon);
+              }
+            }
+          }
+        }
+      }
+      const segs = [...unique.values()];
+      if(segs.length) return {
+        gType,
+        gW: gridW,
+        gH: gridH,
+        gSub: 1,
+        gSize: Math.round(360 / gridW),
+        gSym: 'none',
+        gData: gStr(segs),
+        gCirc: '',
+        gArcs: '',
+        gSplines: '',
+        width: 2.2,
+        name: `Current Tessellation: ${T.label}`,
+        count: segs.length
+      };
+    }
+  }
+
+  // Every other engine (tess-fractal, star, multi, voro, subst): these are
+  // either non-periodic (quasiperiodic multigrid, substitution) or don't carry
+  // a simple two-vector lattice, so there's no clean single repeat cell to pull
+  // out. Snapshot whatever is actually built on screen right now — last.shapes —
+  // at a finer grid than the old default so the aliasing loss is minor rather
+  // than a fixed stand-in pattern that has nothing to do with the active geometry.
+  if(last && last.shapes && last.shapes.length){
+    const gridW = opts.gridW || 20, gridH = gridW;
+    const unique = new Map();
+    for(const sh of last.shapes){
+      const pts = sh.pts; if(!pts || pts.length < 2) continue;
+      for(let i = 0; i < pts.length; i++){
+        const p1 = pts[i], p2 = pts[(i + 1) % pts.length];
+        const g1 = [Math.round((p1.x / W) * gridW), Math.round((p1.y / H) * gridH)];
+        const g2 = [Math.round((p2.x / W) * gridW), Math.round((p2.y / H) * gridH)];
+        if(g1[0] >= 0 && g1[0] <= gridW && g1[1] >= 0 && g1[1] <= gridH &&
+           g2[0] >= 0 && g2[0] <= gridW && g2[1] >= 0 && g2[1] <= gridH &&
+           (g1[0] !== g2[0] || g1[1] !== g2[1])){
+          const canon = gCanon([...g1, ...g2]);
+          unique.set(canon.join(','), canon);
+        }
+      }
+    }
+    const segs = [...unique.values()];
+    if(segs.length){
+      const engName = (ENGINES.find(e => e.id === st.engine) || {}).name || 'Pattern';
+      return {
+        gType: 'square',
+        gW: gridW,
+        gH: gridH,
+        gSub: 1,
+        gSize: Math.round(360 / gridW),
+        gSym: 'none',
+        gData: gStr(segs),
+        gCirc: '',
+        gArcs: '',
+        gSplines: '',
+        width: 2.2,
+        name: `Current ${engName}`,
+        count: segs.length
+      };
+    }
+  }
+
+  // Last-resort fallback, only if nothing is on screen to snapshot
   return {
     gType: 'square',
     gW: 12,
@@ -6601,8 +6818,8 @@ function getCurrentPatternSpec(opts = {}){
 function loadPatternIntoDraw(pState, { mode = 'replace', title = 'Pattern' } = {}){
   if(!pState) return;
   const gType = pState.gType === 'iso' ? 'iso' : 'square';
-  const gW = Math.max(2, Math.min(32, parseInt(pState.gW) || 12));
-  const gH = gType === 'iso' ? gW : Math.max(2, Math.min(32, parseInt(pState.gH) || 12));
+  const gW = Math.max(2, Math.min(64, parseInt(pState.gW) || 12));
+  const gH = gType === 'iso' ? gW : Math.max(2, Math.min(64, parseInt(pState.gH) || 12));
   const gSub = Math.max(1, Math.min(4, parseInt(pState.gSub) || 1));
   const gSym = pState.gSym || 'none';
 
