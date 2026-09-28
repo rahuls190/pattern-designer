@@ -2279,17 +2279,28 @@ function generateFractalTessellation(st, W, H, rotr){
   }
 
   if (fam === 'rosette') {
-    const baseTiles = tilePlane('hex', st.scale * 1.4, rotr, W, H, 0.6);
+    const sides = Math.max(3, Math.min(20, Math.round(st.subSegments !== undefined ? st.subSegments : 6)));
+    const baseTilingKey = (sides % 4 === 0) ? 'square' : 'hex';
+    const baseTiles = tilePlane(baseTilingKey, st.scale * 1.4, rotr, W, H, 0.6);
     for (const t of baseTiles) {
       under.push(t.pts);
       const c = t.c;
-      const baseR = len(sub(t.pts[0], c));
-      const sides = t.pts.length;
-      let prevRing = t.pts;
+      const baseR = len(sub(t.pts[0], c)) || (st.scale * 1.4);
+      const a0 = len(sub(t.pts[0], c)) > 1e-4 ? Math.atan2(t.pts[0].y - c.y, t.pts[0].x - c.x) : rotr;
+
+      let prevRing = [];
+      if (t.pts.length === sides) {
+        prevRing = t.pts;
+      } else {
+        for (let i = 0; i < sides; i++) {
+          const a = a0 + (2 * Math.PI * i) / sides;
+          prevRing.push(v(c.x + baseR * Math.cos(a), c.y + baseR * Math.sin(a)));
+        }
+      }
 
       for (let d = 0; d <= reqDepth; d++) {
         const curR = baseR * Math.pow(scaleRatio, d);
-        const curAng = rotr + d * twist;
+        const curAng = a0 + d * twist;
         const curRing = [];
         for (let i = 0; i < sides; i++) {
           const a = curAng + (2 * Math.PI * i) / sides;
@@ -2790,7 +2801,7 @@ const ENGINES=[
    src:'Hankin, <i>Drawing of Geometric Patterns in Saracenic Art</i> (1925) [3]; Kaplan, <i>Islamic Star Patterns from Polygons in Contact</i> (2005) [7]. Documented construction, implemented directly.'},
   {id:'tess', name:'Regular & Fractal Tessellation', sub:'Dual-grid · recursive · tile editing', tag:'doc', tagText:'interactive',
    def:{tessFam:'regular',tessType:'hex',tessDual:true,tessDualBlend:0.55,tessKerf:0,tessEdge:'straight',tessStarMod:0.25,
-        subFam:'sierpinski',subDepth:3,subScale:0.5,subTwist:0,subMask:'all',scale:72,width:2.5,round:0,frame:true},
+        subFam:'sierpinski',subSegments:6,subDepth:3,subScale:0.5,subTwist:0,subMask:'all',scale:72,width:2.5,round:0,frame:true},
    src:'Euclidean regular & Archimedean tilings, Laves dual lattices (Grünbaum & Shephard, <i>Tilings and Patterns</i>, 1987), and recursive self-similar fractal dissections (Fathauer, <i>Tessellations: Mathematics, Art, and Recreation</i>, 2021). Features interactive dual-grid morphing, edge deformations, kerf spacing, and multi-depth fractal generation.'},
   {id:'star', name:'Star polygons {n/d}', sub:'compass construction', tag:'doc', def:{scell:150,width:3,round:0},
    src:'The Metropolitan Museum of Art, <i>Islamic Art and Geometric Design</i> activity pack [1]. Documented construction.'},
