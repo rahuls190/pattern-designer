@@ -29,9 +29,15 @@ setTimeout(() => {
     const afterLoadEngine = st.engine;
     const afterLoadCount = st.gData.split(";").length;
     
-    // 2. Draw a new line with drawing tools
+    // 2. Draw a new line with drawing tools — one the pattern doesn't already
+    //    have, since adding an existing line is correctly a no-op
     const beforeSegCount = gParse(st.gData).length;
-    gAddSeg([0, 0], [2, 2]);
+    const have = new Set(gParse(st.gData).map(t => gCanon(t).join()));
+    let freeEnd = null;
+    for (let x = 0; x <= st.gW * st.gSub && !freeEnd; x++)
+      for (let y = 0; y <= st.gH * st.gSub && !freeEnd; y++)
+        if ((x || y) && !have.has(gCanon([0, 0, x, y]).join())) freeEnd = [x, y];
+    gAddSeg([0, 0], freeEnd);
     const afterSegCount = gParse(st.gData).length;
     
     // 3. Convert current Polygons in Contact pattern

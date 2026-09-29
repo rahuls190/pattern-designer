@@ -35,7 +35,6 @@ Built from the research catalogue *Geometric Pattern Research and Book Catalogue
 | Engine | Method | Status |
 |---|---|---|
 | **Polygons in contact** | Hankin's method in Kaplan's computational form, over 9 tilings × their duals = 18 tessellations | documented |
-| **Star polygons {n/d}** | Compass construction (Met activity pack) | documented |
 | **Self-similar subdivision** | Penrose deflation, triangle rep-4, chair rep-4, Sierpinski | documented |
 | **Quasiperiodic multigrid** | de Bruijn's multigrid — N=5 is Penrose, N=4 is Ammann–Beenker. An optional *Islamic star motif* runs Kaplan's polygons-in-contact over the tiles, giving 8-, 10-, 12- and 16-fold star patterns that no periodic tiling can | documented |
 | **Draw on a grid** | Field's method: straight lines, arcs, 3-point arcs, circles and filled squares on a square or triangle grid, with symmetry and a repeat cell, drawn by hand | documented |

@@ -1023,7 +1023,7 @@ code{
   display:inline-block;
 }
 
-/* ================= AI Pattern Generator Modal ================= */
+/* ================= Modals ================= */
 .ai-modal-backdrop{
   position:fixed;
   inset:0;
@@ -1070,71 +1070,6 @@ code{
   flex-direction:column;
   gap:13px;
 }
-.ai-dropzone{
-  border:2px dashed var(--line);
-  border-radius:8px;
-  padding:22px 14px;
-  text-align:center;
-  cursor:pointer;
-  background:var(--bg);
-  transition:all .18s;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:6px;
-}
-.ai-dropzone:hover,.ai-dropzone.dragover{
-  border-color:var(--accent);
-  background:rgba(36,51,114,0.05);
-}
-.ai-preview-box{
-  position:relative;
-  border:1px solid var(--line);
-  border-radius:8px;
-  overflow:hidden;
-  background:#0d1117;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  max-height:200px;
-}
-.ai-preview-box img{
-  max-width:100%;
-  max-height:200px;
-  object-fit:contain;
-  display:block;
-}
-.ai-samples-grid{
-  display:grid;
-  grid-template-columns:repeat(4, 1fr);
-  gap:8px;
-  margin-top:6px;
-}
-.ai-sample-item{
-  border:1px solid var(--line);
-  border-radius:6px;
-  padding:6px 4px;
-  cursor:pointer;
-  background:var(--bg);
-  text-align:center;
-  font-size:10.5px;
-  transition:all .15s;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:3px;
-}
-.ai-sample-item:hover{
-  border-color:var(--accent);
-  transform:translateY(-1px);
-  background:var(--panel);
-}
-.ai-sample-item svg{
-  width:100%;
-  height:46px;
-  display:block;
-  border-radius:4px;
-}
 .ai-modal-footer{
   display:flex;
   align-items:center;
@@ -1144,17 +1079,6 @@ code{
   border-top:1px solid var(--line);
   background:var(--panel-sub);
 }
-.ai-spinner{
-  width:14px;
-  height:14px;
-  border:2px solid rgba(255,255,255,0.3);
-  border-top-color:#fff;
-  border-radius:50%;
-  animation:aiSpin .75s linear infinite;
-  display:inline-block;
-  vertical-align:middle;
-}
-@keyframes aiSpin{to{transform:rotate(360deg)}}
 
 /* Pattern Drawing Modal & Card Gallery */
 .pat-tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:8px;overflow-x:auto}
@@ -1174,6 +1098,8 @@ code{
 .pat-opts-box{background:var(--panel-sub);border:1px solid var(--line);border-radius:8px;padding:10px 14px;display:flex;flex-direction:column;gap:8px;font-size:12px}
 .pat-preview-cell{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--panel);display:flex;align-items:center;justify-content:center;height:180px}
 
+.insp-pick,#btnStageFrame{display:none}
+
 /* Responsive rules */
 @media(max-width:1024px){
   header.studio-header{padding:0 12px;gap:10px}
@@ -1182,11 +1108,30 @@ code{
   .gstep{grid-template-columns:1fr}
 }
 @media(max-width:768px){
-  header.studio-header{height:auto;padding:8px 12px;flex-wrap:wrap}
-  nav.studio-nav{order:3;width:100%;justify-content:space-around;border-top:1px solid var(--line-light);padding-top:6px}
+  header.studio-header{height:auto;padding:8px 12px;flex-wrap:wrap;position:static}
+  nav.studio-nav{order:3;width:100%;justify-content:space-around;border-top:1px solid var(--line-light);padding-top:6px;
+    overflow-x:auto;scrollbar-width:none;gap:2px}
+  nav.studio-nav::-webkit-scrollbar{display:none}
+  nav.studio-nav a{padding:6px 6px;white-space:nowrap;flex:none}
+  /* the header buttons wrap instead of pushing the page wider than the phone */
+  .hdr-actions{flex-wrap:wrap;row-gap:6px}
   main{display:flex;flex-direction:column;height:auto}
-  .stage{min-height:55vh}
-  .canvas-artboard-wrap{padding:10px;height:52vh}
+  /* the artwork comes first and stays pinned, so every control you touch
+     below it shows its result straight away */
+  .stage{order:-1;position:sticky;top:0;z-index:30;height:auto;min-height:0;box-shadow:0 8px 14px -10px rgba(0,0,0,.5)}
+  .stage-bar{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:6px 10px;gap:6px}
+  .stage-bar::-webkit-scrollbar{display:none}
+  .stage-bar>*{flex:none}
+  .canvas-artboard-wrap{padding:6px;height:36vh}
+  .stage-footer{flex-wrap:nowrap;padding:4px 10px;gap:8px}
+  .stage-footer .info{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
+  aside.r{order:0}
+  /* the preset, engine and tiling lists live in one row of dropdowns instead */
+  .insp-pick{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px}
+  .insp-pick select{flex:1 1 140px;min-width:0;width:auto}
+  .insp-pick .btn{flex:none;font-size:12px;padding:6px 10px}
+  #btnStageFrame{display:inline-flex}
+  .insp-desk,aside.l,#btnToggleDrawer{display:none}
   aside.l,aside.r{border:0;border-top:1px solid var(--line);width:100%}
 }
 </style>
@@ -1302,9 +1247,16 @@ code{
       <div class="bar-sep"></div>
       <div class="seg" id="modes"></div>
       <button class="btn btn-sm" id="btnStageDualGrid" style="display:inline-flex;align-items:center;gap:5px" title="Toggle Dual (Laves) Grid Lattice Overlay"><span>⬡</span> Dual Grid</button>
-      <button class="btn btn-sm pri" id="btnEditInDraw" style="display:none;align-items:center;gap:5px" title="Send this pattern to Draw on a Grid to edit lines, vertices, and symmetry"><span>✏️</span> Edit in Draw</button>
+      <button class="btn btn-sm pri" id="btnEditInDraw" style="display:none;align-items:center;gap:5px" title="Edit the pattern directly: draw and erase lines on it. Every edit repeats across the whole pattern."><span>✏️</span> Edit</button>
+      <div class="seg" id="editBar" style="display:none">
+        <button id="eToolLine" class="on" title="Draw a line: click a start point, then an end point. Keeps going from the last point; Esc or right-click stops.">Line</button>
+        <button id="eToolErase" title="Erase a line of the pattern, or one you drew">Erase</button>
+        <button id="eUndo" title="Undo the last edit (Ctrl+Z)">Undo</button>
+        <button id="eClear" title="Remove every edit and go back to the generated pattern">Clear</button>
+        <button id="eSave" title="Save the edited pattern as SVG, PNG, PDF or DXF">💾 Save</button>
+      </div>
+      <button class="btn btn-sm" id="btnStageFrame" type="button" title="Border frame around the artwork">▢ Frame</button>
       <button class="btn btn-sm pri" id="btnAddPatternToDraw" style="display:none;align-items:center;gap:5px" title="Add Polygons in Contact or other geometric patterns to the canvas to edit"><span>➕</span> Add Pattern…</button>
-      <button class="btn btn-sm pri" id="btnStageAiImage" style="display:none;align-items:center;gap:5px" title="Generate grid pattern from image using Gemini Vision"><span>✨</span> AI from Image</button>
       <button class="btn btn-sm" id="btnSmartSnap" style="display:none;align-items:center;gap:5px" title="Smart Snap: automatically align drawing points to the nearest structural intersection point within the detected grid"><span>🧲</span> Smart Snap</button>
       <span class="spacer"></span>
       <div class="seg">
@@ -1330,18 +1282,6 @@ code{
   <!-- Right Panel: Inspector Controls -->
   <aside class="r" id="params"></aside>
 </main>
-
-<!-- AI Pattern Generator Modal -->
-<div id="aiModal" class="ai-modal-backdrop" style="display:none" role="dialog" aria-modal="true" aria-labelledby="aiModalTitle">
-  <div class="ai-modal">
-    <div class="ai-modal-header">
-      <h3 class="ai-modal-title" id="aiModalTitle"><span>✨</span> Generate Grid Pattern from Image (AI)</h3>
-      <button class="btn btn-sm" id="aiBtnClose" title="Close modal" style="padding:2px 8px;font-size:15px;line-height:1">✕</button>
-    </div>
-    <div class="ai-modal-body" id="aiModalBody"></div>
-    <div class="ai-modal-footer" id="aiModalFooter"></div>
-  </div>
-</div>
 
 <!-- Add & Transfer Pattern to Drawing Grid Modal -->
 <div id="patDrawModal" class="ai-modal-backdrop" style="display:none" role="dialog" aria-modal="true" aria-labelledby="patDrawModalTitle">
@@ -1423,14 +1363,11 @@ code{
   </table>
   <p>Truncating a tiling cuts each corner back to a new edge, so an <i>n</i>-gon becomes a 2<i>n</i>-gon: truncating the square tiling turns squares into octagons and leaves small squares at the old vertices (4.8.8), and truncating the hexagonal tiling turns hexagons into dodecagons and leaves triangles (3.12.12). That is why the truncated family carries the large stars — an octagon hosts an 8-point star and a dodecagon a 12-point one.</p>
 
-  <h2>3 · Star polygons {n/d}</h2>
-  <p>Divide a circle into <b>n</b> equal parts and join every <b>d</b>-th point. When <code>gcd(n,d) &gt; 1</code> the figure falls into several separate closed components drawn on top of one another — {12/4} is three squares, {12/3} is four triangles. This is the compass construction taught in the Met's free activity pack [1] and is kept as a separate engine because it is a <i>radial</i> construction: the star's own symmetry is independent of the translation symmetry of the panel it sits in.</p>
-
-  <h2>4 · Dual (Laves) tilings</h2>
+  <h2>3 · Dual (Laves) tilings</h2>
   <p>Every tiling has a dual: put one vertex at the centre of each face and join two of them whenever their faces share an edge. Each <i>vertex</i> of the original therefore becomes a <i>face</i> of the dual, found by taking the centres of the tiles around it in angular order. This is computed from the tiles themselves, so it works for all nine tilings without a separate definition, and the duals of the uniform tilings are the Laves tilings — the trihexagonal dual is the rhombille, the truncated square dual is the tetrakis square, the truncated trihexagonal dual is the kisrhombille, and the square tiling is its own dual. Fathauer [29] ch.2.</p>
   <p>A vertex only yields a face when every tile around it is present, so the outermost ring of generated tiles is sacrificial and the pattern is built with a wider margin whenever the dual is on.</p>
 
-  <h2>5 · Self-similar subdivision</h2>
+  <h2>4 · Self-similar subdivision</h2>
   <p>Replace each tile with scaled copies of the same prototile set, to a finite depth. Each rule lists its children in the prototile's own local coordinates, and a frame built from the parent's vertices maps those back to the plane — so rotation and reflection fall out of the vertex order and never have to be tracked. Fathauer [29] ch.6 and ch.8.</p>
   <ul>
     <li><b>Penrose deflation</b> — Robinson triangles cut by the golden ratio. Each rhombus is two mirrored triangles. Reaching the same tiling as the multigrid engine by a completely different route.</li>
@@ -1439,29 +1376,29 @@ code{
     <li><b>Sierpinski</b> — the same triangle rule with the middle child dropped. This is a <i>fractal</i>, not a tiling: exactly a quarter of the area is discarded at every step, and the app says so rather than implying it fills the plane. Fathauer ch.9.</li>
   </ul>
 
-  <h2>6 · Quasiperiodic multigrid (de Bruijn)</h2>
+  <h2>5 · Quasiperiodic multigrid (de Bruijn)</h2>
   <p>Take <b>N</b> families of equally spaced parallel lines, family <i>i</i> having unit normal <b>e<sub>i</sub></b>, its <i>k</i>-th line being every point where <code>P·e_i + g_i = k</code>. Every crossing of two lines becomes one tile of the dual tiling.</p>
   <p>For a crossing at <i>P</i>, give each family the index <code>K_m = ceil(P·e_m + g_m)</code> — which comes out as exactly <i>k</i> for the two families that cross there. The dual vertex is the vector sum <code>Σ K_m·e_m</code>. The four regions meeting at the crossing differ only in those two indices, and only by one, so the four vertices are <i>V</i>, <i>V</i>+e<sub>i</sub>, <i>V</i>+e<sub>i</sub>+e<sub>j</sub>, <i>V</i>+e<sub>j</sub>: a rhombus of unit edge whose angle is the angle between the two normals. Spacing the normals over a half turn gives N directions, ⌊N/2⌋ rhombus shapes and a patch with 2N-fold symmetry. <b>N = 5 is the Penrose tiling</b>; N = 4 is the octagonal Ammann–Beenker tiling.</p>
   <p><b>Singular offsets.</b> The construction assumes no three lines meet at a point. At a whole-number <b>pattern offset</b> that assumption fails everywhere at once — every family passes through the centre. This is not a breakdown: a crossing of <i>m</i> lines simply has a 2<i>m</i>-gon as its dual, the zonogon generated by those <i>m</i> normals, and the rhombus is only the <i>m</i> = 2 case. Crossings are therefore gathered by position and one tile is built per distinct point, whatever its order. At offset 0 with N = 5 this puts a single <b>decagon</b> at the centre, ringed by hexagons — the decagonal rosette, which is where this construction meets the geometry Lu and Steinhardt discuss [4].</p>
   <p>The result is <b>aperiodic</b>: it has long-range order and sharp rotational symmetry but never repeats, however far it is extended. That is a genuinely different thing from the wallpaper repeats elsewhere in this tool, and it is labelled as mathematics rather than as a historical reconstruction — de Bruijn's method is not a claim about how any historical pattern was made.</p>
 
-  <h2>7 · Voronoi — sharp to round</h2>
+  <h2>6 · Voronoi — sharp to round</h2>
   <p>Scatter seed points, then give every point the region of the panel that is closer to it than to any other point. Each region is a convex polygon, found by clipping the panel with the perpendicular bisector between that seed and every other seed. <b>Lloyd relaxation</b> repeatedly moves each seed to the centre of its own cell, which evens the cells out.</p>
   <p><b>Repeating layouts.</b> A single scatter of seeds gives one unique panel that cannot be tiled or extended. Since the Voronoi diagram of a periodic set of seeds is itself periodic, the seeds are instead placed inside one repeat unit — on a hexagonal, square or brick lattice — and that unit is solved against copies of itself on all four sides. The finished cells are then translated across the panel, so the pattern repeats seamlessly and can be extended to any size. Only one unit is ever solved, however many repeats are shown, which is what keeps it fast enough to drag a slider against.</p>
   <p><b>Jitter</b> moves each seed off its lattice point. At 0 the cells are the exact regular tiling the lattice implies — hexagons, or squares — and as it rises they become progressively less regular without ever losing the repeat. <b>Radial mandala</b> and <b>random scatter</b> are also available; neither repeats, and the radial one mirrors seeds around the centre so the result reads as ornament rather than as noise.</p>
   <p>The <b>sharp → round</b> control then replaces every corner of every cell with a curve. At 0 the cells are hard-edged polygons. As the value rises, each corner is cut back along both of its edges and bridged with a quadratic curve. At 1 the cut reaches the middle of every edge, the straight parts vanish entirely, and the cell becomes a single smooth closed curve. The same control is available on the Islamic engines, where it softens star points the way a cut stone or cast metal rib naturally does.</p>
   <p>This is contemporary work, not a historic reconstruction, and it is labelled that way in the app.</p>
 
-  <h2>8 · Drawing on a grid (Field, Critchlow)</h2>
+  <h2>7 · Drawing on a grid (Field, Critchlow)</h2>
   <p>Robert Field's book [30] makes every pattern the same way: straight lines between the points of a <b>square grid</b> or a <b>triangle (isometric) grid</b>, repeated across the plane. Blocks and brickwork are filled squares of the same grid. Eight-pointed stars, octagon designs, single-tile tilings, interlaced bands, circle designs and six-pointed stars are all lines and circles on a grid. Keith Critchlow's book [31] analyses specimen patterns on circle, square, hexagon and pentagon grids in the same spirit. So the way to let anyone make any of them is not a generator for each, but the drawing tool the books use.</p>
   <p><b>Repeat cell.</b> The pattern is one cell of W by H grid squares, repeated by translation. Whatever is drawn is stored once and tiled, so the same drawing fills the panel and exports as one cell.</p>
   <p><b>Symmetry while you draw.</b> Each line is stored together with its images under the chosen symmetry: mirrors, 2-fold, 4-fold rotation and 4-fold with mirrors on the square grid; mirror, 2-, 3- and 6-fold rotation and their mirror groups on the triangle grid. Four-fold symmetry needs a square cell. The mirror axes are drawn on the cell so the symmetry is visible.</p>
   <p><b>Tools.</b> Line: click two grid points, and keep clicking to chain. Spline: click points to weave smooth Catmull-Rom curvilinear Arabesques; click the last point or press Enter to finish, or click the start point to close the loop. Arc: click the centre, the start, then the end, and tick the box for the long way round. 3-point arc: click the start, a point the arc must pass through, and the end; the arc is the circle through those three points, and three points in a line are refused. Circle: centre, then a point on it. Fill: toggles a square, for block patterns. Erase removes a line, spline, arc or circle together with its symmetric partners. Undo restores the previous drawing, and the pattern is saved in the link.</p>
 
-  <h2>9 · Mosaic regions</h2>
+  <h2>8 · Mosaic regions</h2>
   <p>A real mosaic is filled by <i>region</i>, not by tile, so on the polygons-in-contact engine Mosaic mode finds the regions the lines cut out. Inside each tile the motif closes on itself and gives the <b>star</b>. Around each tile <i>vertex</i> the neighbouring motifs leave a gap bounded by the star points and edge midpoints of every tile meeting there, giving the kites, pentagons and hexagons around a star.</p>
 
-  <h2>10 · Render modes</h2>
+  <h2>9 · Render modes</h2>
   <ul>
     <li><b>Construction</b> — shows the underlying polygons, edge midpoints and contact rays that produced the pattern.</li>
     <li><b>Line</b> — the bare pattern as single-weight line art.</li>
@@ -1605,12 +1542,15 @@ function tilePlane(key,scale,rotation,W,H,padMul){
   const idx=pointIndex(scale*0.02), tiles=[];
   for(let i=-N;i<=N;i++)for(let j=-N;j<=N;j++){
     const off=add(mul(T1,i),mul(T2,j));
-    for(const pr of protos){
+    for(let pk=0;pk<protos.length;pk++){
+      const pr=protos[pk];
       const pts=pr.map(p=>{const q=rot(add(mul(p,scale),off),rotation);return v(q.x+cx,q.y+cy)});
       const c=centroid(pts);
       if(c.x<-pad||c.x>W+pad||c.y<-pad||c.y>H+pad) continue;
       if(idx.get(c)) continue; idx.add(c,1);
-      tiles.push({pts,n:pr.length,c});
+      /* lattice parity — which "colour" this cell/proto would take in a checkerboard
+         2-colouring, used to mirror-alternate motifs so neighbours don't all spin the same way */
+      tiles.push({pts,n:pr.length,c,parity:((i+j+pk)%2+2)%2});
     }
   }
   return tiles;
@@ -1726,17 +1666,6 @@ function makeFaces(pt,W,H,eps,pad){
   return out;
 }
 
-/* ============================================================ star polygons {n/d} */
-function starPolys(n,d,cx,cy,R,ph){
-  const g=(function gcd(a,b){return b?gcd(b,a%b):a})(n,d)||1, out=[];
-  for(let s=0;s<g;s++){
-    const comp=[]; let k=s;
-    do{const t=ph+k*TAU/n;comp.push(v(cx+R*Math.cos(t),cy+R*Math.sin(t)));k=(k+d)%n}while(k!==s);
-    if(comp.length>2) out.push(comp);
-  }
-  return out;
-}
-
 /* ============================================================ Voronoi */
 function clipHalf(poly,A,B){   /* keep the side of the bisector of A,B nearer A */
   const nrm=sub(B,A), m=mid(A,B), off=nrm.x*m.x+nrm.y*m.y, out=[];
@@ -1805,6 +1734,11 @@ function insetConvex(p,d){
   }
   return out;
 }
+/* Voronoi cells and bare multigrid rhombi are convex, so grout and openings are
+   made by insetting them. The multigrid's star motif isn't convex (an inset
+   shrinks a star to its kernel), so it's filled and stroked the way the
+   polygons-in-contact engine is */
+const convexCells = s => s.engine === 'voro' || (s.engine === 'multi' && !s.mMotif);
 function rng(seed){let s=seed>>>0||1;return()=>{s^=s<<13;s>>>=0;s^=s>>17;s^=s<<5;s>>>=0;return s/4294967296}}
 
 /* ---------- repeating seed layouts --------------------------------------
@@ -1922,10 +1856,22 @@ function multigrid(st,W,H){
   const N=Math.max(3,Math.round(st.mN)), R=rng(st.seed), s=st.scale;
   const rot0=st.rotation*Math.PI/180;
   const th=[],e=[],g=[];
+  /* an even N of equal-offset families is exactly invariant under rotation by
+     π/N about the centre (family i's lines map onto family i+1's), which packs
+     a cluster of near-parallel, near-coincident crossings into one region —
+     a fan of sliver tiles. Odd N never closes up this way, so it's unaffected.
+     A *regular* stagger (e.g. linear in i) isn't enough: it shifts where the
+     near-coincidences fall but keeps them just as clustered. What breaks it up
+     is irregularity, so families are scrambled with an irrational (golden-ratio)
+     step — deterministic and reproducible, but with no small-integer resonance
+     between any two families for the crossing math to line up on. */
+  const evenStagger = (N%2===0);
+  const GOLDEN=0.6180339887498949;
   for(let i=0;i<N;i++){
     const t=Math.PI*i/N+rot0;
     th.push(t); e.push(v(Math.cos(t),Math.sin(t)));
-    g.push(st.mOffset+(st.mDisorder/100)*(R()-0.5));
+    const stag = evenStagger ? (((i*GOLDEN)%1)-0.5)*0.5 : 0;
+    g.push(st.mOffset+stag+(st.mDisorder/100)*(R()-0.5));
   }
   /* V is about (N/2)·P, so this many lines each way covers the panel */
   const D=Math.hypot(W,H)/2, K=Math.ceil(2*D/(s*N))+2, cx=W/2, cy=H/2;
@@ -2234,7 +2180,8 @@ function generateFractalTessellation(st, W, H, rotr){
   const shapes = [];
   const under = [];
   const fam = st.subFam || 'sierpinski';
-  const reqDepth = Math.max(0, Math.min(5, Math.round(st.subDepth !== undefined ? st.subDepth : 3)));
+  const depthCap = fam === 'rosette' ? 24 : 5;
+  const reqDepth = Math.max(0, Math.min(depthCap, Math.round(st.subDepth !== undefined ? st.subDepth : 3)));
   const scaleRatio = Math.max(0.2, Math.min(0.9, st.subScale || 0.5));
   const twist = (st.subTwist || 0) * Math.PI / 180;
   const mask = st.subMask || 'all';
@@ -2279,14 +2226,21 @@ function generateFractalTessellation(st, W, H, rotr){
   }
 
   if (fam === 'rosette') {
-    const sides = Math.max(3, Math.min(20, Math.round(st.subSegments !== undefined ? st.subSegments : 6)));
-    const baseTilingKey = (sides % 4 === 0) ? 'square' : 'hex';
+    /* only 3, 4 or 6 sides can tile the plane edge-to-edge with no gap or overlap;
+       snap anything else (stray preset/URL values) to the nearest of those */
+    const rawSides = Math.round(st.subSegments !== undefined ? st.subSegments : 6);
+    const sides = [3,4,6].reduce((a,b)=>Math.abs(b-rawSides)<Math.abs(a-rawSides)?b:a);
+    const baseTilingKey = sides === 3 ? 'tri' : sides === 4 ? 'square' : 'hex';
     const baseTiles = tilePlane(baseTilingKey, st.scale * 1.4, rotr, W, H, 0.6);
+    const mirrorOn = !!st.subMirror;
     for (const t of baseTiles) {
       under.push(t.pts);
       const c = t.c;
       const baseR = len(sub(t.pts[0], c)) || (st.scale * 1.4);
       const a0 = len(sub(t.pts[0], c)) > 1e-4 ? Math.atan2(t.pts[0].y - c.y, t.pts[0].x - c.x) : rotr;
+      /* alternate tiles spin the deflation the other way, so neighbours mirror
+         each other instead of every motif rotating in lockstep */
+      const twistSign = (mirrorOn && t.parity) ? -1 : 1;
 
       let prevRing = [];
       if (t.pts.length === sides) {
@@ -2300,7 +2254,7 @@ function generateFractalTessellation(st, W, H, rotr){
 
       for (let d = 0; d <= reqDepth; d++) {
         const curR = baseR * Math.pow(scaleRatio, d);
-        const curAng = a0 + d * twist;
+        const curAng = a0 + d * twist * twistSign;
         const curRing = [];
         for (let i = 0; i < sides; i++) {
           const a = curAng + (2 * Math.PI * i) / sides;
@@ -2803,8 +2757,6 @@ const ENGINES=[
    def:{tessFam:'regular',tessType:'hex',tessDual:true,tessDualBlend:0.55,tessKerf:0,tessEdge:'straight',tessStarMod:0.25,
         subFam:'sierpinski',subSegments:6,subDepth:3,subScale:0.5,subTwist:0,subMask:'all',scale:72,width:2.5,round:0,frame:true},
    src:'Euclidean regular & Archimedean tilings, Laves dual lattices (Grünbaum & Shephard, <i>Tilings and Patterns</i>, 1987), and recursive self-similar fractal dissections (Fathauer, <i>Tessellations: Mathematics, Art, and Recreation</i>, 2021). Features interactive dual-grid morphing, edge deformations, kerf spacing, and multi-depth fractal generation.'},
-  {id:'star', name:'Star polygons {n/d}', sub:'compass construction', tag:'doc', def:{scell:150,width:3,round:0},
-   src:'The Metropolitan Museum of Art, <i>Islamic Art and Geometric Design</i> activity pack [1]. Documented construction.'},
   {id:'gridp',name:'Draw on a grid',sub:'Field · Critchlow method',tag:'doc',tagText:'documented',
    def:{gType:'square',gW:4,gH:4,gSub:1,gSize:56,gSym:'d4',gTool:'line',gChain:true,gSmartSnap:true,gShowGrid:true,gShowCell:true,
         gBand:false,gBandW:8,width:2,round:0,frame:false,gData:'',gCirc:'',gFill:'',gArcs:'',gSplines:'',gSplineTension:0.5,gArcLong:false,gCheck:false,pal:1},
@@ -2823,33 +2775,24 @@ const MODES=[['construct','Construction'],['line','Line'],['interlace','Interlac
    adjusted afterwards. The note says which construction produces it, because a
    look is not a claim about any historic object. */
 const PRESETS=[
-  {name:'Carrara & Nero Marquina 4.8.8',note:'Architectural truncated square tiling in Carrara White & Nero Marquina palette',
-   s:{engine:'tess',tessFam:'regular',tessType:'octasq',scale:85,width:3,dualGrid:false,tessDual:false,mode:'mosaic',pal:'carrara',colourBy:'type',frame:true}},
-  {name:'Brushed Gold & Obsidian Kagome',note:'3.6.3.6 trihexagonal tiling in rich gold palette',
-   s:{engine:'tess',tessFam:'regular',tessType:'trihex',dualGrid:false,tessDual:false,tessKerf:2.5,tessEdge:'straight',scale:78,width:2.5,mode:'mosaic',pal:'brass',colourBy:'type',frame:true}},
-  {name:'Royal Lapis Snowflake',note:'Multi-tier Koch Snowflake crystal in lapis gemstone palette',
-   s:{engine:'tess',tessFam:'fractal',subFam:'koch',tessKochBase:'hex',subDepth:2,scale:100,dualGrid:false,tessDual:false,width:2,mode:'mosaic',pal:'lapis',colourBy:'type',frame:true}},
   {name:'Moroccan Zellige 12-Star',note:'12-fold star medallion in Moroccan zellige palette',
    s:{engine:'pic',tiling:'trunctrihex',angle:38,scale:60,width:4,mode:'mosaic',pal:'zellige',colourBy:'type',frame:true}},
-  {name:'Fractal Hexagonal Starburst',note:'Recursive hexagonal Sierpinski deflation in Verde Alpi emerald palette',
-   s:{engine:'tess',tessFam:'fractal',subFam:'sierpinski',subDepth:3,subScale:0.5,scale:120,dualGrid:false,tessDual:false,width:2,mode:'mosaic',pal:'verde',colourBy:'type',frame:true}},
   {name:'Archimedean Dual Kagome Lattice',note:'3.6.3.6 trihexagonal tiling with dual rhombille grid overlay and edge chamfer',
    s:{engine:'tess',tessFam:'regular',tessType:'trihex',dualGrid:true,tessDual:true,tessDualBlend:0.75,tessDualWidth:2.5,tessDualCol:'accent',tessKerf:3,tessEdge:'straight',scale:75,width:2.5,mode:'line',pal:'indigo',frame:true}},
-  {name:'Concentric Star Deflation',note:'Recursive 8-point rosette deflation in Calacatta Gold palette with 22.5° twist and tile gap',
-   s:{engine:'tess',tessFam:'fractal',subFam:'rosette',subDepth:3,subScale:0.58,subTwist:22.5,tessKerf:2,scale:140,width:2,mode:'mosaic',pal:'calacatta',colourBy:'type',frame:true}},
-  {name:'Interlaced 12-fold stars',note:'Polygons in contact on 4.6.12, woven ribbon',
-   s:{engine:'pic',tiling:'trunctrihex',angle:38,scale:58,width:4,mode:'interlace',pal:'copper',frame:false}},
+  {name:'Concentric Star Deflation',note:'Recursive 6-point rosette deflation, full edge-to-edge hex tiling with mirrored alternating spirals, in Calacatta Gold palette with 22.5° twist and tile gap',
+   s:{engine:'tess',tessFam:'fractal',subFam:'rosette',subSegments:6,subMirror:true,subDepth:3,subScale:0.58,subTwist:22.5,tessKerf:2,scale:140,width:2,mode:'mosaic',pal:'calacatta',colourBy:'type',frame:true}},
   {name:'Thin-line 8-point stars',note:'Polygons in contact on 4.8.8, fine line',
    s:{engine:'pic',tiling:'octasq',angle:45,scale:64,width:1.5,mode:'line',pal:'ivory',frame:false}},
   {name:'8-point star mosaic',note:'4.8.8 filled by region, coloured in rings around each star',
    s:{engine:'pic',tiling:'octasq',angle:67,scale:96,width:6,mode:'mosaic',pal:'ivory',colourBy:'ring',frame:false}},
-  {name:'16-point star lattice',note:'Compass stars {16/6}. Not a full rosette medallion',
-   s:{engine:'star',sn:16,sd:6,scell:230,width:2,mode:'line',pal:'ivory',ssec:true,frame:false}},
-  {name:'Ten-fold Penrose stars',note:'Star motif over the Penrose tiling',
-   s:{engine:'multi',mN:5,mOffset:0,scale:58,mMotif:true,angle:54,width:3,mode:'line',
-      palMode:'custom',cHue:42,cSpread:60,cSat:55,cLight:55,cContrast:40,colourBy:'type',frame:true}},
   {name:'Repeating jali panel',note:'Voronoi hex repeat, cut out and rounded in Tuscan Terracotta palette',
-   s:{engine:'voro',vlayout:'hex',vrepeat:2,vcount:12,vjitter:40,vrelax:3,round:0.7,width:6,mode:'jali',pal:'terracotta',frame:true}}
+   s:{engine:'voro',vlayout:'hex',vrepeat:2,vcount:12,vjitter:40,vrelax:3,round:0.7,width:6,mode:'jali',pal:'terracotta',frame:true}},
+  {name:'Penrose Rhomb Substitution',note:'Robinson triangle deflation into golden-ratio rhombi, depth 6, Titanium & Slate palette',
+   s:{engine:'subst',subRule:'penrose',subDepth:6,width:2,mode:'mosaic',pal:'titanium',colourBy:'type',frame:true}},
+  {name:'Rhombitrihexagonal Contact Lattice',note:'3.4.6.4 semi-regular tiling in Emerald & Gold contact polygons',
+   s:{engine:'pic',tiling:'rhombitri',angle:55,scale:70,width:3,mode:'mosaic',pal:'emerald',colourBy:'type',frame:true}},
+  {name:'Radial Voronoi Mandala',note:'10-fold radial Voronoi mandala, Lloyd-relaxed, in Rosso Levanto palette',
+   s:{engine:'voro',vlayout:'radial',vsym:10,vmirror:true,vcount:60,vrelax:3,round:0.35,width:4,mode:'mosaic',pal:'rosso',colourBy:'position',frame:true}}
 ];
 
 /* ============================================================ state */
@@ -2858,14 +2801,14 @@ const DEF={engine:'pic',tiling:'octasq',mode:'line',
   dualGrid:false,tessDual:false,tessDualBlend:0.65,tessDualWidth:2.5,tessDualCol:'accent',tessDualStyle:'dashed',tessDualNodes:true,
   tessFam:'regular',tessType:'hex',tessKerf:0,tessEdge:'straight',tessStarMod:0.25,
   tessKochBase:'hex',
-  subFam:'sierpinski',subDepth:3,subScale:0.5,subTwist:0,subMask:'all',
-  sn:12,sd:5,scell:150,ssec:true,
+  subFam:'sierpinski',subDepth:3,subScale:0.5,subTwist:0,subMask:'all',subSegments:6,subMirror:true,
   mN:5,mOffset:0.2,mDisorder:0,mMotif:false,
   subRule:'penrose',subDepth:4,
   vlayout:'hex',vrepeat:3,vjitter:55,vcount:24,vsym:8,vmirror:true,vrelax:2,seed:7,
   gType:'square',gW:4,gH:4,gSub:1,gSize:56,gSym:'d4',gTool:'line',gChain:true,gSmartSnap:true,gShowGrid:true,gShowCell:true,
   gBand:false,gBandW:8,gData:'',gCirc:'',gFill:'',gArcs:'',gSplines:'',gSplineTension:0.5,gArcLong:false,gCheck:false,
   units:'mm',artW:297,artH:210,
+  eAdd:'',eDel:'',eSig:'',
   pal:0,palMode:'preset',colourBy:'type',
   cHue:210,cSpread:120,cSat:55,cLight:48,cContrast:55,cReverse:false};
 let st=Object.assign({},DEF);
@@ -2928,7 +2871,11 @@ const CTRL={
   {k:'tessKochBase', label:'Snowflake geometry', type:'sel', opts:[
     ['hex','Interlocking Hexagonal Crystals'],['tri','Classic Star Snowflake (Triangular)'],['grand','Grand Centered Koch Medallion']],
     when:s=>s.tessFam==='fractal'&&s.subFam==='koch'},
-  {k:'subDepth', label:'Recursion depth', min:0, max:5, step:1, unit:'levels', when:s=>s.tessFam==='fractal'},
+  {k:'subSegments', label:'Base shape (edge-to-edge tiling only)', type:'seg', opts:[[3,'Triangle'],[4,'Square'],[6,'Hexagon']],
+    when:s=>s.tessFam==='fractal'&&s.subFam==='rosette'},
+  {k:'subMirror', label:'Mirror alternate tiles', type:'chk',
+    when:s=>s.tessFam==='fractal'&&s.subFam==='rosette'},
+  {k:'subDepth', label:'Recursion depth', min:0, max:s=>s.subFam==='rosette'?24:5, step:1, unit:'levels', when:s=>s.tessFam==='fractal'},
   {k:'subScale', label:'Inward scale ratio', min:0.25, max:0.9, step:0.01, pct:true,
     when:s=>s.tessFam==='fractal'&&(s.subFam==='rosette'||s.subFam==='sierpinski')},
   {k:'subTwist', label:'Twist angle per step', min:0, max:90, step:1, unit:'°', deg:true,
@@ -2948,14 +2895,6 @@ const CTRL={
   {k:'rotation', label:'Rotation',      min:0,max:90,step:1,unit:'°',deg:true},
   {k:'round',    label:'Sharp → round', min:0,max:1,step:0.01,pct:true}
  ],
- star:[
-  {k:'sn',   label:'Divisions n',    min:5,max:24,step:1},
-  {k:'sd',   label:'Step d',         min:2,max:11,step:1},
-  {k:'scell',label:'Spacing',        min:70,max:300,step:1,unit:' px',len:true},
-  {k:'rotation',label:'Rotation',    min:0,max:90,step:1,unit:'°',deg:true},
-  {k:'round',label:'Sharp → round',  min:0,max:1,step:0.01,pct:true},
-  {k:'ssec', label:'Secondary stars',type:'chk'}
- ],
  gridp:[
   {k:'gTool',label:'Tool',type:'seg',opts:[['line','Line'],['spline','Spline'],['arc','Arc'],['arc3','3-point arc'],['circle','Circle'],['fill','Fill'],['erase','Erase']]},
   {k:'gSplineTension',label:'Spline curvature',min:0.1,max:0.9,step:0.05,when:s=>s.gTool==='spline'},
@@ -2963,14 +2902,14 @@ const CTRL={
   {k:'gArcLong',label:'Arc: take the long way round',type:'chk',when:s=>s.gTool==='arc'},
   {k:'gChain',label:'Keep drawing from the last point',type:'chk'},
   {k:'gSmartSnap',label:'Smart Snap (align to intersections)',type:'chk'},
-  {type:'acts',acts:[['undo','Undo'],['clear','Clear'],['random','Random'],['aiImage','✨ AI Image']]},
+  {type:'acts',acts:[['undo','Undo'],['clear','Clear'],['random','Random']]},
   {type:'acts',acts:[['closeEnds','Close near ends']],when:s=>s.gCheck},
   {k:'gType',label:'Grid',type:'sel',opts:[['square','Square grid'],['iso','Triangle (isometric) grid']]},
   {k:'gW',label:s=>s.gType==='iso'?'Repeat size (grid steps)':'Repeat width (squares)',min:1,max:64,step:1},
   {k:'gH',label:'Repeat height (squares)',min:1,max:64,step:1,when:s=>s.gType!=='iso'},
   {k:'gSub',label:'Points per square',min:1,max:4,step:1},
   {k:'gSym',label:'Symmetry',type:'sel',opts:s=>gSymOpts()},
-  {k:'gSize',label:'Grid spacing',min:20,max:120,step:1,unit:' px',len:true},
+  {k:'gSize',label:'Grid spacing',min:8,max:120,step:1,unit:' px',len:true},
   {k:'gShowGrid',label:'Show grid points',type:'chk'},
   {k:'gShowCell',label:'Show repeat cell & symmetry axes',type:'chk'},
   {k:'gCheck',label:'Mark unclosed line ends',type:'chk'},
@@ -3046,12 +2985,12 @@ const SIZES=[
   ['p600','Panel 600 × 600 mm',600,600,'mm'],['p1000','Panel 1000 × 1000 mm',1000,1000,'mm'],
   ['d900','Door panel 900 × 2100 mm',900,2100,'mm']
 ];
-const LENKEYS=['scale','scell','width','gSize','gBandW'];
+const LENKEYS=['scale','width','gSize','gBandW'];
 /* no length may shrink below a drawable size, whatever the artwork */
-const LENMIN={scale:8,scell:16,width:0.3,gSize:6,gBandW:1};
+const LENMIN={scale:8,width:0.3,gSize:6,gBandW:1};
 function fitViewBox(){
   /* the canvas takes the artwork's own proportions */
-  const a=Math.max(0.2,Math.min(5,st.artW/st.artH));
+  const a=Math.max(1/20,Math.min(20,st.artW/st.artH));
   const area=720000;
   H=Math.sqrt(area/a); W=H*a;
   const svg=document.getElementById('svg');
@@ -3064,6 +3003,9 @@ const numOf=x=>{const n=parseFloat(x);return isFinite(n)?n:NaN};
 /* change the artwork; keep every length at the same real size */
 function setArtwork(u,w,h){
   if(!(w>0)||!(h>0)||!UNITS[u]) return;
+  /* exports take their true size from the canvas, which keeps the artwork's
+     proportions only up to 20:1 — past that it is too thin to draw on */
+  if(w/h>20||h/w>20){ showToast('The artwork can be at most 20 times longer than it is wide', 'error'); buildParams(); return; }
   /* compare pixels per REAL length (per mm), not per unit: the unit itself may change */
   const Kold=Kpx()/UNITS[st.units].mm;
   st.units=u; st.artW=+(+w).toPrecision(9); st.artH=+(+h).toPrecision(9);
@@ -3115,20 +3057,6 @@ function build(){
     const dual=extractDualGrid(tiles, W, H);
     dualLines=dual.dualLines;
     dualNodes=dual.dualNodes;
-  } else if(st.engine==='star'){
-    const c=st.scell, cols=Math.ceil(W/c)+3, rows=Math.ceil(H/c)+3;
-    /* d must stay below n/2: at exactly n/2 every component is a digon and the
-       star collapses to nothing on screen */
-    const d=Math.max(2,Math.min(st.sd,Math.floor((st.sn-1)/2)));
-    for(let j=-1;j<rows;j++)for(let i=-1;i<cols;i++){
-      const p=rot(v(i*c-W/2,j*c-H/2),rotr), cx=p.x+W/2, cy=p.y+H/2;
-      if(cx<-c||cx>W+c||cy<-c||cy>H+c) continue;
-      under.push(regular(4,cx,cy,c*Math.SQRT1_2,Math.PI/4+rotr));
-      for(const comp of starPolys(st.sn,d,cx,cy,c*0.5,rotr)) shapes.push({pts:comp,c:v(cx,cy),n:st.sn});
-      if(st.ssec) for(const comp of starPolys(st.sn,d,cx+c/2*Math.cos(rotr)-c/2*Math.sin(rotr),cy+c/2*Math.sin(rotr)+c/2*Math.cos(rotr),c*0.22,rotr+Math.PI/st.sn))
-        shapes.push({pts:comp,c:v(cx,cy),n:st.sn});
-      if(st.mode==='construct'){dots.push(v(cx,cy));rays.push([v(cx-c/2,cy),v(cx+c/2,cy)])}
-    }
   } else if(st.engine==='subst'){
     const {tiles,parents}=substitution(st,W,H);
     for(const t of tiles){const c=centroid(t.p);shapes.push({pts:t.p,c,n:t.p.length,cls:t.t})}
@@ -4373,6 +4301,10 @@ function gUp(e){
   });
   document.addEventListener('keydown',e=>{
     if(st.engine!=='gridp') return;
+    /* typing in a field keeps its own Enter, space and undo */
+    const tag=(e.target&&e.target.tagName)||'';
+    const typing=tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||(e.target&&e.target.isContentEditable);
+    if(typing&&e.key!=='Escape') return;
     if(e.key==='Enter' || e.key===' '){
       if(st.gTool==='spline' && GP.splinePts && GP.splinePts.length >= 2){
         e.preventDefault();
@@ -4395,6 +4327,347 @@ function gUp(e){
   });
 })();
 
+/* ============================================================ edit layer
+   Drawing and erasing directly on the generated pattern, in any engine and
+   mode. A line is stored in the pattern's own lattice coordinates (a,b, where
+   p = C + a·T1 + b·T2) and moved into the one repeat cell that holds its
+   midpoint, so drawing it once puts it in every copy of the cell, and it stays
+   in place when the pattern's scale or rotation changes. An erased generated
+   line is stored the same way, as the key of the line it removes. Patterns that
+   never repeat get the whole panel as a single cell. */
+const EL = { on: false, tool: 'line', start: null, hover: null, hit: null, hist: [], snap: null };
+
+function editFrame(){
+  const L = patternLattice();
+  if(L) return { T1: L.T1, T2: L.T2, C: v(W / 2, H / 2), periodic: true };
+  return { T1: v(W, 0), T2: v(0, H), C: v(0, 0), periodic: false };
+}
+function toLat(F, p){
+  const d = sub(p, F.C), det = F.T1.x * F.T2.y - F.T2.x * F.T1.y;
+  return [(d.x * F.T2.y - d.y * F.T2.x) / det, (d.y * F.T1.x - d.x * F.T1.y) / det];
+}
+const fromLat = (F, a, b) => add(F.C, add(mul(F.T1, a), mul(F.T2, b)));
+const eParse = s => s ? s.split(';').filter(Boolean).map(t => t.split(',').map(Number)) : [];
+/* a line in lattice terms, shifted into the cell holding its midpoint, rounded
+   to `dp` places and with its ends in a fixed order, so every copy of the same
+   line gives the same numbers */
+function latSeg(F, p, q, dp){
+  let [a1, b1] = toLat(F, p), [a2, b2] = toLat(F, q);
+  if(F.periodic){
+    const sa = Math.floor((a1 + a2) / 2 + 1e-6), sb = Math.floor((b1 + b2) / 2 + 1e-6);
+    a1 -= sa; a2 -= sa; b1 -= sb; b2 -= sb;
+  }
+  const k = Math.pow(10, dp), r = x => Math.round(x * k) / k;
+  const s = [r(a1), r(b1), r(a2), r(b2)];
+  return (s[0] < s[2] || (s[0] === s[2] && s[1] <= s[3])) ? s : [s[2], s[3], s[0], s[1]];
+}
+const edgeKey = (F, p, q) => latSeg(F, p, q, 3).join(',');
+/* the stored key of a stored line (re-derived, so hand-edited links still match) */
+const storedKey = (F, s) => edgeKey(F, fromLat(F, s[0], s[1]), fromLat(F, s[2], s[3]));
+
+/* which pattern the edits belong to. Another engine, tiling or family is a
+   different pattern, where the stored lines would land somewhere meaningless;
+   scale, rotation and contact angle keep the lattice, so edits stay */
+function editSig(){
+  switch(st.engine){
+    case 'pic': return `pic:${st.tiling}:${st.dual ? 1 : 0}`;
+    case 'tess': return st.tessFam === 'regular' ? `tess:${st.tessType}`
+      : `tess:${st.subFam}:${st.subFam === 'rosette' ? st.subSegments + (st.subMirror ? 'm' : '') : st.subFam === 'koch' ? st.tessKochBase : ''}`;
+    case 'voro': return `voro:${st.vlayout}`;
+    case 'subst': return `subst:${st.subRule}`;
+    default: return st.engine;
+  }
+}
+function editContext(){
+  if(st.engine === 'gridp') return null;
+  const has = st.eSig === editSig() && !!(st.eAdd || st.eDel);
+  if(!has && !EL.on) return null;
+  const F = editFrame();
+  return { F, del: new Set(has ? eParse(st.eDel).map(s => storedKey(F, s)) : []), add: has ? eParse(st.eAdd) : [] };
+}
+/* the first edit on a pattern starts its own set, replacing another pattern's */
+function editClaim(){
+  const sig = editSig();
+  if(st.eSig !== sig){ st.eAdd = ''; st.eDel = ''; st.eSig = sig; }
+}
+const isErased = (E, p, q) => !!(E && E.del.size && E.del.has(edgeKey(E.F, p, q)));
+
+/* every copy of the added lines that reaches the panel, in canvas points */
+function addedCanvasSegs(E, margin){
+  const out = []; if(!E || !E.add.length) return out;
+  const { F } = E, m = margin || 0;
+  if(!F.periodic){ for(const s of E.add) out.push([fromLat(F, s[0], s[1]), fromLat(F, s[2], s[3])]); return out; }
+  const corners = [v(-m, -m), v(W + m, -m), v(-m, H + m), v(W + m, H + m)].map(p => toLat(F, p));
+  const as = corners.map(c => c[0]), bs = corners.map(c => c[1]);
+  const a0 = Math.floor(Math.min(...as)) - 1, a1 = Math.ceil(Math.max(...as)) + 1;
+  const b0 = Math.floor(Math.min(...bs)) - 1, b1 = Math.ceil(Math.max(...bs)) + 1;
+  for(const s of E.add) for(let i = a0; i <= a1; i++) for(let j = b0; j <= b1; j++){
+    const p = fromLat(F, s[0] + i, s[1] + j), q = fromLat(F, s[2] + i, s[3] + j);
+    const minx = Math.min(p.x, q.x), maxx = Math.max(p.x, q.x), miny = Math.min(p.y, q.y), maxy = Math.max(p.y, q.y);
+    if(maxx < -m || minx > W + m || maxy < -m || miny > H + m) continue;
+    out.push([p, q]);
+  }
+  return out;
+}
+
+/* a shape's outline with any erased edges left out, as one or more open runs */
+function shapeD(sh, r, E, erasedOut){
+  const pts = sh.pts, n = pts.length;
+  if(!E || !E.del.size || n < 2) return pathD(pts, r);
+  const keep = [];
+  for(let i = 0; i < n; i++){
+    const p = pts[i], q = pts[(i + 1) % n], gone = isErased(E, p, q);
+    keep.push(!gone); if(gone && erasedOut) erasedOut.push([p, q]);
+  }
+  if(keep.every(Boolean)) return pathD(pts, r);
+  let d = '', s0 = keep.findIndex((k, i) => k && !keep[(i - 1 + n) % n]);
+  if(s0 < 0) return '';
+  for(let t = 0, open = false; t < n; t++){
+    const i = (s0 + t) % n;
+    if(!keep[i]){ open = false; continue; }
+    const p = pts[i], q = pts[(i + 1) % n];
+    d += (open ? '' : `M${f(p.x)} ${f(p.y)}`) + `L${f(q.x)} ${f(q.y)}`;
+    open = true;
+  }
+  return d;
+}
+
+/* merge the tiles an erased line separated: one colour for the group, and the
+   erased grout line painted over in that colour */
+function mosaicMerge(polys, cols, E, cover){
+  if(!E || !E.del.size) return { cols, over: '' };
+  const parent = polys.map((_, i) => i);
+  const find = i => parent[i] === i ? i : (parent[i] = find(parent[i]));
+  const ck = (p, q) => { const a = Math.round(p.x * 2) + ',' + Math.round(p.y * 2), b = Math.round(q.x * 2) + ',' + Math.round(q.y * 2); return a < b ? a + '|' + b : b + '|' + a; };
+  const seen = new Map(), lines = [];
+  polys.forEach((pts, i) => {
+    for(let k = 0; k < pts.length; k++){
+      const p = pts[k], q = pts[(k + 1) % pts.length];
+      if(!isErased(E, p, q)) continue;
+      const key = ck(p, q);
+      if(seen.has(key)) parent[find(i)] = find(seen.get(key));
+      else { seen.set(key, i); lines.push([p, q, i]); }
+    }
+  });
+  if(!lines.length) return { cols, over: '' };
+  const area = polys.map(p => Math.abs(polyArea(p))), rep = new Map();
+  polys.forEach((_, i) => { const g = find(i); if(!rep.has(g) || area[i] > area[rep.get(g)]) rep.set(g, i); });
+  const out = cols.map((_, i) => cols[rep.get(find(i))]);
+  let over = '';
+  for(const [p, q, i] of lines)
+    over += `<line x1="${f(p.x)}" y1="${f(p.y)}" x2="${f(q.x)}" y2="${f(q.y)}" stroke="${out[i]}" stroke-width="${f(cover)}" stroke-linecap="butt"/>`;
+  return { cols: out, over };
+}
+
+/* added lines, drawn the way the current mode draws its own lines */
+function addedLinesSvg(E, P, w){
+  /* the pattern itself runs on past the artboard edge, so the edits do too */
+  const segs = addedCanvasSegs(E, Math.max(W, H) * 0.6); if(!segs.length) return '';
+  const d = segs.map(([p, q]) => `M${f(p.x)} ${f(p.y)}L${f(q.x)} ${f(q.y)}`).join('');
+  const a = addedLineStyle(P, w);
+  const halo = st.mode === 'interlace' ? `<path d="${d}" fill="none" stroke="${P.bg}" stroke-width="${f(w * 2.6)}" stroke-linecap="round"/>` : '';
+  return halo + `<path d="${d}" fill="none" stroke="${a.col}" stroke-width="${f(a.w)}" stroke-linecap="round" stroke-linejoin="round"/>`;
+}
+/* a drawn line looks like the mode's own lines: grout between tiles, a rib in
+   a panel, or a line of ink */
+function addedLineStyle(P, w){
+  if(st.mode === 'mosaic') return { col: P.grout, w: convexCells(st) ? 2 * Math.max(0.5, w * 0.6) : (st.engine === 'tess' || st.engine === 'subst') ? Math.max(.6, w * 0.5) : Math.max(1, w * 0.7) };
+  if(st.mode === 'jali') return { col: P.mat, w: w * 2.2 };
+  return { col: P.ink, w };
+}
+/* the generated edges that were erased, once each */
+function erasedEdgeSegs(E){
+  const out = [], seen = new Set();
+  if(!E || !E.del.size) return out;
+  for(const sh of (last && last.shapes) || []){
+    const p = sh.pts; if(!p) continue;
+    for(let i = 0; i < p.length; i++){
+      const a = p[i], b = p[(i + 1) % p.length];
+      if(!isErased(E, a, b)) continue;
+      const k = [a, b].map(z => Math.round(z.x * 2) + ',' + Math.round(z.y * 2)).sort().join('|');
+      if(!seen.has(k)){ seen.add(k); out.push([a, b]); }
+    }
+  }
+  return out;
+}
+/* an outline with erased edges, as the straight runs that are left (the way
+   the canvas draws it), or null when nothing on it was erased */
+function erasedRuns(pts, E){
+  const n = pts.length, keep = [];
+  for(let i = 0; i < n; i++) keep.push(!isErased(E, pts[i], pts[(i + 1) % n]));
+  if(keep.every(Boolean)) return null;
+  const out = [], s0 = keep.indexOf(false) + 1;
+  let run = null;
+  for(let t = 0; t < n; t++){
+    const i = (s0 + t) % n;
+    if(!keep[i]){ if(run) out.push(run); run = null; continue; }
+    if(!run){ run = [pts[i]]; run.open = true; }
+    run.push(pts[(i + 1) % n]);
+  }
+  if(run) out.push(run);
+  return out;
+}
+
+/* the editing overlay: the repeat cell the edits copy through, plus the live
+   cursor, start point, rubber band and erase highlight (kept out of exports) */
+function editOverlaySvg(E, P){
+  if(!EL.on || !E) return '';
+  const { F } = E, a = F.C, b = add(F.C, F.T1), c = add(b, F.T2), d = add(F.C, F.T2);
+  let s = `<g id="ov" pointer-events="none">`;
+  s += `<path d="M${f(a.x)} ${f(a.y)}L${f(b.x)} ${f(b.y)}L${f(c.x)} ${f(c.y)}L${f(d.x)} ${f(d.y)}Z" fill="${P.acc}" fill-opacity=".06" stroke="${P.acc}" stroke-width="1.5" stroke-dasharray="6 5"/>`;
+  s += `<line id="e-hit" stroke="#e0653f" stroke-width="${f(Math.max(4, st.width * 1.8))}" stroke-opacity=".75" stroke-linecap="round" visibility="hidden"/>`;
+  s += `<line id="e-prev" stroke="${P.acc}" stroke-width="2" stroke-dasharray="5 4" visibility="hidden"/>`;
+  s += `<circle id="e-start" r="7" fill="none" stroke="${P.acc}" stroke-width="2.5" visibility="hidden"/>`;
+  s += `<circle id="e-hover" r="5.5" fill="${P.acc}" fill-opacity=".9" stroke="${P.bg}" stroke-width="1.2" visibility="hidden"/>`;
+  return s + `</g>`;
+}
+
+/* points a click can snap to: the pattern's own corners, then its edge
+   midpoints, then the ends of added lines — bucketed for quick lookup */
+function editSnapIndex(){
+  if(EL.snap) return EL.snap;
+  const cell = 24, grid = new Map(), put = (p, pri) => {
+    if(p.x < -40 || p.x > W + 40 || p.y < -40 || p.y > H + 40) return;
+    const k = Math.floor(p.x / cell) + ',' + Math.floor(p.y / cell);
+    if(!grid.has(k)) grid.set(k, []); grid.get(k).push({ p, pri });
+  };
+  for(const sh of (last && last.shapes) || []){
+    const pts = sh.pts; if(!pts) continue;
+    for(let i = 0; i < pts.length; i++){ const q = pts[(i + 1) % pts.length]; put(pts[i], 0); put(v((pts[i].x + q.x) / 2, (pts[i].y + q.y) / 2), 1); }
+  }
+  for(const [p, q] of addedCanvasSegs(editContext(), 40)){ put(p, 0); put(q, 0); }
+  return (EL.snap = { cell, grid });
+}
+function editSnap(q, radius){
+  const { cell, grid } = editSnapIndex(), ci = Math.floor(q.x / cell), cj = Math.floor(q.y / cell);
+  let best = null, bd = Infinity;
+  const reach = Math.ceil(radius / cell);
+  for(let i = ci - reach; i <= ci + reach; i++) for(let j = cj - reach; j <= cj + reach; j++){
+    for(const c of grid.get(i + ',' + j) || []){
+      const d = len(sub(c.p, q)) * (c.pri ? 1.35 : 1);
+      if(d < bd){ bd = d; best = c.p; }
+    }
+  }
+  return bd <= radius ? best : q;
+}
+function segDistance(p, a, b){
+  const d = sub(b, a), L = d.x * d.x + d.y * d.y;
+  const t = L ? Math.max(0, Math.min(1, ((p.x - a.x) * d.x + (p.y - a.y) * d.y) / L)) : 0;
+  return len(sub(p, add(a, mul(d, t))));
+}
+/* the line under the cursor: an added copy first, then a generated edge */
+function editHit(q, radius, E){
+  let best = null, bd = radius;
+  for(const [p, r] of addedCanvasSegs(E, radius)){
+    const d = segDistance(q, p, r); if(d < bd){ bd = d; best = { kind: 'add', p, q: r }; }
+  }
+  if(best) return best;
+  for(const sh of (last && last.shapes) || []){
+    const pts = sh.pts; if(!pts) continue;
+    for(let i = 0; i < pts.length; i++){
+      const p = pts[i], r = pts[(i + 1) % pts.length];
+      if(Math.min(p.x, r.x) > q.x + bd || Math.max(p.x, r.x) < q.x - bd || Math.min(p.y, r.y) > q.y + bd || Math.max(p.y, r.y) < q.y - bd) continue;
+      if(isErased(E, p, r)) continue;
+      const d = segDistance(q, p, r); if(d < bd){ bd = d; best = { kind: 'gen', p, q: r }; }
+    }
+  }
+  return best;
+}
+
+function editRecord(){ EL.hist.push({ eAdd: st.eAdd, eDel: st.eDel, eSig: st.eSig }); if(EL.hist.length > 200) EL.hist.shift(); }
+function editUndo(){
+  const h = EL.hist.pop(); if(!h) return;
+  st.eAdd = h.eAdd; st.eDel = h.eDel; st.eSig = h.eSig; EL.start = null; render(); sync();
+}
+function editClear(){
+  if(!st.eAdd && !st.eDel) return;
+  editRecord(); st.eAdd = ''; st.eDel = ''; EL.start = null; render(); sync();
+}
+function editAddLine(E, p, q){
+  const s = latSeg(E.F, p, q, 5), key = s.join(',');
+  if(st.eSig === editSig() && eParse(st.eAdd).some(t => t.join(',') === key)) return;
+  editRecord(); editClaim(); st.eAdd = st.eAdd ? st.eAdd + ';' + key : key;
+}
+function editErase(E, hit){
+  editRecord(); editClaim();
+  if(hit.kind === 'add'){
+    const k = edgeKey(E.F, hit.p, hit.q);
+    st.eAdd = eParse(st.eAdd).filter(s => storedKey(E.F, s) !== k).map(s => s.join(',')).join(';');
+  } else {
+    /* finer than the 3-place match key, so re-deriving that key can't round
+       across a boundary the live edge doesn't */
+    const key = latSeg(E.F, hit.p, hit.q, 6).join(',');
+    st.eDel = st.eDel ? st.eDel + ';' + key : key;
+  }
+}
+
+function setEditMode(on){
+  EL.on = !!on && st.engine !== 'gridp';
+  EL.start = null; EL.hit = null;
+  const bar = $('editBar'), btn = $('btnEditInDraw');
+  if(bar) bar.style.display = EL.on ? 'inline-flex' : 'none';
+  if(btn){ btn.classList.toggle('on', EL.on); btn.innerHTML = EL.on ? '<span>✓</span> Done editing' : '<span>✏️</span> Edit'; }
+  const svg = document.getElementById('svg'); if(svg) svg.style.cursor = EL.on ? 'crosshair' : '';
+  setEditTool(EL.tool);
+  render();
+}
+function setEditTool(tool){
+  EL.tool = tool; EL.start = null;
+  const l = $('eToolLine'), e = $('eToolErase');
+  if(l) l.classList.toggle('on', tool === 'line');
+  if(e) e.classList.toggle('on', tool === 'erase');
+  editPaintOverlay();
+}
+function editPaintOverlay(){
+  const set = (id, attrs) => { const el = document.getElementById(id); if(!el) return; for(const k in attrs) el.setAttribute(k, attrs[k]); };
+  const hv = EL.hover, st0 = EL.start;
+  set('e-hover', hv && EL.tool === 'line' ? { cx: f(hv.x), cy: f(hv.y), visibility: 'visible' } : { visibility: 'hidden' });
+  set('e-start', st0 ? { cx: f(st0.x), cy: f(st0.y), visibility: 'visible' } : { visibility: 'hidden' });
+  set('e-prev', st0 && hv ? { x1: f(st0.x), y1: f(st0.y), x2: f(hv.x), y2: f(hv.y), visibility: 'visible' } : { visibility: 'hidden' });
+  const h = EL.hit;
+  set('e-hit', h && EL.tool === 'erase' ? { x1: f(h.p.x), y1: f(h.p.y), x2: f(h.q.x), y2: f(h.q.y), visibility: 'visible' } : { visibility: 'hidden' });
+}
+/* canvas units per screen pixel, so snapping feels the same at any zoom */
+function editPx(){ const m = document.getElementById('svg').getScreenCTM(); return m ? 1 / Math.max(1e-6, Math.abs(m.a)) : 1; }
+
+(function(){
+  const svg = document.getElementById('svg');
+  svg.addEventListener('pointermove', e => {
+    if(!EL.on || st.engine === 'gridp') return;
+    const q = gEvt(e); if(!q) return;
+    const px = editPx();
+    if(EL.tool === 'line') EL.hover = editSnap(q, 14 * px);
+    else EL.hit = editHit(q, 9 * px, editContext());
+    editPaintOverlay();
+  });
+  svg.addEventListener('pointerleave', () => { EL.hover = null; EL.hit = null; if(EL.on) editPaintOverlay(); });
+  svg.addEventListener('pointerdown', e => {
+    if(!EL.on || st.engine === 'gridp' || e.button > 0) return;
+    const q = gEvt(e); if(!q) return;
+    const E = editContext(), px = editPx();
+    if(EL.tool === 'erase'){
+      const hit = editHit(q, 9 * px, E); if(!hit) return;
+      editErase(E, hit); EL.hit = null; render(); sync(); return;
+    }
+    const p = editSnap(q, 14 * px);
+    if(!EL.start){ EL.start = p; editPaintOverlay(); return; }
+    if(len(sub(p, EL.start)) < 2 * px){ EL.start = null; editPaintOverlay(); return; }
+    editAddLine(E, EL.start, p); EL.start = p;
+    render(); sync();
+  });
+  svg.addEventListener('contextmenu', e => {
+    if(!EL.on || st.engine === 'gridp') return;
+    e.preventDefault(); EL.start = null; editPaintOverlay();
+  });
+  document.addEventListener('keydown', e => {
+    if(!EL.on || st.engine === 'gridp') return;
+    const tag = (e.target && e.target.tagName) || '';
+    if(tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    if(e.key === 'Escape'){ EL.start = null; editPaintOverlay(); }
+    if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z'){ e.preventDefault(); editUndo(); }
+  });
+})();
+
 /* a random symmetric drawing, for a quick start */
 function gRandom(){
   const G=gGeom(), R=rng(Math.floor(Math.random()*1e6)+1), n=4+Math.floor(R()*6);
@@ -4407,7 +4680,7 @@ function gRandom(){
   for(let k=0;k<n;k++){const nx=pick(); if(nx[0]!==cur[0]||nx[1]!==cur[1]) gAddSeg(cur,nx); cur=R()<0.5?nx:pick()}
   GP.start=null; render(); sync();
 }
-const GACT={undo:gUndo,clear:gClear,random:gRandom,closeEnds:gCloseEnds,aiImage:()=>openAiModal(),finishSpline:()=>{if(GP.splinePts&&GP.splinePts.length>=2){gSnap();gAddSpline(GP.splinePts,false);GP.splinePts=null;gShowStart();render();sync()}}};
+const GACT={undo:gUndo,clear:gClear,random:gRandom,closeEnds:gCloseEnds,finishSpline:()=>{if(GP.splinePts&&GP.splinePts.length>=2){gSnap();gAddSpline(GP.splinePts,false);GP.splinePts=null;gShowStart();render();sync()}}};
 
 /* the drawing is saved into the link as text, and library entries are just this text */
 /*LIB-START*/
@@ -4723,6 +4996,8 @@ function render(){
   setLref(shapes);
   const w=st.width, r=st.round;
   let measured=null;          /* exact open area, when the openings are real faces */
+  EL.snap=null;
+  const E=editContext(), erasedSegs=[];
 
   let s=`<rect width="${W}" height="${H}" fill="${st.mode==='jali'?P.open:(st.mode==='mosaic'?P.grout:P.bg)}"/>`;
 
@@ -4735,25 +5010,27 @@ function render(){
     for(const d of dots) s+=`<circle cx="${f(d.x)}" cy="${f(d.y)}" r="2.6"/>`;
     const sc0=strokeColours(shapes,P);
     s+=`</g><g fill="none" stroke-width="${w}" stroke-linejoin="round">`;
-    shapes.forEach((sh,i)=>{s+=`<path d="${pathD(sh.pts,r)}" stroke="${sc0[i]}"/>`});
+    shapes.forEach((sh,i)=>{s+=`<path d="${shapeD(sh,r,E)}" stroke="${sc0[i]}"/>`});
     s+=`</g>`;
   }
   else if(st.mode==='line'){
     const sc=strokeColours(shapes,P);
     s+=`<g fill="none" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round">`;
-    shapes.forEach((sh,i)=>{s+=`<path d="${pathD(sh.pts,r)}" stroke="${sc[i]}"/>`});
+    shapes.forEach((sh,i)=>{s+=`<path d="${shapeD(sh,r,E)}" stroke="${sc[i]}"/>`});
     s+=`</g>`;
   }
   else if(st.mode==='interlace'){
-    const ds=shapes.map(sh=>pathD(sh.pts,r));
+    const ds=shapes.map(sh=>shapeD(sh,r,E,erasedSegs));
     const cas=w*2.6, sci=strokeColours(shapes,P);
     s+=`<g fill="none" stroke="${P.bg}" stroke-width="${cas}" stroke-linejoin="round">`;
     for(const d of ds) s+=`<path d="${d}"/>`;
     s+=`</g><g fill="none" stroke-width="${w}" stroke-linejoin="round">`;
     ds.forEach((d,i)=>{s+=`<path d="${d}" stroke="${sci[i]}"/>`});
     s+=`</g>`;
-    /* redraw the over-strand through each crossing, so it passes on top */
-    const stubs=weave(shapes,w);
+    /* redraw the over-strand through each crossing, so it passes on top —
+       except where an erased line would be drawn back in */
+    const onErased=(a,b)=>erasedSegs.some(([p,q])=>segDistance(a,p,q)<0.5&&segDistance(b,p,q)<0.5);
+    const stubs=weave(shapes,w).filter(p=>!onErased(p[0],p[1])&&!onErased(p[1],p[2]));
     if(stubs.length){
       s+=`<g fill="none" stroke="${P.bg}" stroke-width="${cas}" stroke-linecap="butt" stroke-linejoin="round">`;
       for(const p of stubs) s+=`<path d="${openD(p)}"/>`;
@@ -4763,7 +5040,7 @@ function render(){
     }
   }
   else if(st.mode==='jali'){
-    if(st.engine==='voro'||st.engine==='multi'){
+    if(convexCells(st)){
       /* solid panel with the cells punched out as closed openings */
       s=`<rect width="${W}" height="${H}" fill="${P.mat}"/><g fill="${P.open}">`;
       let open=0;
@@ -4775,45 +5052,57 @@ function render(){
         s+=`<path d="${pathD(o,r)}"/>`;
       }
       s+=`</g>`; measured=open/(W*H);
+      /* an erased rib joins the two openings it separated */
+      s+=mosaicMerge(shapes.map(sh=>sh.pts),shapes.map(()=>P.open),E,w*2.2+1).over;
     }else{
       s+=`<g fill="none" stroke="${P.mat}" stroke-width="${w*2.2}" stroke-linejoin="round" stroke-linecap="round">`;
-      for(const sh of shapes) s+=`<path d="${pathD(sh.pts,r)}"/>`;
+      for(const sh of shapes) s+=`<path d="${shapeD(sh,r,E)}"/>`;
       s+=`</g>`;
     }
   }
   else { /* mosaic */
     const nf=P.fills.length, pick=colourer(shapes,st.colourBy,nf);
-    if(st.engine==='voro'||st.engine==='multi'){
+    if(convexCells(st)){
+      const gap=Math.max(0.5,w*0.6);
+      const mm=mosaicMerge(shapes.map(sh=>sh.pts),shapes.map((sh,i)=>P.fills[pick(sh,i)]),E,2*gap+1);
+      last.fillCols=mm.cols;
       s+=`<g>`;
       for(let i=0;i<shapes.length;i++){
-        const o=insetConvex(shapes[i].pts,Math.max(0.5,w*0.6));
+        const o=insetConvex(shapes[i].pts,gap);
         if(o.length<3) continue;
-        s+=`<path d="${pathD(o,r)}" fill="${P.fills[pick(shapes[i],i)]}"/>`;
+        s+=`<path d="${pathD(o,r)}" fill="${mm.cols[i]}"/>`;
       }
-      s+=`</g>`;
+      s+=`</g>`+mm.over;
     }else if(st.engine==='subst'||st.engine==='tess'){
-      s+=`<g stroke="${P.grout}" stroke-width="${Math.max(.6,w*0.5)}" stroke-linejoin="round">`;
-      for(let i=0;i<shapes.length;i++){
-        let cIdx = pick(shapes[i],i);
-        if(shapes[i].depth !== undefined && st.colourBy === 'type'){
-          cIdx = shapes[i].depth % nf;
+      const gw=Math.max(.6,w*0.5);
+      const cols=shapes.map((sh,i)=>{
+        let cIdx = pick(sh,i);
+        if(sh.depth !== undefined && st.colourBy === 'type'){
+          cIdx = sh.depth % nf;
         }
-        s+=`<path d="${pathD(shapes[i].pts,r)}" fill="${P.fills[cIdx]}"/>`;
-      }
-      s+=`</g>`;
+        return P.fills[cIdx];
+      });
+      const mm=mosaicMerge(shapes.map(sh=>sh.pts),cols,E,gw+1.5);
+      last.fillCols=mm.cols;
+      s+=`<g stroke="${P.grout}" stroke-width="${gw}" stroke-linejoin="round">`;
+      for(let i=0;i<shapes.length;i++)
+        s+=`<path d="${pathD(shapes[i].pts,r)}" fill="${mm.cols[i]}"/>`;
+      s+=`</g>`+mm.over;
     }else{
       if(last.faces&&last.faces.length){
         /* fill the regions the lines cut out: stars, and the gaps between them */
         const fp=colourer(last.faces,st.colourBy,nf);
         const ck=[...new Set(last.faces.map(f=>f.cls))].sort((a,b)=>a-b);
         const byType=st.colourBy==='type';
-        last.faceCols=last.faces.map((f,i)=>{
-          const k=byType?Math.round(ck.indexOf(f.cls)/Math.max(1,ck.length-1)*(nf-1)):fp(f,i);
+        const gw=Math.max(1,w*0.7);
+        const mm=mosaicMerge(last.faces.map(fc=>fc.pts),last.faces.map((fc,i)=>{
+          const k=byType?Math.round(ck.indexOf(fc.cls)/Math.max(1,ck.length-1)*(nf-1)):fp(fc,i);
           return P.fills[k%nf];
-        });
-        s+=`<g stroke="${P.grout}" stroke-width="${Math.max(1,w*0.7)}" stroke-linejoin="round">`;
-        last.faces.forEach((f,i)=>{s+=`<path d="${pathD(f.pts,r)}" fill="${last.faceCols[i]}"/>`});
-        s+=`</g>`;
+        }),E,gw+1.5);
+        last.faceCols=mm.cols;
+        s+=`<g stroke="${P.grout}" stroke-width="${gw}" stroke-linejoin="round">`;
+        last.faces.forEach((fc,i)=>{s+=`<path d="${pathD(fc.pts,r)}" fill="${last.faceCols[i]}"/>`});
+        s+=`</g>`+mm.over;
       }else{
       const upick=colourer(under.map(u=>({pts:u,c:centroid(u)})),st.colourBy,nf);
       s+=`<g stroke="${P.grout}" stroke-width="${Math.max(1,w*0.6)}" stroke-linejoin="round">`;
@@ -4827,6 +5116,8 @@ function render(){
       }
     }
   }
+
+  s+=addedLinesSvg(E,P,w);
 
   /* Dual grid overlay for tessellation or whenever dual grid is active */
   const dl = (last && last.dualLines) || [];
@@ -4878,7 +5169,9 @@ function render(){
     const inset=Math.max(10,w*2);
     s+=`<rect x="${inset}" y="${inset}" width="${W-2*inset}" height="${H-2*inset}" fill="none" stroke="${st.mode==='jali'?P.mat:P.acc}" stroke-width="${Math.max(6,w*2)}"/>`;
   }
+  s+=editOverlaySvg(E,P);
   document.getElementById('svg').innerHTML=s;
+  if(EL.on) editPaintOverlay();
   updateStageDualBtn();
   updateInfo(shapes,measured);
 }
@@ -4904,7 +5197,6 @@ function updateInfo(shapes,measured){
   }
   if(st.engine==='pic'){const T=TILINGS[st.tiling];
     bits.push(`<b>${T.label}</b> ${st.dual?'· dual (Laves)':T.vf}`,`contact ${st.angle}°`)}
-  if(st.engine==='star'){const d=Math.max(2,Math.min(st.sd,Math.floor((st.sn-1)/2)));bits.push(`<b>{${st.sn}/${d}}</b>`,`${(function g(a,b){return b?g(b,a%b):a})(st.sn,d)} component(s)`)}
   if(st.engine==='subst'){
     const R=SUBST[st.subRule]||SUBST.penrose;
     bits.push(`<b>${R.name}</b>`,`depth ${st.subDepth}`,`${shapes.length} tiles`,`scale ${R.factor}`);
@@ -4935,8 +5227,12 @@ function updateInfo(shapes,measured){
 
 /* ============================================================ UI */
 const $=id=>document.getElementById(id);
+/* a preset is current only while the canvas still is exactly that preset */
+const presetMatches=p=>Object.entries(p.s).every(([k,v])=>st[k]===v);
+let lastPreset=-1;
 function applyPreset(i){
   const p=PRESETS[i]; if(!p) return;
+  lastPreset=i;
   st=Object.assign({},DEF,p.s);      /* start from defaults so nothing stale leaks in */
   setDualGridActive(!!(p.s && (p.s.dualGrid || p.s.tessDual)));
   clampAll();
@@ -4950,12 +5246,8 @@ function loadGridPattern(i){
   GP.start=null; GP.hist=[]; GP.splinePts=null;
   clampAll(); buildLists(); buildParams(); render(); sync();
 }
-function buildGridLib(){
-  const on=st.engine==='gridp';
-  $('h-glib').style.display=on?'':'none';
-  if(!on){$('glib').innerHTML='';return}
-  if(!GRID_LIB.length){$('glib').innerHTML='<div class="card">No patterns loaded yet.</div>';return}
-  /* one dropdown, grouped by where the pattern comes from, instead of a long list */
+/* one dropdown, grouped by where the pattern comes from, instead of a long list */
+function gridLibOptions(){
   const size=e=>e.s.gType==='iso'?`triangle ${e.s.gW}`:`${e.s.gW}×${e.s.gH}`;
   let opts=`<option value="">Choose a pattern (${GRID_LIB.length})…</option>`, cur='', open=false;
   GRID_LIB.forEach((e,i)=>{
@@ -4963,6 +5255,14 @@ function buildGridLib(){
     opts+=`<option value="${i}"${i===GP.lib?' selected':''}>${e.name} · ${size(e)}</option>`;
   });
   if(open) opts+='</optgroup>';
+  return opts;
+}
+function buildGridLib(){
+  const on=st.engine==='gridp';
+  $('h-glib').style.display=on?'':'none';
+  if(!on){$('glib').innerHTML='';return}
+  if(!GRID_LIB.length){$('glib').innerHTML='<div class="card">No patterns loaded yet.</div>';return}
+  const opts=gridLibOptions();
   $('glib').innerHTML=`
     <div style="margin-bottom:10px;padding:10px;border-radius:8px;background:var(--bg);border:1px solid var(--line);border-left:3px solid var(--accent)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
@@ -4971,14 +5271,6 @@ function buildGridLib(){
       </div>
       <p style="margin:0 0 8px;font-size:11px;color:var(--mute);line-height:1.4">Add Saracenic rosettes &amp; contact polygons to draw and edit on the active canvas.</p>
       <button class="btn pri" id="openPatModalBtn" style="width:100%;font-size:12px;padding:6px 10px;display:flex;align-items:center;justify-content:center;gap:6px"><span>➕</span> Add Pattern to Canvas…</button>
-    </div>
-    <div style="margin-bottom:12px;padding:10px;border-radius:8px;background:var(--bg);border:1px solid var(--line)">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-        <span style="font-weight:600;font-size:12px;display:flex;align-items:center;gap:5px"><span>✨</span> AI Pattern Generator</span>
-        <span class="tag doc" style="font-size:9.5px">Gemini</span>
-      </div>
-      <p style="margin:0 0 8px;font-size:11px;color:var(--mute);line-height:1.4">Upload or paste an ornament image to auto-detect grid and lines.</p>
-      <button class="btn" id="openAiPatternModal" style="width:100%;font-size:12px;padding:6px 10px;display:flex;align-items:center;justify-content:center;gap:6px"><span>✨</span> Generate from Image</button>
     </div>
     <select id="glibSel" aria-label="Numbered patterns by complexity">${opts}</select>
     <div style="display:flex;gap:6px;margin-top:8px">
@@ -4991,8 +5283,6 @@ function buildGridLib(){
   $('glib').querySelectorAll('[data-go]').forEach(a=>a.onclick=ev=>{ev.preventDefault();document.querySelector('#nav [data-p='+a.dataset.go+']').click()});
   const btnPat = $('openPatModalBtn');
   if(btnPat) btnPat.onclick = () => openAddPatternModal('pic');
-  const btnAi = $('openAiPatternModal');
-  if(btnAi) btnAi.onclick = () => openAiModal();
 }
 let paramTab = 'geo'; // 'geo' | 'color' | 'art'
 
@@ -5040,7 +5330,7 @@ function renderPresetsList(q = ''){
   }
 
   container.innerHTML = filtered.map(({ p, i }) => {
-    const isCur = st.engine === p.s.engine && (p.s.tiling ? st.tiling === p.s.tiling : true);
+    const isCur = presetMatches(p);
     return `<div class="pcard${isCur ? ' on' : ''}" data-pre="${i}">
       <div class="pcard-hdr">
         <span class="pcard-title">${p.name}</span>
@@ -5053,6 +5343,16 @@ function renderPresetsList(q = ''){
   container.querySelectorAll('[data-pre]').forEach(el => {
     el.onclick = () => applyPreset(+el.dataset.pre);
   });
+}
+
+function pickEngine(id){
+  if(st.engine!==id){
+    st.engine=id;
+    const d=(ENGINES.find(x=>x.id===st.engine)||{}).def;
+    if(d) Object.assign(st,d);
+    clampAll();
+  }
+  buildLists();buildParams();render();sync();
 }
 
 function buildLists(){
@@ -5108,11 +5408,30 @@ function buildLists(){
   const sr = $('stageRnd');
   if(sr) sr.onclick = () => $('rnd').click();
 
-  // Stage bar Edit in Draw button
+  // Stage bar Edit button: edit the pattern in place
   const btnEditInDraw = $('btnEditInDraw');
   if(btnEditInDraw){
     btnEditInDraw.style.display = st.engine === 'gridp' ? 'none' : 'inline-flex';
-    btnEditInDraw.onclick = () => openAddPatternModal('current');
+    btnEditInDraw.onclick = () => setEditMode(!EL.on);
+    if(st.engine === 'gridp' && EL.on){ EL.on = false; const eb = $('editBar'); if(eb) eb.style.display = 'none'; }
+  }
+  const eLine = $('eToolLine'), eErase = $('eToolErase'), eUndoB = $('eUndo'), eClearB = $('eClear');
+  if(eLine) eLine.onclick = () => setEditTool('line');
+  if(eErase) eErase.onclick = () => setEditTool('erase');
+  if(eUndoB) eUndoB.onclick = () => editUndo();
+  if(eClearB) eClearB.onclick = () => editClear();
+  const eSaveB = $('eSave');
+  if(eSaveB) eSaveB.onclick = e => {
+    e.stopPropagation();   /* or the page click that closes the menu shuts it at once */
+    const m = $('expDropdownMenu'), b = $('expMenuBtn'); if(!m || !b) return;
+    b.scrollIntoView({ block: 'nearest' }); m.style.display = 'flex';
+  };
+
+  // Stage bar border frame toggle (phone layout)
+  const btnFrame = $('btnStageFrame');
+  if(btnFrame){
+    btnFrame.classList.toggle('on', !!st.frame);
+    btnFrame.onclick = () => { st.frame = !st.frame; btnFrame.classList.toggle('on', !!st.frame); buildParams(); render(); sync(); };
   }
 
   // Stage bar Add Pattern button
@@ -5120,13 +5439,6 @@ function buildLists(){
   if(btnAddPat){
     btnAddPat.style.display = st.engine === 'gridp' ? 'inline-flex' : 'none';
     btnAddPat.onclick = () => openAddPatternModal('pic');
-  }
-
-  // Stage bar AI from image button
-  const btnStageAi = $('btnStageAiImage');
-  if(btnStageAi){
-    btnStageAi.style.display = st.engine === 'gridp' ? 'inline-flex' : 'none';
-    btnStageAi.onclick = () => openAiModal();
   }
 
   // Stage bar Smart Snap button
@@ -5178,15 +5490,7 @@ function buildLists(){
       </div>
       <div class="ecard-sub">${e.sub}</div>
     </div>`).join('');
-  $('engines').querySelectorAll('[data-e]').forEach(el=>el.onclick=()=>{
-    if(st.engine!==el.dataset.e){
-      st.engine=el.dataset.e;
-      const d=(ENGINES.find(x=>x.id===st.engine)||{}).def;
-      if(d) Object.assign(st,d);
-      clampAll();
-    }
-    buildLists();buildParams();render();sync();
-  });
+  $('engines').querySelectorAll('[data-e]').forEach(el=>el.onclick=()=>pickEngine(el.dataset.e));
 
   const showTil=st.engine==='pic';
   $('h-tiling').style.display=showTil?'':'none';
@@ -5229,6 +5533,24 @@ function sizeBlock(){
     </div>`;
 }
 
+/* on a phone the preset, engine and tiling lists become one row of dropdowns
+   at the top of the controls, so the pinned artwork above stays in view */
+function pickRow(){
+  const opt = (v, label, on, title) => `<option value="${v}"${on ? ' selected' : ''}${title ? ` title="${title}"` : ''}>${label}</option>`;
+  const cur = PRESETS.findIndex(presetMatches);
+  let h = `<div class="insp-pick">`;
+  h += `<select id="pickPreset" aria-label="Preset">${opt('', 'Presets…', cur < 0)}${PRESETS.map((p, i) => opt(i, p.name, i === cur, p.note)).join('')}</select>`;
+  h += `<select id="pickEngine" aria-label="Construction engine">${ENGINES.map(e => opt(e.id, e.name, e.id === st.engine, e.sub)).join('')}</select>`;
+  if(st.engine === 'pic') h += `<select id="pickTiling" aria-label="Underlying tiling">${TILING_GROUPS.map(([g]) => {
+    const rows = Object.entries(TILINGS).filter(([, t]) => t.g === g);
+    return rows.length ? `<optgroup label="${g}">${rows.map(([k, t]) => opt(k, `${t.label} · ${t.vf}`, k === st.tiling)).join('')}</optgroup>` : '';
+  }).join('')}</select>`;
+  if(st.engine === 'gridp'){
+    if(GRID_LIB.length) h += `<select id="pickLib" aria-label="Pattern collection">${gridLibOptions()}</select>`;
+    h += `<button class="btn pri" id="pickAdd" type="button" title="Add Polygons in Contact or other patterns to the drawing">➕ Add</button>`;
+  } else h += `<button class="btn" id="pickSend" type="button" title="Send this pattern to the Drawing Grid">✏️ To Draw</button>`;
+  return h + `</div>`;
+}
 function buildParams(){
   fitViewBox();
   const rows=visibleCtrls();
@@ -5241,7 +5563,7 @@ function buildParams(){
 
   if(paramTab === 'geo'){
     const eng = ENGINES.find(x => x.id === st.engine) || ENGINES[0];
-    h += `<div class="insp-sec">
+    h += `<div class="insp-sec">${pickRow()}<div class="insp-desk">
       <div class="insp-hdr">
         <span>${eng.name}</span>
         <button class="btn btn-sm" id="btnChangeEngine" type="button" style="font-size:10.5px;padding:2px 7px">Engines &amp; Tilings ▾</button>
@@ -5266,9 +5588,6 @@ function buildParams(){
         <button class="btn pri" id="btnInspAddPattern" type="button" style="flex:1;font-size:12px;padding:6px 8px;display:flex;align-items:center;justify-content:center;gap:5px">
           <span>➕</span> Add Polygons in Contact…
         </button>
-        <button class="btn" id="btnInspOpenAi" type="button" style="flex:1;font-size:11px;padding:6px 6px;display:flex;align-items:center;justify-content:center;gap:4px">
-          <span>✨</span> AI from Image
-        </button>
       </div>`;
     } else {
       h += `
@@ -5278,6 +5597,7 @@ function buildParams(){
         </button>
       </div>`;
     }
+    h += `</div>`;
 
     const geoRows = rows.filter(c => c.k !== 'width' && c.k !== 'frame' && c.k !== 'palMode' && c.k !== 'cHue' && c.k !== 'cSpread' && c.k !== 'cSat' && c.k !== 'cLight' && c.k !== 'cContrast' && c.k !== 'cReverse' && c.k !== 'colourBy');
     for(const c of geoRows) h += renderCtrlRow(c);
@@ -5288,7 +5608,8 @@ function buildParams(){
     h += `<div class="insp-sec">
       <div class="insp-hdr">Line &amp; Frame Stroke</div>`;
     const lineRows = rows.filter(c => c.k === 'width' || c.k === 'frame');
-    for(const c of lineRows) h += renderCtrlRow(c);
+    /* on a phone the frame is a toggle beside Edit, over the artwork */
+    for(const c of lineRows) h += c.k === 'frame' ? `<div class="insp-desk">${renderCtrlRow(c)}</div>` : renderCtrlRow(c);
     h += `</div>`;
 
     h += `<div class="insp-sec">
@@ -5339,6 +5660,13 @@ function buildParams(){
       outs();
     };
   });
+
+  const pkP = $('pickPreset'); if(pkP) pkP.onchange = () => { if(pkP.value !== '') applyPreset(+pkP.value); };
+  const pkE = $('pickEngine'); if(pkE) pkE.onchange = () => pickEngine(pkE.value);
+  const pkT = $('pickTiling'); if(pkT) pkT.onchange = () => { st.tiling = pkT.value; buildLists(); buildParams(); render(); sync(); };
+  const pkL = $('pickLib'); if(pkL) pkL.onchange = () => { if(pkL.value !== '') loadGridPattern(+pkL.value); };
+  const pkS = $('pickSend'); if(pkS) pkS.onclick = () => openAddPatternModal('current');
+  const pkA = $('pickAdd'); if(pkA) pkA.onclick = () => openAddPatternModal('pic');
 
   const bce = $('btnChangeEngine');
   if(bce) bce.onclick = () => {
@@ -5426,8 +5754,6 @@ function buildParams(){
   if(btnInspEdit) btnInspEdit.onclick = () => openAddPatternModal('current');
   const btnInspAdd = $('btnInspAddPattern');
   if(btnInspAdd) btnInspAdd.onclick = () => openAddPatternModal('pic');
-  const btnInspAi = $('btnInspOpenAi');
-  if(btnInspAi) btnInspAi.onclick = () => openAiModal();
 
   outs();
 }
@@ -5454,7 +5780,7 @@ function outs(){
       :'Underlying polygons, edge midpoints and contact rays, with the resulting pattern over them.',
     line:'The bare construction as single-weight line art.',
     interlace:'Over and under decided per crossing by walking each strand and flipping as it goes.',
-    jali:(st.engine==='voro'||st.engine==='multi')
+    jali:convexCells(st)
       ?'Solid panel with each tile cut out as a closed opening. Rib width sets the material left between them, and the aperture is measured from the shapes on screen.'
       :'Lines read as physical ribs; everything between them is an opening.',
     mosaic:'Closed pieces filled from the palette and separated by grout.'}[st.mode];
@@ -5482,11 +5808,20 @@ function sync(){
 function load(){
   if(!location.hash) return;
   for(const p of location.hash.slice(1).split('&')){
-    const [k,val]=p.split('='); if(!(k in DEF)) continue;
-    st[k]=typeof DEF[k]==='boolean'?val==='1':(typeof DEF[k]==='number'?parseFloat(val):val);
+    const [k,raw='']=p.split('='); if(!(k in DEF)) continue;
+    let val=raw; try{ val=decodeURIComponent(raw) }catch(e){}
+    const n=parseFloat(val);
+    /* a palette is either an index or a named id; any other number that
+       doesn't parse keeps its default rather than becoming NaN */
+    st[k]=typeof DEF[k]==='boolean'?val==='1'
+      :typeof DEF[k]==='number'?(Number.isFinite(n)?n:(k==='pal'?val:DEF[k]))
+      :val;
   }
   if(!TILINGS[st.tiling]) st.tiling=DEF.tiling;
   if(!ENGINES.some(e=>e.id===st.engine)) st.engine=DEF.engine;
+  if(!MODES.some(m=>m[0]===st.mode)) st.mode=DEF.mode;
+  if(!UNITS[st.units]) st.units=DEF.units;
+  if(!(st.artW>0)||!(st.artH>0)){ st.artW=DEF.artW; st.artH=DEF.artH; }
   setDualGridActive(isDualGridActive());
 }
 
@@ -5526,30 +5861,39 @@ function clipPolyline(pts,closed){
   if(cur&&cur.length>1) runs.push(cur);
   return runs;
 }
-function exportShapes(){
-  const raw=exportShapesRaw(), out=[];
+function exportShapes(lines){
+  const raw=exportShapesRaw(lines), out=[];
   const fill=(st.mode==='jali'||st.mode==='mosaic')&&st.engine!=='gridp';
   const eps=1e-6, inside=q=>q.every(p=>p.x>=-eps&&p.x<=W+eps&&p.y>=-eps&&p.y<=H+eps);
   raw.forEach((pts,si)=>{
     if(!pts.length) return;
-    if(inside(pts)){ pts.src=si; out.push(pts); return }
-    if(pts.open){ for(const r of clipPolyline(pts,false)){ r.open=true; r.src=si; out.push(r) } }
-    else if(fill){ const c=clipToPanel(pts); if(c.length>=3){ c.src=si; out.push(c) } }
-    else{ for(const r of clipPolyline(pts,true)){ r.open=true; r.src=si; out.push(r) } }
+    const src=pts.src!==undefined?pts.src:si;   /* the shape it came from, for its colour */
+    if(inside(pts)){ pts.src=src; out.push(pts); return }
+    if(pts.open){ for(const r of clipPolyline(pts,false)){ r.open=true; r.src=src; out.push(r) } }
+    else if(fill){ const c=clipToPanel(pts); if(c.length>=3){ c.src=src; out.push(c) } }
+    else{ for(const r of clipPolyline(pts,true)){ r.open=true; r.src=src; out.push(r) } }
   });
+  /* every copy of a drawn line that reaches the panel */
+  if(lines) for(const [p,q] of addedCanvasSegs(editContext(),0)){
+    const c=clipSeg(p,q); if(c){ c.open=true; c.src=-1; out.push(c) }
+  }
   return out;
 }
-function exportShapesRaw(){
+function exportShapesRaw(lines){
   if(last.gexport) return last.gexport;
-  const {shapes,P}=last, r=st.round, out=[];
-  if(st.mode==='mosaic'&&last.faces&&last.faces.length) return last.faces.map(f=>roundedPoly(f.pts,r));
-  for(const sh of shapes){
-    let pts=sh.pts;
-    if(st.mode==='jali'&&(st.engine==='voro'||st.engine==='multi')){
-      pts=insetConvex(pts,st.width*1.1); if(pts.length<3) continue;
-    }
-    out.push(roundedPoly(pts,r));
-  }
+  const {shapes}=last, r=st.round, out=[], E=lines?editContext():null;
+  /* each outline keeps the index of its shape, even when some are skipped */
+  const put=(pts,i,split)=>{
+    const runs=split&&E&&E.del.size?erasedRuns(pts,E):null;
+    if(runs) for(const q of runs){ q.src=i; out.push(q) }
+    else{ const q=roundedPoly(pts,r); q.src=i; out.push(q) }
+  };
+  if(st.mode==='mosaic'&&last.faces&&last.faces.length){ last.faces.forEach((fc,i)=>put(fc.pts,i,true)); return out }
+  const cells=st.mode==='jali'&&convexCells(st);   /* openings are cut out whole */
+  shapes.forEach((sh,i)=>{
+    if(!cells) return put(sh.pts,i,true);
+    const o=insetConvex(sh.pts,st.width*1.1); if(o.length>=3) put(o,i,false);
+  });
   return out;
 }
 function download(blob,name){
@@ -5560,7 +5904,7 @@ function download(blob,name){
 const baseName=()=>`pattern-${st.engine}-${st.engine==='pic'?st.tiling:st.mode}`;
 
 function exportDXF(){
-  const polys=exportShapes(), L=[], U=UNITS[st.units], k=1/Kpx();   /* canvas px -> drawing units */
+  const polys=exportShapes(true), L=[], U=UNITS[st.units], k=1/Kpx();   /* canvas px -> drawing units */
   const put=(c,v)=>{L.push(String(c),String(v))};
   /* the header tells CAD what one drawing unit is, so the file opens at true size */
   put(0,'SECTION'); put(2,'HEADER'); put(9,'$ACADVER'); put(1,'AC1009');
@@ -5573,6 +5917,14 @@ function exportDXF(){
     put(0,'SEQEND'); put(8,layer);
   };
   for(const p of polys) emit(p,'PATTERN');
+  /* in a cut panel an erased rib joins two openings: cut out the strip it leaves */
+  if(st.mode==='jali'&&convexCells(st)){
+    const hw=(st.width*2.2+1)/2;
+    for(const [a,b] of erasedEdgeSegs(editContext())){
+      const d=norm(sub(b,a)), n=v(-d.y*hw,d.x*hw), c=clipToPanel([add(a,n),add(b,n),sub(b,n),sub(a,n)]);
+      if(c.length>=3) emit(c,'PATTERN');
+    }
+  }
   if(isDualGridActive() && last.dualLines && last.dualLines.length){
     for(const seg of last.dualLines){
       put(0,'LINE'); put(8,'DUAL_GRID');
@@ -5589,28 +5941,46 @@ function exportDXF(){
 }
 
 function exportPDF(){
-  const polys=exportShapes(), P=paletteOf(st);
+  const P=paletteOf(st), E=editContext(), w=st.width;
   const hex=c=>{const n=parseInt(c.slice(1),16);
     return [((n>>16)&255)/255,((n>>8)&255)/255,(n&255)/255].map(x=>x.toFixed(3)).join(' ')};
   const y=v=>(H-v).toFixed(2);
+  const path=pts=>{let d=`${pts[0].x.toFixed(2)} ${y(pts[0].y)} m\n`;
+    for(let k=1;k<pts.length;k++) d+=`${pts[k].x.toFixed(2)} ${y(pts[k].y)} l\n`;
+    return pts.open?d:d+'h\n'};
+  const line=(p,q)=>path(Object.assign([p,q],{open:true}));
   /* scale the whole page so it is the real size: PDF units are points */
   const wpt=st.artW*UNITS[st.units].pt, sc=wpt/W, hpt=H*sc;
+  /* the drawing grid is lines whatever mode was left from another engine */
+  const jali=st.engine!=='gridp'&&st.mode==='jali', mosaic=st.engine!=='gridp'&&st.mode==='mosaic';
+  const cells=jali&&convexCells(st);
   let s=`${sc.toFixed(8)} 0 0 ${sc.toFixed(8)} 0 0 cm\n`;
-  const solid=(st.mode==='jali'||st.mode==='mosaic');
-  s+=`${hex(st.mode==='jali'?P.mat:P.bg)} rg 0 0 ${W.toFixed(2)} ${H.toFixed(2)} re f\n`;
-  const nf=P.fills.length, pick=colourer(last.shapes,st.colourBy,nf);
-  const spdf=strokeColours(last.shapes,P);
-  s+=`${st.width.toFixed(2)} w 1 J 1 j\n`;
-  polys.forEach((pts,pi)=>{
-    if(!pts.length) return;
-    const i=pts.src!==undefined?pts.src:pi;
-    s+=`${pts[0].x.toFixed(2)} ${y(pts[0].y)} m\n`;
-    for(let k=1;k<pts.length;k++) s+=`${pts[k].x.toFixed(2)} ${y(pts[k].y)} l\n`;
-    if(!pts.open) s+='h\n';
-    if(st.mode==='jali')       s+=`${hex(P.open)} rg f\n`;
-    else if(st.mode==='mosaic')s+=`${hex(last.faces&&last.faceCols?last.faceCols[i]:P.fills[pick(last.shapes[i]||{pts,c:centroid(pts)},i)])} rg f\n`;
-    else                       s+=`${hex(spdf[i]||P.ink)} RG S\n`;
-  });
+  /* the ground the canvas shows: a solid panel, open ground, grout or paper */
+  s+=`${hex(jali?(cells?P.mat:P.open):mosaic?P.grout:P.bg)} rg 0 0 ${W.toFixed(2)} ${H.toFixed(2)} re f\n1 J 1 j\n`;
+  if(mosaic||cells){
+    /* filled pieces or cut openings, in the colours the canvas shows */
+    const nf=P.fills.length, pick=colourer(last.shapes,st.colourBy,nf);
+    for(const pts of exportShapes(false)){
+      if(pts.length<3) continue;
+      const i=pts.src;
+      const col=cells?P.open:last.faces&&last.faceCols?last.faceCols[i]
+        :last.fillCols?last.fillCols[i]:P.fills[pick(last.shapes[i]||{pts,c:centroid(pts)},i)];
+      s+=path(pts)+`${hex(col)} rg f\n`;
+    }
+    const ribs=cells?erasedEdgeSegs(E):[];   /* an erased rib joins the openings either side */
+    if(ribs.length){ s+=`0 J ${(w*2.2+1).toFixed(2)} w ${hex(P.open)} RG\n`; for(const [a,b] of ribs) s+=line(a,b)+'S\n'; s+='1 J\n' }
+    const drawn=addedCanvasSegs(E,0);
+    if(drawn.length){ const a=addedLineStyle(P,w); s+=`${a.w.toFixed(2)} w ${hex(a.col)} RG\n`; for(const [p,q] of drawn) s+=line(p,q)+'S\n' }
+  }else{
+    /* lines: outlines with erased edges left out, plus the drawn lines; in a
+       panel of ribs (Solid/void) they are the ribs */
+    const spdf=strokeColours(last.shapes,P);
+    s+=`${(jali?w*2.2:w).toFixed(2)} w\n`;
+    for(const pts of exportShapes(true)){
+      if(pts.length<2) continue;
+      s+=path(pts)+`${hex(jali?P.mat:(pts.src>=0&&spdf[pts.src])||P.ink)} RG S\n`;
+    }
+  }
   const objs=[
     '<< /Type /Catalog /Pages 2 0 R >>',
     '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
@@ -5626,8 +5996,37 @@ function exportPDF(){
   return pdf;
 }
 
-function exportPNG(scale){
-  const sc = scale || 2;
+/* pixels per canvas unit for a print of the artwork's real size at `dpi`, kept
+   inside what a browser canvas can allocate */
+function printScale(dpi){
+  const inches = st.artW * UNITS[st.units].mm / 25.4;
+  return Math.min(inches * dpi / W, 16384 / Math.max(W, H), Math.sqrt(1.2e8 / (W * H)));
+}
+/* a canvas PNG says nothing about resolution: add a pHYs chunk so print
+   software opens it at the artwork's real size */
+const CRC_T = (() => { const t = new Uint32Array(256); for(let n = 0; n < 256; n++){ let c = n; for(let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(bytes){ let c = 0xffffffff; for(const b of bytes) c = CRC_T[(c ^ b) & 255] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; }
+async function pngWithDpi(blob, dpi){
+  const src = new Uint8Array(await blob.arrayBuffer());
+  for(let i = 8; i + 8 <= src.length;){
+    const n = ((src[i] << 24) | (src[i + 1] << 16) | (src[i + 2] << 8) | src[i + 3]) >>> 0;
+    if(String.fromCharCode(src[i + 4], src[i + 5], src[i + 6], src[i + 7]) === 'pHYs') return blob;
+    i += 12 + n;
+  }
+  const ppm = Math.round(dpi / 0.0254), chunk = new Uint8Array(21), dv = new DataView(chunk.buffer);
+  dv.setUint32(0, 9); chunk.set([112, 72, 89, 115], 4);             /* length, "pHYs" */
+  dv.setUint32(8, ppm); dv.setUint32(12, ppm); chunk[16] = 1;        /* pixels per metre */
+  dv.setUint32(17, crc32(chunk.subarray(4, 17)));
+  const at = 33, out = new Uint8Array(src.length + 21);              /* after the signature and IHDR */
+  out.set(src.subarray(0, at)); out.set(chunk, at); out.set(src.subarray(at), at + 21);
+  return new Blob([out], { type: 'image/png' });
+}
+
+/* `dpi` sizes the image from the artwork's real size; otherwise `scale` is a
+   plain multiple of the canvas (the 4K option) */
+function exportPNG({ dpi, scale } = {}){
+  const sc = dpi ? printScale(dpi) : (scale || 2);
+  const inches = st.artW * UNITS[st.units].mm / 25.4, realDpi = W * sc / inches;
   const svg = $('svg').cloneNode(true);
   const ov = svg.querySelector('#ov'); if(ov) ov.remove();
   const guides = svg.querySelector('#gp-guides'); if(guides) guides.remove();
@@ -5655,10 +6054,9 @@ function exportPNG(scale){
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     URL.revokeObjectURL(url);
-    canvas.toBlob(blob => {
-      if(blob){
-        download(blob, baseName() + (sc >= 4 ? '-4k.png' : '-300dpi.png'));
-      }
+    canvas.toBlob(async blob => {
+      if(!blob){ showToast('PNG export failed: the image is too large for this browser', 'error'); return; }
+      download(await pngWithDpi(blob, realDpi), baseName() + (dpi ? `-${Math.round(realDpi)}dpi.png` : '-4k.png'));
     }, 'image/png');
   };
   img.onerror = () => {
@@ -5730,10 +6128,11 @@ function doExportPDF(){
   }
 }
 
-function doExportPNG(sc){
+function doExportPNG(opt){
   try {
-    exportPNG(sc);
-    showToast(sc >= 4 ? 'Generating Ultra 4K PNG...' : 'Generating High-Res PNG (300 DPI)...', 'info');
+    exportPNG(opt);
+    const dpi = opt.dpi && Math.round(W * printScale(opt.dpi) / (st.artW * UNITS[st.units].mm / 25.4));
+    showToast(opt.dpi ? (dpi < opt.dpi ? `Generating PNG at ${dpi} DPI (the most a browser can hold at this size)...` : `Generating High-Res PNG (${dpi} DPI)...`) : 'Generating Ultra 4K PNG...', 'info');
   } catch(e) {
     showToast('PNG export failed: ' + e.message, 'error');
   }
@@ -5755,39 +6154,30 @@ async function copyDesignLink(){
 }
 
 /* ================= Viewport & Zoom Actions ================= */
-function zoomIn(){
-  if(st.engine === 'gridp'){
-    st.gSize = Math.min(120, Math.round((st.gSize || 45) * 1.2));
-  } else {
-    st.scale = Math.min(220, Math.round(st.scale * 1.2));
-    st.scell = Math.min(300, Math.round(st.scell * 1.2));
-  }
+/* zoom is the pattern's own size — the grid spacing when drawing — kept inside
+   its slider's range. Voronoi and subdivision are sized by their count and
+   depth, so they have nothing to zoom */
+function zoomKey(){
+  const k = st.engine === 'gridp' ? 'gSize' : 'scale';
+  const c = (CTRL[st.engine] || []).find(c => c.k === k);
+  return c && { k, min: cv(c.min), max: cv(c.max) };
+}
+function zoomBy(f){
+  const z = zoomKey();
+  if(!z){ showToast('This pattern is sized by its count and depth — use those sliders', 'info'); return; }
+  st[z.k] = Math.max(z.min, Math.min(z.max, Math.round(st[z.k] * f)));
   buildParams(); render(); sync();
 }
-
-function zoomOut(){
-  if(st.engine === 'gridp'){
-    st.gSize = Math.max(16, Math.round((st.gSize || 45) / 1.2));
-  } else {
-    st.scale = Math.max(20, Math.round(st.scale / 1.2));
-    st.scell = Math.max(30, Math.round(st.scell / 1.2));
-  }
-  buildParams(); render(); sync();
-}
+function zoomIn(){ zoomBy(1.2); }
+function zoomOut(){ zoomBy(1 / 1.2); }
 
 function fitView(){
-  if(st.engine === 'gridp'){
-    st.gSize = Math.max(28, Math.min(80, Math.round(360 / (st.gW || 8))));
-  } else if(st.engine === 'tess'){
-    st.scale = 75;
-  } else if(st.engine === 'pic'){
-    st.scell = 140;
-  } else if(st.engine === 'star'){
-    st.scale = 80;
-  } else if(st.engine === 'multi'){
-    st.scale = 48;
-  } else {
-    st.scale = 65;
+  const z = zoomKey();
+  if(z){
+    const d = (ENGINES.find(e => e.id === st.engine) || {}).def || {};
+    const want = st.engine === 'gridp' ? Math.round(360 / (st.gW || 8)) : (d.scale || DEF.scale);
+    st[z.k] = st.engine === 'gridp' ? Math.max(28, Math.min(80, want)) : want;
+    st[z.k] = Math.max(z.min, Math.min(z.max, st[z.k]));
   }
   buildParams(); render(); sync();
   showToast('Canvas view fitted to artboard', 'info');
@@ -5795,6 +6185,8 @@ function fitView(){
 
 function doRandomise(){
   const R = Math.random;
+  /* a drawing gets a random symmetric sketch of its own */
+  if(st.engine === 'gridp'){ gRandom(); showToast('Generated random variations', 'info'); return; }
   if(st.engine === 'tess'){
     st.tessFam = R() < 0.5 ? 'regular' : 'fractal';
     if(st.tessFam === 'regular'){
@@ -5817,15 +6209,18 @@ function doRandomise(){
     st.tiling = ks[Math.floor(R()*ks.length)];
     st.angle = 20 + Math.floor(R()*55);
     st.dual = R() < 0.35;
-  } else if(st.engine === 'star'){
-    st.sn = 6 + Math.floor(R()*16);
-    st.sd = 2 + Math.floor(R()*(Math.floor(st.sn/2)-1));
   } else if(st.engine === 'multi'){
     st.mN = [4,5,5,7,8,9,11,12][Math.floor(R()*8)];
     st.mOffset = Math.round(R()*100)/100;
     st.mDisorder = R() < 0.6 ? 0 : Math.floor(R()*60);
     st.seed = 1 + Math.floor(R()*999);
     st.scale = 24 + Math.floor(R()*60);
+    clampAll();
+  } else if(st.engine === 'subst'){
+    const rules = Object.keys(SUBST);
+    st.subRule = rules[Math.floor(R()*rules.length)];
+    st.subDepth = 2 + Math.floor(R()*4);
+    st.rotation = Math.floor(R()*7)*15;
     clampAll();
   } else {
     st.vlayout = ['hex','grid','brick','hex','radial'][Math.floor(R()*5)];
@@ -5846,8 +6241,8 @@ function doRandomise(){
 }
 
 function cyclePreset(dir){
-  let cur = PRESETS.findIndex(p => st.engine===p.s.engine && (p.s.tiling ? st.tiling===p.s.tiling : true));
-  if(cur < 0) cur = 0;
+  let cur = lastPreset >= 0 ? lastPreset : PRESETS.findIndex(presetMatches);
+  if(cur < 0) cur = dir > 0 ? -1 : 0;
   let next = (cur + dir + PRESETS.length) % PRESETS.length;
   applyPreset(next);
   showToast(`Loaded preset: ${PRESETS[next].name}`, 'info');
@@ -5903,8 +6298,8 @@ if(expBtn && expMenu){
 }
 
 const optSvg = $('expSvgOpt'); if(optSvg) optSvg.onclick = () => { if(expMenu) expMenu.style.display='none'; exportSVG(); };
-const optPng300 = $('expPng300Opt'); if(optPng300) optPng300.onclick = () => { if(expMenu) expMenu.style.display='none'; doExportPNG(2); };
-const optPng4k = $('expPng4kOpt'); if(optPng4k) optPng4k.onclick = () => { if(expMenu) expMenu.style.display='none'; doExportPNG(4); };
+const optPng300 = $('expPng300Opt'); if(optPng300) optPng300.onclick = () => { if(expMenu) expMenu.style.display='none'; doExportPNG({ dpi: 300 }); };
+const optPng4k = $('expPng4kOpt'); if(optPng4k) optPng4k.onclick = () => { if(expMenu) expMenu.style.display='none'; doExportPNG({ scale: 4 }); };
 const optPdf = $('expPdfOpt'); if(optPdf) optPdf.onclick = () => { if(expMenu) expMenu.style.display='none'; doExportPDF(); };
 const optDxf = $('expDxfOpt'); if(optDxf) optDxf.onclick = () => { if(expMenu) expMenu.style.display='none'; doExportDXF(); };
 
@@ -5933,7 +6328,7 @@ if(scClose) scClose.onclick = () => toggleShortcutsModal(false);
 const SRC_MAIN=[
  ['[3] E. H. Hankin, <i>Drawing of Geometric Patterns in Saracenic Art</i> (1925)','Free scan','Polygons-in-contact construction — implemented'],
  ['[7] Craig Kaplan, <i>Islamic Star Patterns from Polygons in Contact</i> (2005)','Free paper','Computational form of the above — implemented'],
- ['[1] Met, <i>Islamic Art and Geometric Design</i>','Free museum PDF','Compass and star-polygon exercises — implemented'],
+ ['[1] Met, <i>Islamic Art and Geometric Design</i>','Free museum PDF','Compass and star-polygon exercises — not built'],
  ['[4] Lu &amp; Steinhardt, girih paper (2007)','Free author PDF','Girih tile set and strapwork — not built'],
  ['[5] Jay Bonner, <i>Islamic Geometric Patterns</i> (2017)','Publisher page','Historical polygonal systems and classification'],
  ['[25] Gülru Necipoğlu, <i>The Topkapi Scroll</i> (1995)','Free Getty PDF','Historical construction documents and context'],
@@ -5982,340 +6377,19 @@ $('srcMain').innerHTML='<tr><th>Reference</th><th>Access verified</th><th>Use he
   SRC_MAIN.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');
 $('srcAll').innerHTML=SRC_ALL.map(r=>`<tr><td>${r}</td><td>Open source</td></tr>`).join('');
 
-/* ============================================================ AI Pattern Generator from Image */
-let aiSelectedImage = null; // dataURL
-let aiGeneratedPattern = null;
-
-const AI_SAMPLES = [
-  {
-    name: 'Cairo Star Lattice',
-    desc: 'Square 8-fold star',
-    svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#d8ac4d" stroke-width="2.5"><rect width="100" height="100" fill="#141824"/><rect x="15" y="15" width="70" height="70"/><polygon points="50,15 75,25 85,50 75,75 50,85 25,75 15,50 25,25"/><line x1="15" y1="15" x2="85" y2="85"/><line x1="85" y1="15" x2="15" y2="85"/><rect x="32" y="32" width="36" height="36" transform="rotate(45 50 50)"/></svg>`
-  },
-  {
-    name: 'Cordoba Rosette',
-    desc: 'Hexagonal 6-fold',
-    svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#e5d5b5" stroke-width="2.5"><rect width="100" height="100" fill="#0f2b26"/><polygon points="50,10 85,30 85,70 50,90 15,70 15,30"/><polygon points="50,22 74,36 74,64 50,78 26,64 26,36"/><line x1="50" y1="10" x2="50" y2="90"/><line x1="15" y1="30" x2="85" y2="70"/><line x1="15" y1="70" x2="85" y2="30"/><circle cx="50" cy="50" r="14"/></svg>`
-  },
-  {
-    name: 'Diamond Lattice',
-    desc: 'Barred 4-fold',
-    svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#8fa0ff" stroke-width="2.5"><rect width="100" height="100" fill="#1c1a24"/><path d="M 0,50 L 50,0 L 100,50 L 50,100 Z"/><path d="M 25,25 L 75,25 L 75,75 L 25,75 Z"/><line x1="0" y1="0" x2="100" y2="100"/><line x1="100" y1="0" x2="0" y2="100"/></svg>`
-  },
-  {
-    name: 'Damascus 12-Star',
-    desc: '12-pointed star',
-    svg: `<svg viewBox="0 0 100 100" fill="none" stroke="#e9c878" stroke-width="2.2"><rect width="100" height="100" fill="#221e33"/><circle cx="50" cy="50" r="38"/><polygon points="50,12 68,17 82,31 88,50 82,68 68,82 50,88 31,82 17,68 12,50 17,31 31,17"/><circle cx="50" cy="50" r="15"/></svg>`
-  }
-];
-
-function svgToDataUrl(svgStr){
-  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr);
-}
-
-function openAiModal(presetImgData){
-  const modal = $('aiModal');
-  if(!modal) return;
-  modal.style.display = 'flex';
-  aiGeneratedPattern = null;
-  if(presetImgData){
-    setAiImage(presetImgData);
-  } else {
-    renderAiModalContent();
-  }
-}
-
-function closeAiModal(){
-  const modal = $('aiModal');
-  if(modal) modal.style.display = 'none';
-}
-
-function setAiImage(dataUrl){
-  aiSelectedImage = dataUrl;
-  aiGeneratedPattern = null;
-  renderAiModalContent();
-}
-
-function renderAiModalContent(){
-  const body = $('aiModalBody');
-  const footer = $('aiModalFooter');
-  if(!body || !footer) return;
-
-  const btnClose = $('aiBtnClose');
-  if(btnClose) btnClose.onclick = closeAiModal;
-
-  if(aiGeneratedPattern){
-    // Result View
-    const p = aiGeneratedPattern;
-    const segCount = p.gData ? p.gData.split(';').filter(Boolean).length : 0;
-    const gridLabel = p.gType === 'iso' ? `Triangle (Isometric) ${p.gW} units` : `Square ${p.gW}×${p.gH} (Sub: ${p.gSub||1})`;
-    body.innerHTML = `
-      <div style="padding:10px 12px;border-radius:8px;background:rgba(31,122,77,0.12);border:1px solid var(--ok);margin-bottom:8px">
-        <div style="font-weight:600;color:var(--ok);font-size:13px;display:flex;align-items:center;gap:6px">
-          <span>✓</span> Pattern Successfully Generated!
-        </div>
-        <div style="font-size:12.5px;margin-top:4px">
-          <b>${p.name || 'AI Generated Geometric Pattern'}</b>
-        </div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
-        <div style="padding:8px 10px;border-radius:6px;background:var(--panel-sub);border:1px solid var(--line)">
-          <span style="color:var(--mute);font-size:11px;display:block">Grid Lattice</span>
-          <b>${gridLabel}</b>
-        </div>
-        <div style="padding:8px 10px;border-radius:6px;background:var(--panel-sub);border:1px solid var(--line)">
-          <span style="color:var(--mute);font-size:11px;display:block">Symmetry &amp; Segments</span>
-          <b>${p.gSym || 'none'}</b> · ${segCount} lines
-        </div>
-      </div>
-
-      ${p.explanation ? `<div style="font-size:12px;line-height:1.5;color:var(--mute);background:var(--panel-sub);padding:9px 12px;border-radius:6px;border:1px solid var(--line)">
-        <b style="color:var(--ink)">Analysis:</b> ${p.explanation}
-      </div>` : ''}
-
-      <div style="font-size:11.5px;color:var(--mute)">
-        Click <b>Load into Drawing Grid</b> to start drawing and editing this pattern directly on the active canvas.
-      </div>
-    `;
-
-    footer.innerHTML = `
-      <button class="btn" id="aiBtnReset">← Try Another Image</button>
-      <span class="spacer"></span>
-      <button class="btn" id="aiBtnSaveLib">➕ Add to Collection</button>
-      <button class="btn pri" id="aiBtnApply">🎯 Load into Drawing Grid</button>
-    `;
-
-    $('aiBtnReset').onclick = () => { aiGeneratedPattern = null; aiSelectedImage = null; renderAiModalContent(); };
-    $('aiBtnApply').onclick = () => { applyAIGeneratedPattern(aiGeneratedPattern, false); closeAiModal(); };
-    $('aiBtnSaveLib').onclick = () => { applyAIGeneratedPattern(aiGeneratedPattern, true); closeAiModal(); };
-    return;
-  }
-
-  // Input View
-  let previewHtml = '';
-  if(aiSelectedImage){
-    previewHtml = `
-      <div class="ai-preview-box">
-        <img src="${aiSelectedImage}" alt="Pattern reference">
-        <button class="btn btn-sm" id="aiBtnRemoveImg" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.7);color:#fff;border-color:rgba(255,255,255,0.3)">✕ Remove</button>
-      </div>
-    `;
-  } else {
-    previewHtml = `
-      <div class="ai-dropzone" id="aiDropzone">
-        <div style="font-size:26px">🖼️</div>
-        <div style="font-weight:600;font-size:13px">Drop image here, paste from clipboard, or click to browse</div>
-        <div style="font-size:11px;color:var(--mute)">Supports architectural photos, tile scans, engravings, line diagrams (PNG, JPG, WebP, SVG)</div>
-        <input type="file" id="aiFileInput" accept="image/*" style="display:none">
-      </div>
-      <div style="display:flex;gap:6px;align-items:center">
-        <input type="url" id="aiUrlInput" class="numbox" placeholder="Or paste image URL (https://...)" style="flex:1;font-size:12px">
-        <button class="btn btn-sm" id="aiBtnFetchUrl">Fetch URL</button>
-      </div>
-
-      <div>
-        <div style="font-size:11px;font-weight:600;color:var(--mute);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">
-          Or try a specimen architectural pattern:
-        </div>
-        <div class="ai-samples-grid">
-          ${AI_SAMPLES.map((s, i) => `
-            <div class="ai-sample-item" data-sample="${i}" title="${s.desc}">
-              ${s.svg}
-              <span style="font-weight:600">${s.name}</span>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    `;
-  }
-
-  body.innerHTML = `
-    ${previewHtml}
-    <div>
-      <div class="rlab"><span>Guidance notes (optional)</span></div>
-      <input type="text" id="aiPromptInput" class="numbox" placeholder="e.g. Focus on the 8-pointed star in the center, preserve 4-fold symmetry..." style="font-size:12.5px">
-    </div>
-    <div id="aiErrorBanner" style="display:none;padding:8px 12px;border-radius:6px;background:rgba(220,38,38,0.12);border:1px solid #dc2626;color:var(--ink);font-size:12px"></div>
-  `;
-
-  footer.innerHTML = `
-    <button class="btn" id="aiBtnCancel">Cancel</button>
-    <button class="btn pri" id="aiBtnGenerate" ${!aiSelectedImage ? 'disabled' : ''}>✨ Generate Pattern</button>
-  `;
-
-  $('aiBtnCancel').onclick = closeAiModal;
-  const dz = $('aiDropzone');
-  const fileInp = $('aiFileInput');
-  if(dz && fileInp){
-    dz.onclick = () => fileInp.click();
-    fileInp.onchange = e => {
-      const file = e.target.files && e.target.files[0];
-      if(file){
-        const r = new FileReader();
-        r.onload = ev => setAiImage(ev.target.result);
-        r.readAsDataURL(file);
-      }
-    };
-    dz.ondragover = e => { e.preventDefault(); dz.classList.add('dragover'); };
-    dz.ondragleave = () => dz.classList.remove('dragover');
-    dz.ondrop = e => {
-      e.preventDefault();
-      dz.classList.remove('dragover');
-      if(e.dataTransfer.files && e.dataTransfer.files[0]){
-        const r = new FileReader();
-        r.onload = ev => setAiImage(ev.target.result);
-        r.readAsDataURL(e.dataTransfer.files[0]);
-      }
-    };
-  }
-
-  const fetchBtn = $('aiBtnFetchUrl');
-  if(fetchBtn){
-    fetchBtn.onclick = () => {
-      const url = $('aiUrlInput').value.trim();
-      if(url){
-        setAiImage(url);
-      }
-    };
-  }
-
-  body.querySelectorAll('[data-sample]').forEach(el => {
-    el.onclick = () => {
-      const idx = +el.dataset.sample;
-      const s = AI_SAMPLES[idx];
-      if(s) setAiImage(svgToDataUrl(s.svg));
-    };
-  });
-
-  const rmvBtn = $('aiBtnRemoveImg');
-  if(rmvBtn){
-    rmvBtn.onclick = () => {
-      aiSelectedImage = null;
-      renderAiModalContent();
-    };
-  }
-
-  const genBtn = $('aiBtnGenerate');
-  if(genBtn){
-    genBtn.onclick = startAiGeneration;
-  }
-}
-
-async function startAiGeneration(){
-  if(!aiSelectedImage) return;
-  const genBtn = $('aiBtnGenerate');
-  const promptInput = $('aiPromptInput');
-  const errBanner = $('aiErrorBanner');
-  if(errBanner) errBanner.style.display = 'none';
-
-  if(genBtn){
-    genBtn.disabled = true;
-    genBtn.innerHTML = '<span class="ai-spinner"></span> Analyzing with Gemini Vision...';
-  }
-
-  try {
-    const payload = {
-      prompt: promptInput ? promptInput.value.trim() : ''
-    };
-    if(aiSelectedImage.startsWith('http')){
-      payload.imageUrl = aiSelectedImage;
-    } else {
-      payload.image = aiSelectedImage;
-    }
-
-    const res = await fetch('/api/generate-pattern-from-image', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    const data = await res.json();
-    if(!res.ok || !data.success){
-      throw new Error(data.error || 'Failed to analyze pattern.');
-    }
-
-    aiGeneratedPattern = data.pattern;
-    renderAiModalContent();
-  } catch(err){
-    console.error('AI Generation Error:', err);
-    if(errBanner){
-      errBanner.style.display = 'block';
-      errBanner.innerHTML = `<b>Error:</b> ${err.message || 'Could not generate pattern. Please check your network and Gemini API key.'}`;
-    }
-    if(genBtn){
-      genBtn.disabled = false;
-      genBtn.innerHTML = '✨ Generate Pattern';
-    }
-  }
-}
-
-function applyAIGeneratedPattern(p, saveToLib){
-  if(!p) return;
-  const gType = p.gType === 'iso' ? 'iso' : 'square';
-  const gW = Math.max(2, Math.min(32, parseInt(p.gW) || 8));
-  const gH = gType === 'iso' ? gW : Math.max(2, Math.min(32, parseInt(p.gH) || 8));
-  const gSub = Math.max(1, Math.min(4, parseInt(p.gSub) || 1));
-  const gSym = p.gSym || (gType === 'iso' ? 'd6' : 'd4');
-  const gData = p.gData || '';
-
-  const patternState = {
-    engine: 'gridp',
-    gType,
-    gW,
-    gH,
-    gSub,
-    gSym,
-    gData,
-    gCirc: p.gCirc || '',
-    gArcs: p.gArcs || '',
-    gSplines: p.gSplines || '',
-    gSplineTension: 0.5,
-    gSize: Math.max(28, Math.min(80, Math.round(360 / gW))),
-    gShowGrid: false,
-    gShowCell: true,
-    pal: 1,
-    width: 2.2
-  };
-
-  if(saveToLib){
-    const newId = 'ai-' + Date.now();
-    const newName = p.name || 'AI Generated Pattern';
-    GRID_LIB.push({
-      id: newId,
-      name: newName,
-      group: 'AI Generated',
-      note: p.explanation || 'Reverse-engineered from image with Gemini Vision',
-      s: patternState
-    });
-    GP.lib = GRID_LIB.length - 1;
-  } else {
-    GP.lib = null;
-  }
-
-  st = Object.assign({}, DEF, ENGINES.find(x => x.id === 'gridp').def, patternState);
-  GP.start = null;
-  GP.hist = [];
-  GP.splinePts = null;
-  clampAll();
-  buildLists();
-  buildParams();
-  render();
-  sync();
-}
-
 // ==================== PATTERN DRAW MODAL & CONVERSION ====================
 let selectedPatSpec = null;
 let patModalTab = 'pic'; // 'pic' | 'field' | 'current'
-let patIncludeMode = 'both'; // 'both' | 'star' | 'poly'
+let patIncludeMode = 'star'; // 'both' | 'star' | 'poly' — 'star' is what the canvas shows
 let patLoadAction = 'replace'; // 'replace' | 'merge'
 
 function openAddPatternModal(tab = 'pic'){
   const modal = $('patDrawModal');
   if(!modal) return;
   modal.style.display = 'flex';
-  patModalTab = tab;
-  if(tab === 'current'){
+  /* on the Drawing Grid the screen already is the drawing */
+  patModalTab = tab === 'current' && st.engine === 'gridp' ? 'pic' : tab;
+  if(patModalTab === 'current'){
     selectedPatSpec = getCurrentPatternSpec({ include: patIncludeMode });
   } else if(!selectedPatSpec && PIC_PATTERNS.length){
     selectedPatSpec = PIC_PATTERNS[0].s;
@@ -6348,14 +6422,14 @@ function renderPatModalContent(){
     <div class="pat-tabs">
       <button class="pat-tab-btn ${patModalTab==='pic'?'on':''}" id="patTabPic">⭐ Polygons in Contact (${PIC_PATTERNS.length})</button>
       <button class="pat-tab-btn ${patModalTab==='field'?'on':''}" id="patTabField">📐 Classic Lattices</button>
-      <button class="pat-tab-btn ${patModalTab==='current'?'on':''}" id="patTabCurrent">⚡ Current Screen Pattern</button>
+      ${st.engine==='gridp'?'':`<button class="pat-tab-btn ${patModalTab==='current'?'on':''}" id="patTabCurrent">⚡ Current Screen Pattern</button>`}
     </div>
   `;
 
   let contentHtml = '';
 
   if(patModalTab === 'pic'){
-    if(!selectedPatSpec && PIC_PATTERNS.length) selectedPatSpec = PIC_PATTERNS[0].s;
+    if(!PIC_PATTERNS.some(p => p.s === selectedPatSpec) && PIC_PATTERNS.length) selectedPatSpec = PIC_PATTERNS[0].s;
     contentHtml = `
       <div style="font-size:12px;color:var(--mute);margin-bottom:6px">
         Select a Saracenic contact polygon construction. Every line is loaded directly onto the grid so you can freely draw, erase, and edit.
@@ -6380,8 +6454,8 @@ function renderPatModalContent(){
       </div>
     `;
   } else if(patModalTab === 'field'){
-    const fieldPats = GRID_LIB.filter(x => x.group !== 'Polygons in Contact (Hankin · Kaplan)' && x.group !== 'AI Generated');
-    if(!selectedPatSpec && fieldPats.length) selectedPatSpec = fieldPats[0].s;
+    const fieldPats = GRID_LIB.filter(x => x.group !== 'Polygons in Contact (Hankin · Kaplan)');
+    if(!fieldPats.some(p => p.s === selectedPatSpec) && fieldPats.length) selectedPatSpec = fieldPats[0].s;
     contentHtml = `
       <div style="font-size:12px;color:var(--mute);margin-bottom:6px">
         Classic architectural window lattices transcribed from Robert Field's geometric studies.
@@ -6435,7 +6509,10 @@ function renderPatModalContent(){
           ` : ''}
           <div style="padding:8px 10px;background:var(--bg);border:1px solid var(--line);border-radius:6px;font-size:11.5px">
             <span style="color:var(--mute);display:block">Lattice &amp; Complexity</span>
-            <b>${curSpec.gType === 'iso' ? 'Isometric Triangle 12' : 'Square 12×12'}</b> · ${curSpec.count} lines
+            <b>${curSpec.gType === 'iso' ? `Triangle grid, repeat ${curSpec.gW}` : `Square grid, repeat ${curSpec.gW}×${curSpec.gH}`} · ${curSpec.gSub} points per square</b> · ${curSpec.count} lines
+            <span style="color:var(--mute);display:block;margin-top:4px">${curSpec.periodic
+              ? 'Repeat cell is the pattern’s own lattice, lined up with the canvas.'
+              : 'This construction never repeats, so the panel itself becomes the one cell.'}</span>
           </div>
           <div style="font-size:11.5px;color:var(--mute);line-height:1.4">
             Click <b>Load into Drawing Grid</b> to start drawing and editing these lines directly on the active canvas.
@@ -6463,7 +6540,7 @@ function renderPatModalContent(){
   // Tab listeners
   $('patTabPic').onclick = () => { patModalTab = 'pic'; renderPatModalContent(); };
   $('patTabField').onclick = () => { patModalTab = 'field'; renderPatModalContent(); };
-  $('patTabCurrent').onclick = () => { patModalTab = 'current'; renderPatModalContent(); };
+  const tabCur = $('patTabCurrent'); if(tabCur) tabCur.onclick = () => { patModalTab = 'current'; renderPatModalContent(); };
 
   // Current tab include mode buttons
   const bBoth = $('patIncBoth');
@@ -6488,14 +6565,15 @@ function renderPatModalContent(){
   body.querySelectorAll('[data-field-idx]').forEach(el => {
     el.onclick = () => {
       const idx = +el.dataset.fieldIdx;
-      const fieldPats = GRID_LIB.filter(x => x.group !== 'Polygons in Contact (Hankin · Kaplan)' && x.group !== 'AI Generated');
+      const fieldPats = GRID_LIB.filter(x => x.group !== 'Polygons in Contact (Hankin · Kaplan)');
       selectedPatSpec = fieldPats[idx].s;
       renderPatModalContent();
     };
   });
 
   // Footer
-  const selName = selectedPatSpec?.name || (patModalTab === 'current' ? 'Current Pattern' : 'Selected Pattern');
+  const selEntry = PIC_PATTERNS.concat(GRID_LIB).find(p => p.s === selectedPatSpec);
+  const selName = selEntry ? selEntry.name : (selectedPatSpec?.name || 'Current Pattern');
   footer.innerHTML = `
     <button class="btn" id="patBtnCancel">Cancel</button>
     <span class="spacer"></span>
@@ -6505,104 +6583,214 @@ function renderPatModalContent(){
   $('patBtnCancel').onclick = closeAddPatternModal;
   $('patBtnApply').onclick = () => {
     if(!selectedPatSpec) return;
-    loadPatternIntoDraw(selectedPatSpec, { mode: patLoadAction, title: selName });
-    closeAddPatternModal();
+    if(loadPatternIntoDraw(selectedPatSpec, { mode: patLoadAction, title: selName }) !== false) closeAddPatternModal();
   };
 }
 
-function getCurrentPatternSpec(opts = {}){
-  if(st.engine === 'pic'){
-    const tilingKey = st.tiling || 'octasq';
-    const angle = st.angle !== undefined ? st.angle : 50;
-    const include = opts.include || patIncludeMode || 'both';
-    const T = TILINGS[tilingKey];
-    if(!T) return null;
-    const { protos, t1, t2 } = T.build();
-    const isIso = !!(tilingKey === 'hex' || tilingKey === 'tri' || tilingKey === 'trihex' || tilingKey === 'trunctrihex' || tilingKey === 'rhombitri' || tilingKey === 'trunchex');
-    const gType = isIso ? 'iso' : 'square';
-    const gridW = opts.gridW || 12;
-    const gridH = gridW;
-    const L1 = len(t1), L2 = len(t2);
-    const unique = new Map();
-    const c0 = centroid(protos[0]);
-    const ox = c0.x, oy = c0.y;
+/* ---------- sending the live pattern to the Drawing Grid ----------------
+   The Drawing Grid repeats one cell by two fixed vectors. For a pattern to come
+   across unchanged, that cell has to be the pattern's own repeat — the lattice
+   the construction was tiled with — not a box fitted around its shapes, or the
+   copies land out of step with each other. So: find the construction's lattice,
+   pick a grid cell made of lattice vectors, map canvas pixels straight onto
+   grid points, and keep one copy of every line per cell. */
+const gridSizeMin = () => (CTRL.gridp.find(c => c.k === 'gSize') || {}).min || 20;
 
-    for(let a = -1; a <= 1; a++){
-      for(let b = -1; b <= 1; b++){
-        const shift = add(mul(t1, a), mul(t2, b));
-        for(const proto of protos){
-          const poly = proto.map(p => sub(add(p, shift), v(ox - L1/2, oy - L2/2)));
-          if(include === 'star' || include === 'both'){
-            const res = picTile(poly, angle);
-            for(let i = 0; i < res.path.length; i++){
-              const p1 = res.path[i], p2 = res.path[(i + 1) % res.path.length];
-              const g1 = [Math.round((p1.x / L1) * gridW), Math.round((p1.y / L2) * gridH)];
-              const g2 = [Math.round((p2.x / L1) * gridW), Math.round((p2.y / L2) * gridH)];
-              if(g1[0] >= 0 && g1[0] <= gridW && g1[1] >= 0 && g1[1] <= gridH &&
-                 g2[0] >= 0 && g2[0] <= gridW && g2[1] >= 0 && g2[1] <= gridH &&
-                 (g1[0] !== g2[0] || g1[1] !== g2[1])){
-                const canon = gCanon([...g1, ...g2]);
-                unique.set(canon.join(','), canon);
-              }
-            }
-          }
-          if(include === 'poly' || include === 'both'){
-            for(let i = 0; i < poly.length; i++){
-              const p1 = poly[i], p2 = poly[(i + 1) % poly.length];
-              const g1 = [Math.round((p1.x / L1) * gridW), Math.round((p1.y / L2) * gridH)];
-              const g2 = [Math.round((p2.x / L1) * gridW), Math.round((p2.y / L2) * gridH)];
-              if(g1[0] >= 0 && g1[0] <= gridW && g1[1] >= 0 && g1[1] <= gridH &&
-                 g2[0] >= 0 && g2[0] <= gridW && g2[1] >= 0 && g2[1] <= gridH &&
-                 (g1[0] !== g2[0] || g1[1] !== g2[1])){
-                const canon = gCanon([...g1, ...g2]);
-                unique.set(canon.join(','), canon);
-              }
-            }
-          }
-        }
-      }
-    }
-    const segs = [...unique.values()];
-    return {
-      gType,
-      gW: gridW,
-      gH: gridH,
-      gSub: 1,
-      gSize: Math.round(360 / gridW),
-      gSym: 'none',
-      gData: gStr(segs),
-      gCirc: '',
-      gArcs: '',
-      gSplines: '',
-      width: 2.2,
-      name: `Current Polygons in Contact: ${T.label} (${angle}°)`,
-      count: segs.length
-    };
-  }
-
-  // Fallback default
-  return {
-    gType: 'square',
-    gW: 12,
-    gH: 12,
-    gSub: 1,
-    gSize: 30,
-    gSym: 'none',
-    gData: PIC_PATTERNS[0].s.gData,
-    gCirc: '',
-    gArcs: '',
-    gSplines: '',
-    width: 2.2,
-    name: 'Saracenic 8-Star & Octagon Contact Lattice',
-    count: PIC_PATTERNS[0].s.gData.split(';').length
+/* the live pattern's translational repeat, in canvas pixels with the view
+   rotation applied, or null for constructions that have none */
+function patternLattice(){
+  const rotr = (st.rotation || 0) * Math.PI / 180;
+  const tiling = (key, scale) => {
+    const T = TILINGS[key]; if(!T) return null;
+    const { t1, t2 } = T.build(), ang = rotr + (T.phase || 0) * Math.PI / 180;
+    return { T1: rot(mul(t1, scale), ang), T2: rot(mul(t2, scale), ang) };
   };
+  if(st.engine === 'pic') return tiling(st.tiling || 'octasq', st.scale);
+  if(st.engine === 'voro' && PERIODIC(st)){ const { ux, uy } = unitOf(st, W); return { T1: v(ux, 0), T2: v(0, uy) }; }
+  if(st.engine !== 'tess') return null;
+  if(st.tessFam === 'regular') return tiling(st.tessType || 'hex', st.scale);
+  switch(st.subFam){
+    case 'rosette': {
+      const raw = Math.round(st.subSegments !== undefined ? st.subSegments : 6);
+      const sides = [3, 4, 6].reduce((a, b) => Math.abs(b - raw) < Math.abs(a - raw) ? b : a);
+      const L = tiling(sides === 3 ? 'tri' : sides === 4 ? 'square' : 'hex', st.scale * 1.4);
+      /* mirrored tiles alternate by lattice parity, which doubles the repeat */
+      return L && st.subMirror ? { T1: add(L.T1, L.T2), T2: sub(L.T1, L.T2) } : L;
+    }
+    case 'koch': return st.tessKochBase === 'grand' ? null : tiling(st.tessKochBase === 'tri' ? 'tri' : 'hex', st.scale);
+    case 'carpet': return tiling('square', st.scale);
+    case 'reptile': return tiling('tri', st.scale * 1.4);
+    case 'pinwheel': { const c = Math.max(30, st.scale * 1.5); return { T1: v(c, 0), T2: v(c / 2, c) }; }
+    default: return tiling('tri', st.scale * 1.5);
+  }
+}
+
+/* a cell made of lattice vectors that the grid can repeat as-is: A along the
+   grid's x axis, B either at 60° with the same length (triangle grid) or
+   straight down (square grid) */
+function cellBasis(T1, T2){
+  const lat = [];
+  for(let m = -6; m <= 6; m++) for(let n = -6; n <= 6; n++)
+    if(m || n) lat.push(add(mul(T1, m), mul(T2, n)));
+  const tol = 1e-4, shortest = a => a.sort((p, q) => len(p) - len(q))[0];
+  const A = shortest(lat.filter(p => p.x > 0 && Math.abs(p.y) <= tol * len(p)));
+  if(!A) return null;
+  const want = v(A.x / 2, A.x * S3G);
+  const Bi = lat.find(p => len(sub(p, want)) <= tol * A.x);
+  if(Bi) return { A, B: Bi, iso: true };
+  const B = shortest(lat.filter(p => p.y > 0 && Math.abs(p.x) <= tol * len(p)));
+  return B ? { A, B, iso: false } : null;
+}
+
+/* the finest grid whose cell is exactly |A| wide at the canvas's own scale:
+   4 points per square, squares no smaller than the grid tool allows */
+function cellResolution(A, B, iso){
+  const la = len(A), lb = len(B), gSub = 4;
+  const top = Math.max(1, Math.min(64, Math.floor(la / gridSizeMin())));
+  if(iso){
+    const gW = top >= 6 ? top - top % 3 : top;
+    return { gW, gH: gW, gSub, gSize: la / gW };
+  }
+  let pick = null, best = null;
+  for(let w = top; w >= 1; w--){
+    const h = Math.round(w * lb / la); if(h < 1 || h > 64) continue;
+    const err = Math.abs(h * la / (w * lb) - 1);
+    if(!best || err < best.err) best = { w, h, err };
+    if(err < 1e-3){ pick = best = { w, h, err }; break; }
+  }
+  const r = pick || best; if(!r) return null;
+  return { gW: r.w, gH: r.h, gSub, gSize: la / r.w };
+}
+
+/* every line of the current pattern as a pair of canvas points. The panel
+   usually holds a whole repeat cell already; a cell too large for it is rebuilt
+   on a wider canvas so none of its lines are missing — but only for tilings
+   whose geometry doesn't depend on the canvas size (Voronoi cells scale with
+   the panel width, and the Sierpinski/carpet/rep-tile depth drops as the tile
+   count grows, so rebuilding those would change the pattern itself) */
+function sceneSegments(cellW, cellH, include){
+  let scene = last, dx = 0, dy = 0;
+  const canvasFree = st.engine === 'pic' ||
+    (st.engine === 'tess' && (st.tessFam === 'regular' || st.subFam === 'rosette' || st.subFam === 'koch'));
+  const wider = canvasFree && (cellW > W || cellH > H);
+  /* no lines built yet, or left over from the Drawing Grid: build them here */
+  const stale = !(scene && scene.shapes && scene.shapes.length);
+  if(wider || stale){
+    if(wider){ dx = Math.ceil(cellW); dy = Math.ceil(cellH); }
+    const W0 = W, H0 = H, last0 = last, ring = { centres: RING.centres, R: RING.R };
+    try { W = W0 + 2 * dx; H = H0 + 2 * dy; scene = build(); }
+    finally { W = W0; H = H0; last = last0; RING.centres = ring.centres; RING.R = ring.R; }
+  }
+  const polys = [];
+  if(!(st.engine === 'pic' && include === 'poly'))
+    for(const s of scene.shapes || []) if(s.pts && s.pts.length > 1) polys.push(s.pts);
+  if(st.engine === 'pic' && (include === 'poly' || include === 'both'))
+    for(const u of scene.under || []) if(u && u.length > 1) polys.push(u);
+  const out = [];
+  for(const pts of polys) for(let i = 0; i < pts.length; i++){
+    const p = pts[i], q = pts[(i + 1) % pts.length];
+    out.push([v(p.x - dx, p.y - dy), v(q.x - dx, q.y - dy)]);
+  }
+  return withEdits(out);
+}
+/* the pattern as edited on the canvas: erased lines out, drawn lines in */
+function withEdits(segs){
+  const E = editContext(); if(!E) return segs;
+  const kept = E.del.size ? segs.filter(([p, q]) => !isErased(E, p, q)) : segs;
+  for(const s of E.add) kept.push([fromLat(E.F, s[0], s[1]), fromLat(E.F, s[2], s[3])]);
+  return kept;
+}
+
+function currentPatternName(){
+  if(st.engine === 'pic') return `Current Polygons in Contact: ${(TILINGS[st.tiling] || {}).label || st.tiling} (${st.angle}°)`;
+  if(st.engine === 'tess' && st.tessFam === 'regular') return `Current Tessellation: ${(TILINGS[st.tessType] || {}).label || st.tessType}`;
+  return `Current ${(ENGINES.find(e => e.id === st.engine) || {}).name || 'Pattern'}`;
+}
+
+function gridSpecBase(gType, gW, gH, gSub, gSize, list, periodic){
+  return {
+    gType, gW, gH, gSub, gSize, gSym: 'none',
+    gData: gStr(list), gCirc: '', gArcs: '', gSplines: '',
+    gShowGrid: gSize / gSub >= 6, width: st.width, frame: st.frame,
+    name: currentPatternName(), count: list.length, periodic
+  };
+}
+
+function latticeGridSpec(L, include){
+  let { T1, T2 } = L, turn = 0, cb = cellBasis(T1, T2);
+  if(!cb){
+    /* the view is rotated off every lattice direction: turn the pattern so a
+       lattice vector runs along the grid (the drawing comes out turned) */
+    turn = -Math.atan2(T1.y, T1.x);
+    T1 = rot(T1, turn); T2 = rot(T2, turn);
+    cb = cellBasis(T1, T2);
+  }
+  if(!cb) return null;
+  const { A, B, iso } = cb, res = cellResolution(A, B, iso);
+  if(!res) return null;
+  const { gW, gH, gSub, gSize } = res;
+  const FW = gW * gSub, FH = gH * gSub, step = gSize / gSub;
+  /* the grid's own origin, so every point lands where the canvas drew it */
+  const C = v(W / 2, H / 2);
+  const O = iso ? C : v(C.x - FW * step / 2, C.y - FH * step / 2);
+  const det = A.x * B.y - B.x * A.y;
+  const toAB = p => {
+    const d = sub(turn ? add(C, rot(sub(p, C), turn)) : p, O);
+    return [(d.x * B.y - d.y * B.x) / det, (d.y * A.x - d.x * A.y) / det];
+  };
+  /* the cell's footprint in canvas terms, to know whether the panel holds one */
+  const A0 = turn ? rot(A, -turn) : A, B0 = turn ? rot(B, -turn) : B;
+  const xs = [0, A0.x, B0.x, A0.x + B0.x], ys = [0, A0.y, B0.y, A0.y + B0.y];
+  const cellW = Math.max(...xs) - Math.min(...xs), cellH = Math.max(...ys) - Math.min(...ys);
+  const segs = new Map();
+  for(const [p, q] of sceneSegments(cellW, cellH, include)){
+    const [a1, b1] = toAB(p), [a2, b2] = toAB(q);
+    /* shift each copy of a line into the cell holding its midpoint before
+       rounding, so all copies round to the same grid points */
+    const sa = Math.floor((a1 + a2) / 2), sb = Math.floor((b1 + b2) / 2);
+    const s = gCanon([Math.round((a1 - sa) * FW), Math.round((b1 - sb) * FH),
+                      Math.round((a2 - sa) * FW), Math.round((b2 - sb) * FH)]);
+    if(s[0] === s[2] && s[1] === s[3]) continue;
+    segs.set(s.join(','), s);
+  }
+  if(!segs.size) return null;
+  return gridSpecBase(iso ? 'iso' : 'square', gW, gH, gSub, gSize, [...segs.values()], true);
+}
+
+/* no translational repeat (quasiperiodic multigrid, substitution, radial or
+   scattered Voronoi): the panel itself becomes the one cell, lined up with it */
+function snapshotGridSpec(include){
+  const gSub = 4, gSize = Math.max(gridSizeMin(), W / 64, H / 64);
+  const gW = Math.max(1, Math.round(W / gSize)), gH = Math.max(1, Math.round(H / gSize));
+  const FW = gW * gSub, FH = gH * gSub, step = gSize / gSub;
+  const O = v(W / 2 - FW * step / 2, H / 2 - FH * step / 2);
+  const segs = new Map();
+  for(const [p, q] of sceneSegments(0, 0, include)){
+    const mx = (p.x + q.x) / 2 - O.x, my = (p.y + q.y) / 2 - O.y;
+    if(mx < 0 || mx >= FW * step || my < 0 || my >= FH * step) continue;
+    const g = gCanon([Math.round((p.x - O.x) / step), Math.round((p.y - O.y) / step),
+                      Math.round((q.x - O.x) / step), Math.round((q.y - O.y) / step)]);
+    if(g[0] === g[2] && g[1] === g[3]) continue;
+    segs.set(g.join(','), g);
+  }
+  return gridSpecBase('square', gW, gH, gSub, gSize, [...segs.values()], false);
+}
+
+function getCurrentPatternSpec(opts = {}){
+  /* on the Drawing Grid the pattern on screen is the drawing itself */
+  if(st.engine === 'gridp') return { gType: st.gType, gW: st.gW, gH: st.gH, gSub: st.gSub, gSize: st.gSize, gSym: st.gSym,
+    gData: st.gData, gCirc: st.gCirc, gArcs: st.gArcs, gSplines: st.gSplines, gFill: st.gFill, gShowGrid: st.gShowGrid,
+    width: st.width, frame: st.frame, name: 'Current drawing', count: gParse(st.gData).length, periodic: true };
+  const include = opts.include || patIncludeMode || 'star';
+  const L = patternLattice();
+  return (L && latticeGridSpec(L, include)) || snapshotGridSpec(include);
 }
 
 function loadPatternIntoDraw(pState, { mode = 'replace', title = 'Pattern' } = {}){
   if(!pState) return;
   const gType = pState.gType === 'iso' ? 'iso' : 'square';
-  const gW = Math.max(2, Math.min(32, parseInt(pState.gW) || 12));
-  const gH = gType === 'iso' ? gW : Math.max(2, Math.min(32, parseInt(pState.gH) || 12));
+  const gW = Math.max(2, Math.min(64, parseInt(pState.gW) || 12));
+  const gH = gType === 'iso' ? gW : Math.max(2, Math.min(64, parseInt(pState.gH) || 12));
   const gSub = Math.max(1, Math.min(4, parseInt(pState.gSub) || 1));
   const gSym = pState.gSym || 'none';
 
@@ -6610,8 +6798,16 @@ function loadPatternIntoDraw(pState, { mode = 'replace', title = 'Pattern' } = {
   let newGCirc = pState.gCirc || '';
   let newGArcs = pState.gArcs || '';
   let newGSplines = pState.gSplines || '';
+  let newGFill = pState.gFill || '';
 
-  if(mode === 'merge' && st.engine === 'gridp'){
+  if(mode === 'merge' && st.engine === 'gridp' && (st.gData || st.gCirc || st.gArcs || st.gSplines || st.gFill)){
+    /* lines are stored as grid points, so two drawings only merge on the same grid */
+    if(st.gType !== gType || st.gW !== gW || (gType !== 'iso' && st.gH !== gH) || st.gSub !== gSub){
+      const desc = (t, w, h, n) => `${t === 'iso' ? `triangle ${w}` : `${w}×${h}`} grid with ${n} point${n > 1 ? 's' : ''} per square`;
+      showToast(`Can't merge: the pattern is on a ${desc(gType, gW, gH, gSub)}, your drawing on a ${desc(st.gType, st.gW, st.gH, st.gSub)}. Use Replace instead.`, 'error', 5200);
+      return false;
+    }
+    newGFill = [...new Set((st.gFill + ';' + newGFill).split(';').filter(Boolean))].join(';');
     const curSegs = gParse(st.gData);
     const addSegs = gParse(newGData);
     const seen = new Set(curSegs.map(s => gCanon(s).join(',')));
@@ -6639,14 +6835,21 @@ function loadPatternIntoDraw(pState, { mode = 'replace', title = 'Pattern' } = {
     gCirc: newGCirc,
     gArcs: newGArcs,
     gSplines: newGSplines,
+    gFill: newGFill,
     gSplineTension: 0.5,
     gSize: pState.gSize || Math.max(28, Math.min(80, Math.round(360 / gW))),
-    gShowGrid: true,
+    gShowGrid: pState.gShowGrid !== undefined ? pState.gShowGrid : true,
     gShowCell: true,
     gTool: 'line',
-    pal: st.pal || 1,
-    width: pState.width || 2.2
+    pal: st.pal !== undefined ? st.pal : 1,
+    width: pState.width || 2.2,
+    /* keep the paper: the grid's cell is sized in canvas pixels, which only
+       mean the same thing on the same artboard */
+    artW: st.artW,
+    artH: st.artH,
+    units: st.units
   };
+  if(pState.frame !== undefined) newState.frame = pState.frame;
 
   GP.lib = null;
   st = Object.assign({}, DEF, ENGINES.find(x => x.id === 'gridp').def, newState);
@@ -6658,30 +6861,11 @@ function loadPatternIntoDraw(pState, { mode = 'replace', title = 'Pattern' } = {
   buildParams();
   render();
   sync();
-  showToast(`✓ ${title} loaded into Drawing Grid! You can now draw, edit lines, or erase.`, 'success');
+  showToast(`${title} loaded into Drawing Grid! You can now draw, edit lines, or erase.`, 'success');
 }
-
-// Global paste and drop listeners
-window.addEventListener('paste', e => {
-  if(st.engine !== 'gridp') return;
-  const items = e.clipboardData && e.clipboardData.items;
-  if(!items) return;
-  for(let i = 0; i < items.length; i++){
-    if(items[i].type.startsWith('image/')){
-      const file = items[i].getAsFile();
-      if(file){
-        const r = new FileReader();
-        r.onload = ev => openAiModal(ev.target.result);
-        r.readAsDataURL(file);
-        break;
-      }
-    }
-  }
-});
 
 window.addEventListener('keydown', e => {
   if(e.key === 'Escape'){
-    closeAiModal();
     closeAddPatternModal();
     toggleShortcutsModal(false);
     const em = $('expDropdownMenu'); if(em) em.style.display = 'none';
@@ -6733,24 +6917,6 @@ window.addEventListener('keydown', e => {
     toggleShortcutsModal();
   }
 });
-
-const canvasEl = document.querySelector('.canvas');
-if(canvasEl){
-  canvasEl.addEventListener('dragover', e => {
-    if(st.engine === 'gridp') e.preventDefault();
-  });
-  canvasEl.addEventListener('drop', e => {
-    if(st.engine === 'gridp' && e.dataTransfer.files && e.dataTransfer.files[0]){
-      e.preventDefault();
-      const file = e.dataTransfer.files[0];
-      if(file.type.startsWith('image/')){
-        const r = new FileReader();
-        r.onload = ev => openAiModal(ev.target.result);
-        r.readAsDataURL(file);
-      }
-    }
-  });
-}
 
 /* go */
 load();buildLists();buildParams();render();sync();
