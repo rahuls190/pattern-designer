@@ -1253,6 +1253,7 @@ code{
         <button id="eToolErase" title="Erase a line of the pattern, or one you drew">Erase</button>
         <button id="eUndo" title="Undo the last edit (Ctrl+Z)">Undo</button>
         <button id="eClear" title="Remove every edit and go back to the generated pattern">Clear</button>
+        <button id="eSave" title="Save the edited pattern as SVG, PNG, PDF or DXF">💾 Save</button>
       </div>
       <button class="btn btn-sm" id="btnStageFrame" type="button" title="Border frame around the artwork">▢ Frame</button>
       <button class="btn btn-sm pri" id="btnAddPatternToDraw" style="display:none;align-items:center;gap:5px" title="Add Polygons in Contact or other geometric patterns to the canvas to edit"><span>➕</span> Add Pattern…</button>
@@ -4463,14 +4464,48 @@ function addedLinesSvg(E, P, w){
   /* the pattern itself runs on past the artboard edge, so the edits do too */
   const segs = addedCanvasSegs(E, Math.max(W, H) * 0.6); if(!segs.length) return '';
   const d = segs.map(([p, q]) => `M${f(p.x)} ${f(p.y)}L${f(q.x)} ${f(q.y)}`).join('');
-  const m = st.mode;
-  if(m === 'mosaic'){
-    const gw = convexCells(st) ? 2 * Math.max(0.5, w * 0.6) : (st.engine === 'tess' || st.engine === 'subst') ? Math.max(.6, w * 0.5) : Math.max(1, w * 0.7);
-    return `<path d="${d}" fill="none" stroke="${P.grout}" stroke-width="${f(gw)}" stroke-linecap="round"/>`;
+  const a = addedLineStyle(P, w);
+  const halo = st.mode === 'interlace' ? `<path d="${d}" fill="none" stroke="${P.bg}" stroke-width="${f(w * 2.6)}" stroke-linecap="round"/>` : '';
+  return halo + `<path d="${d}" fill="none" stroke="${a.col}" stroke-width="${f(a.w)}" stroke-linecap="round" stroke-linejoin="round"/>`;
+}
+/* a drawn line looks like the mode's own lines: grout between tiles, a rib in
+   a panel, or a line of ink */
+function addedLineStyle(P, w){
+  if(st.mode === 'mosaic') return { col: P.grout, w: convexCells(st) ? 2 * Math.max(0.5, w * 0.6) : (st.engine === 'tess' || st.engine === 'subst') ? Math.max(.6, w * 0.5) : Math.max(1, w * 0.7) };
+  if(st.mode === 'jali') return { col: P.mat, w: w * 2.2 };
+  return { col: P.ink, w };
+}
+/* the generated edges that were erased, once each */
+function erasedEdgeSegs(E){
+  const out = [], seen = new Set();
+  if(!E || !E.del.size) return out;
+  for(const sh of (last && last.shapes) || []){
+    const p = sh.pts; if(!p) continue;
+    for(let i = 0; i < p.length; i++){
+      const a = p[i], b = p[(i + 1) % p.length];
+      if(!isErased(E, a, b)) continue;
+      const k = [a, b].map(z => Math.round(z.x * 2) + ',' + Math.round(z.y * 2)).sort().join('|');
+      if(!seen.has(k)){ seen.add(k); out.push([a, b]); }
+    }
   }
-  if(m === 'jali') return `<path d="${d}" fill="none" stroke="${P.mat}" stroke-width="${f(w * 2.2)}" stroke-linecap="round"/>`;
-  if(m === 'interlace') return `<path d="${d}" fill="none" stroke="${P.bg}" stroke-width="${f(w * 2.6)}" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${P.ink}" stroke-width="${f(w)}" stroke-linecap="round"/>`;
-  return `<path d="${d}" fill="none" stroke="${P.ink}" stroke-width="${f(w)}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  return out;
+}
+/* an outline with erased edges, as the straight runs that are left (the way
+   the canvas draws it), or null when nothing on it was erased */
+function erasedRuns(pts, E){
+  const n = pts.length, keep = [];
+  for(let i = 0; i < n; i++) keep.push(!isErased(E, pts[i], pts[(i + 1) % n]));
+  if(keep.every(Boolean)) return null;
+  const out = [], s0 = keep.indexOf(false) + 1;
+  let run = null;
+  for(let t = 0; t < n; t++){
+    const i = (s0 + t) % n;
+    if(!keep[i]){ if(run) out.push(run); run = null; continue; }
+    if(!run){ run = [pts[i]]; run.open = true; }
+    run.push(pts[(i + 1) % n]);
+  }
+  if(run) out.push(run);
+  return out;
 }
 
 /* the editing overlay: the repeat cell the edits copy through, plus the live
@@ -5030,6 +5065,7 @@ function render(){
     if(convexCells(st)){
       const gap=Math.max(0.5,w*0.6);
       const mm=mosaicMerge(shapes.map(sh=>sh.pts),shapes.map((sh,i)=>P.fills[pick(sh,i)]),E,2*gap+1);
+      last.fillCols=mm.cols;
       s+=`<g>`;
       for(let i=0;i<shapes.length;i++){
         const o=insetConvex(shapes[i].pts,gap);
@@ -5047,6 +5083,7 @@ function render(){
         return P.fills[cIdx];
       });
       const mm=mosaicMerge(shapes.map(sh=>sh.pts),cols,E,gw+1.5);
+      last.fillCols=mm.cols;
       s+=`<g stroke="${P.grout}" stroke-width="${gw}" stroke-linejoin="round">`;
       for(let i=0;i<shapes.length;i++)
         s+=`<path d="${pathD(shapes[i].pts,r)}" fill="${mm.cols[i]}"/>`;
@@ -5383,6 +5420,12 @@ function buildLists(){
   if(eErase) eErase.onclick = () => setEditTool('erase');
   if(eUndoB) eUndoB.onclick = () => editUndo();
   if(eClearB) eClearB.onclick = () => editClear();
+  const eSaveB = $('eSave');
+  if(eSaveB) eSaveB.onclick = e => {
+    e.stopPropagation();   /* or the page click that closes the menu shuts it at once */
+    const m = $('expDropdownMenu'), b = $('expMenuBtn'); if(!m || !b) return;
+    b.scrollIntoView({ block: 'nearest' }); m.style.display = 'flex';
+  };
 
   // Stage bar border frame toggle (phone layout)
   const btnFrame = $('btnStageFrame');
@@ -5818,30 +5861,39 @@ function clipPolyline(pts,closed){
   if(cur&&cur.length>1) runs.push(cur);
   return runs;
 }
-function exportShapes(){
-  const raw=exportShapesRaw(), out=[];
+function exportShapes(lines){
+  const raw=exportShapesRaw(lines), out=[];
   const fill=(st.mode==='jali'||st.mode==='mosaic')&&st.engine!=='gridp';
   const eps=1e-6, inside=q=>q.every(p=>p.x>=-eps&&p.x<=W+eps&&p.y>=-eps&&p.y<=H+eps);
   raw.forEach((pts,si)=>{
     if(!pts.length) return;
-    if(inside(pts)){ pts.src=si; out.push(pts); return }
-    if(pts.open){ for(const r of clipPolyline(pts,false)){ r.open=true; r.src=si; out.push(r) } }
-    else if(fill){ const c=clipToPanel(pts); if(c.length>=3){ c.src=si; out.push(c) } }
-    else{ for(const r of clipPolyline(pts,true)){ r.open=true; r.src=si; out.push(r) } }
+    const src=pts.src!==undefined?pts.src:si;   /* the shape it came from, for its colour */
+    if(inside(pts)){ pts.src=src; out.push(pts); return }
+    if(pts.open){ for(const r of clipPolyline(pts,false)){ r.open=true; r.src=src; out.push(r) } }
+    else if(fill){ const c=clipToPanel(pts); if(c.length>=3){ c.src=src; out.push(c) } }
+    else{ for(const r of clipPolyline(pts,true)){ r.open=true; r.src=src; out.push(r) } }
   });
+  /* every copy of a drawn line that reaches the panel */
+  if(lines) for(const [p,q] of addedCanvasSegs(editContext(),0)){
+    const c=clipSeg(p,q); if(c){ c.open=true; c.src=-1; out.push(c) }
+  }
   return out;
 }
-function exportShapesRaw(){
+function exportShapesRaw(lines){
   if(last.gexport) return last.gexport;
-  const {shapes,P}=last, r=st.round, out=[];
-  if(st.mode==='mosaic'&&last.faces&&last.faces.length) return last.faces.map(f=>roundedPoly(f.pts,r));
-  for(const sh of shapes){
-    let pts=sh.pts;
-    if(st.mode==='jali'&&convexCells(st)){
-      pts=insetConvex(pts,st.width*1.1); if(pts.length<3) continue;
-    }
-    out.push(roundedPoly(pts,r));
-  }
+  const {shapes}=last, r=st.round, out=[], E=lines?editContext():null;
+  /* each outline keeps the index of its shape, even when some are skipped */
+  const put=(pts,i,split)=>{
+    const runs=split&&E&&E.del.size?erasedRuns(pts,E):null;
+    if(runs) for(const q of runs){ q.src=i; out.push(q) }
+    else{ const q=roundedPoly(pts,r); q.src=i; out.push(q) }
+  };
+  if(st.mode==='mosaic'&&last.faces&&last.faces.length){ last.faces.forEach((fc,i)=>put(fc.pts,i,true)); return out }
+  const cells=st.mode==='jali'&&convexCells(st);   /* openings are cut out whole */
+  shapes.forEach((sh,i)=>{
+    if(!cells) return put(sh.pts,i,true);
+    const o=insetConvex(sh.pts,st.width*1.1); if(o.length>=3) put(o,i,false);
+  });
   return out;
 }
 function download(blob,name){
@@ -5852,7 +5904,7 @@ function download(blob,name){
 const baseName=()=>`pattern-${st.engine}-${st.engine==='pic'?st.tiling:st.mode}`;
 
 function exportDXF(){
-  const polys=exportShapes(), L=[], U=UNITS[st.units], k=1/Kpx();   /* canvas px -> drawing units */
+  const polys=exportShapes(true), L=[], U=UNITS[st.units], k=1/Kpx();   /* canvas px -> drawing units */
   const put=(c,v)=>{L.push(String(c),String(v))};
   /* the header tells CAD what one drawing unit is, so the file opens at true size */
   put(0,'SECTION'); put(2,'HEADER'); put(9,'$ACADVER'); put(1,'AC1009');
@@ -5865,6 +5917,14 @@ function exportDXF(){
     put(0,'SEQEND'); put(8,layer);
   };
   for(const p of polys) emit(p,'PATTERN');
+  /* in a cut panel an erased rib joins two openings: cut out the strip it leaves */
+  if(st.mode==='jali'&&convexCells(st)){
+    const hw=(st.width*2.2+1)/2;
+    for(const [a,b] of erasedEdgeSegs(editContext())){
+      const d=norm(sub(b,a)), n=v(-d.y*hw,d.x*hw), c=clipToPanel([add(a,n),add(b,n),sub(b,n),sub(a,n)]);
+      if(c.length>=3) emit(c,'PATTERN');
+    }
+  }
   if(isDualGridActive() && last.dualLines && last.dualLines.length){
     for(const seg of last.dualLines){
       put(0,'LINE'); put(8,'DUAL_GRID');
@@ -5881,28 +5941,46 @@ function exportDXF(){
 }
 
 function exportPDF(){
-  const polys=exportShapes(), P=paletteOf(st);
+  const P=paletteOf(st), E=editContext(), w=st.width;
   const hex=c=>{const n=parseInt(c.slice(1),16);
     return [((n>>16)&255)/255,((n>>8)&255)/255,(n&255)/255].map(x=>x.toFixed(3)).join(' ')};
   const y=v=>(H-v).toFixed(2);
+  const path=pts=>{let d=`${pts[0].x.toFixed(2)} ${y(pts[0].y)} m\n`;
+    for(let k=1;k<pts.length;k++) d+=`${pts[k].x.toFixed(2)} ${y(pts[k].y)} l\n`;
+    return pts.open?d:d+'h\n'};
+  const line=(p,q)=>path(Object.assign([p,q],{open:true}));
   /* scale the whole page so it is the real size: PDF units are points */
   const wpt=st.artW*UNITS[st.units].pt, sc=wpt/W, hpt=H*sc;
+  /* the drawing grid is lines whatever mode was left from another engine */
+  const jali=st.engine!=='gridp'&&st.mode==='jali', mosaic=st.engine!=='gridp'&&st.mode==='mosaic';
+  const cells=jali&&convexCells(st);
   let s=`${sc.toFixed(8)} 0 0 ${sc.toFixed(8)} 0 0 cm\n`;
-  const solid=(st.mode==='jali'||st.mode==='mosaic');
-  s+=`${hex(st.mode==='jali'?P.mat:P.bg)} rg 0 0 ${W.toFixed(2)} ${H.toFixed(2)} re f\n`;
-  const nf=P.fills.length, pick=colourer(last.shapes,st.colourBy,nf);
-  const spdf=strokeColours(last.shapes,P);
-  s+=`${st.width.toFixed(2)} w 1 J 1 j\n`;
-  polys.forEach((pts,pi)=>{
-    if(!pts.length) return;
-    const i=pts.src!==undefined?pts.src:pi;
-    s+=`${pts[0].x.toFixed(2)} ${y(pts[0].y)} m\n`;
-    for(let k=1;k<pts.length;k++) s+=`${pts[k].x.toFixed(2)} ${y(pts[k].y)} l\n`;
-    if(!pts.open) s+='h\n';
-    if(st.mode==='jali')       s+=`${hex(P.open)} rg f\n`;
-    else if(st.mode==='mosaic')s+=`${hex(last.faces&&last.faceCols?last.faceCols[i]:P.fills[pick(last.shapes[i]||{pts,c:centroid(pts)},i)])} rg f\n`;
-    else                       s+=`${hex(spdf[i]||P.ink)} RG S\n`;
-  });
+  /* the ground the canvas shows: a solid panel, open ground, grout or paper */
+  s+=`${hex(jali?(cells?P.mat:P.open):mosaic?P.grout:P.bg)} rg 0 0 ${W.toFixed(2)} ${H.toFixed(2)} re f\n1 J 1 j\n`;
+  if(mosaic||cells){
+    /* filled pieces or cut openings, in the colours the canvas shows */
+    const nf=P.fills.length, pick=colourer(last.shapes,st.colourBy,nf);
+    for(const pts of exportShapes(false)){
+      if(pts.length<3) continue;
+      const i=pts.src;
+      const col=cells?P.open:last.faces&&last.faceCols?last.faceCols[i]
+        :last.fillCols?last.fillCols[i]:P.fills[pick(last.shapes[i]||{pts,c:centroid(pts)},i)];
+      s+=path(pts)+`${hex(col)} rg f\n`;
+    }
+    const ribs=cells?erasedEdgeSegs(E):[];   /* an erased rib joins the openings either side */
+    if(ribs.length){ s+=`0 J ${(w*2.2+1).toFixed(2)} w ${hex(P.open)} RG\n`; for(const [a,b] of ribs) s+=line(a,b)+'S\n'; s+='1 J\n' }
+    const drawn=addedCanvasSegs(E,0);
+    if(drawn.length){ const a=addedLineStyle(P,w); s+=`${a.w.toFixed(2)} w ${hex(a.col)} RG\n`; for(const [p,q] of drawn) s+=line(p,q)+'S\n' }
+  }else{
+    /* lines: outlines with erased edges left out, plus the drawn lines; in a
+       panel of ribs (Solid/void) they are the ribs */
+    const spdf=strokeColours(last.shapes,P);
+    s+=`${(jali?w*2.2:w).toFixed(2)} w\n`;
+    for(const pts of exportShapes(true)){
+      if(pts.length<2) continue;
+      s+=path(pts)+`${hex(jali?P.mat:(pts.src>=0&&spdf[pts.src])||P.ink)} RG S\n`;
+    }
+  }
   const objs=[
     '<< /Type /Catalog /Pages 2 0 R >>',
     '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
