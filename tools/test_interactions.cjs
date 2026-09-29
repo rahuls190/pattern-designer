@@ -72,11 +72,11 @@ setTimeout(() => {
   // 4. Test Preset Search
   const ps = doc.getElementById('presetSearch');
   if (!ps) throw new Error('Missing #presetSearch');
-  ps.value = 'Carrara';
+  ps.value = 'Zellige';
   ps.dispatchEvent(new win.Event('input'));
   const presetCards = doc.querySelectorAll('#presets .pcard');
-  console.log(`Searching "Carrara": found ${presetCards.length} preset card(s)`);
-  if (presetCards.length !== 1) throw new Error('Preset search failed for "Carrara"');
+  console.log(`Searching "Zellige": found ${presetCards.length} preset card(s)`);
+  if (presetCards.length !== 1) throw new Error('Preset search failed for "Zellige"');
   
   // Clear search
   ps.value = '';

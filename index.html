@@ -1098,6 +1098,8 @@ code{
 .pat-opts-box{background:var(--panel-sub);border:1px solid var(--line);border-radius:8px;padding:10px 14px;display:flex;flex-direction:column;gap:8px;font-size:12px}
 .pat-preview-cell{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--panel);display:flex;align-items:center;justify-content:center;height:180px}
 
+.insp-pick,#btnStageFrame{display:none}
+
 /* Responsive rules */
 @media(max-width:1024px){
   header.studio-header{padding:0 12px;gap:10px}
@@ -1106,11 +1108,30 @@ code{
   .gstep{grid-template-columns:1fr}
 }
 @media(max-width:768px){
-  header.studio-header{height:auto;padding:8px 12px;flex-wrap:wrap}
-  nav.studio-nav{order:3;width:100%;justify-content:space-around;border-top:1px solid var(--line-light);padding-top:6px}
+  header.studio-header{height:auto;padding:8px 12px;flex-wrap:wrap;position:static}
+  nav.studio-nav{order:3;width:100%;justify-content:space-around;border-top:1px solid var(--line-light);padding-top:6px;
+    overflow-x:auto;scrollbar-width:none;gap:2px}
+  nav.studio-nav::-webkit-scrollbar{display:none}
+  nav.studio-nav a{padding:6px 6px;white-space:nowrap;flex:none}
+  /* the header buttons wrap instead of pushing the page wider than the phone */
+  .hdr-actions{flex-wrap:wrap;row-gap:6px}
   main{display:flex;flex-direction:column;height:auto}
-  .stage{min-height:55vh}
-  .canvas-artboard-wrap{padding:10px;height:52vh}
+  /* the artwork comes first and stays pinned, so every control you touch
+     below it shows its result straight away */
+  .stage{order:-1;position:sticky;top:0;z-index:30;height:auto;min-height:0;box-shadow:0 8px 14px -10px rgba(0,0,0,.5)}
+  .stage-bar{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:6px 10px;gap:6px}
+  .stage-bar::-webkit-scrollbar{display:none}
+  .stage-bar>*{flex:none}
+  .canvas-artboard-wrap{padding:6px;height:36vh}
+  .stage-footer{flex-wrap:nowrap;padding:4px 10px;gap:8px}
+  .stage-footer .info{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
+  aside.r{order:0}
+  /* the preset, engine and tiling lists live in one row of dropdowns instead */
+  .insp-pick{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px}
+  .insp-pick select{flex:1 1 140px;min-width:0;width:auto}
+  .insp-pick .btn{flex:none;font-size:12px;padding:6px 10px}
+  #btnStageFrame{display:inline-flex}
+  .insp-desk,aside.l,#btnToggleDrawer{display:none}
   aside.l,aside.r{border:0;border-top:1px solid var(--line);width:100%}
 }
 </style>
@@ -1233,6 +1254,7 @@ code{
         <button id="eUndo" title="Undo the last edit (Ctrl+Z)">Undo</button>
         <button id="eClear" title="Remove every edit and go back to the generated pattern">Clear</button>
       </div>
+      <button class="btn btn-sm" id="btnStageFrame" type="button" title="Border frame around the artwork">▢ Frame</button>
       <button class="btn btn-sm pri" id="btnAddPatternToDraw" style="display:none;align-items:center;gap:5px" title="Add Polygons in Contact or other geometric patterns to the canvas to edit"><span>➕</span> Add Pattern…</button>
       <button class="btn btn-sm" id="btnSmartSnap" style="display:none;align-items:center;gap:5px" title="Smart Snap: automatically align drawing points to the nearest structural intersection point within the detected grid"><span>🧲</span> Smart Snap</button>
       <span class="spacer"></span>
@@ -1711,6 +1733,11 @@ function insetConvex(p,d){
   }
   return out;
 }
+/* Voronoi cells and bare multigrid rhombi are convex, so grout and openings are
+   made by insetting them. The multigrid's star motif isn't convex (an inset
+   shrinks a star to its kernel), so it's filled and stroked the way the
+   polygons-in-contact engine is */
+const convexCells = s => s.engine === 'voro' || (s.engine === 'multi' && !s.mMotif);
 function rng(seed){let s=seed>>>0||1;return()=>{s^=s<<13;s>>>=0;s^=s>>17;s^=s<<5;s>>>=0;return s/4294967296}}
 
 /* ---------- repeating seed layouts --------------------------------------
@@ -2780,7 +2807,7 @@ const DEF={engine:'pic',tiling:'octasq',mode:'line',
   gType:'square',gW:4,gH:4,gSub:1,gSize:56,gSym:'d4',gTool:'line',gChain:true,gSmartSnap:true,gShowGrid:true,gShowCell:true,
   gBand:false,gBandW:8,gData:'',gCirc:'',gFill:'',gArcs:'',gSplines:'',gSplineTension:0.5,gArcLong:false,gCheck:false,
   units:'mm',artW:297,artH:210,
-  eAdd:'',eDel:'',
+  eAdd:'',eDel:'',eSig:'',
   pal:0,palMode:'preset',colourBy:'type',
   cHue:210,cSpread:120,cSat:55,cLight:48,cContrast:55,cReverse:false};
 let st=Object.assign({},DEF);
@@ -2962,7 +2989,7 @@ const LENKEYS=['scale','width','gSize','gBandW'];
 const LENMIN={scale:8,width:0.3,gSize:6,gBandW:1};
 function fitViewBox(){
   /* the canvas takes the artwork's own proportions */
-  const a=Math.max(0.2,Math.min(5,st.artW/st.artH));
+  const a=Math.max(1/20,Math.min(20,st.artW/st.artH));
   const area=720000;
   H=Math.sqrt(area/a); W=H*a;
   const svg=document.getElementById('svg');
@@ -2975,6 +3002,9 @@ const numOf=x=>{const n=parseFloat(x);return isFinite(n)?n:NaN};
 /* change the artwork; keep every length at the same real size */
 function setArtwork(u,w,h){
   if(!(w>0)||!(h>0)||!UNITS[u]) return;
+  /* exports take their true size from the canvas, which keeps the artwork's
+     proportions only up to 20:1 — past that it is too thin to draw on */
+  if(w/h>20||h/w>20){ showToast('The artwork can be at most 20 times longer than it is wide', 'error'); buildParams(); return; }
   /* compare pixels per REAL length (per mm), not per unit: the unit itself may change */
   const Kold=Kpx()/UNITS[st.units].mm;
   st.units=u; st.artW=+(+w).toPrecision(9); st.artH=+(+h).toPrecision(9);
@@ -4270,6 +4300,10 @@ function gUp(e){
   });
   document.addEventListener('keydown',e=>{
     if(st.engine!=='gridp') return;
+    /* typing in a field keeps its own Enter, space and undo */
+    const tag=(e.target&&e.target.tagName)||'';
+    const typing=tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||(e.target&&e.target.isContentEditable);
+    if(typing&&e.key!=='Escape') return;
     if(e.key==='Enter' || e.key===' '){
       if(st.gTool==='spline' && GP.splinePts && GP.splinePts.length >= 2){
         e.preventDefault();
@@ -4330,10 +4364,30 @@ const edgeKey = (F, p, q) => latSeg(F, p, q, 3).join(',');
 /* the stored key of a stored line (re-derived, so hand-edited links still match) */
 const storedKey = (F, s) => edgeKey(F, fromLat(F, s[0], s[1]), fromLat(F, s[2], s[3]));
 
+/* which pattern the edits belong to. Another engine, tiling or family is a
+   different pattern, where the stored lines would land somewhere meaningless;
+   scale, rotation and contact angle keep the lattice, so edits stay */
+function editSig(){
+  switch(st.engine){
+    case 'pic': return `pic:${st.tiling}:${st.dual ? 1 : 0}`;
+    case 'tess': return st.tessFam === 'regular' ? `tess:${st.tessType}`
+      : `tess:${st.subFam}:${st.subFam === 'rosette' ? st.subSegments + (st.subMirror ? 'm' : '') : st.subFam === 'koch' ? st.tessKochBase : ''}`;
+    case 'voro': return `voro:${st.vlayout}`;
+    case 'subst': return `subst:${st.subRule}`;
+    default: return st.engine;
+  }
+}
 function editContext(){
-  if(st.engine === 'gridp' || (!st.eAdd && !st.eDel && !EL.on)) return null;
+  if(st.engine === 'gridp') return null;
+  const has = st.eSig === editSig() && !!(st.eAdd || st.eDel);
+  if(!has && !EL.on) return null;
   const F = editFrame();
-  return { F, del: new Set(eParse(st.eDel).map(s => storedKey(F, s))), add: eParse(st.eAdd) };
+  return { F, del: new Set(has ? eParse(st.eDel).map(s => storedKey(F, s)) : []), add: has ? eParse(st.eAdd) : [] };
+}
+/* the first edit on a pattern starts its own set, replacing another pattern's */
+function editClaim(){
+  const sig = editSig();
+  if(st.eSig !== sig){ st.eAdd = ''; st.eDel = ''; st.eSig = sig; }
 }
 const isErased = (E, p, q) => !!(E && E.del.size && E.del.has(edgeKey(E.F, p, q)));
 
@@ -4411,7 +4465,7 @@ function addedLinesSvg(E, P, w){
   const d = segs.map(([p, q]) => `M${f(p.x)} ${f(p.y)}L${f(q.x)} ${f(q.y)}`).join('');
   const m = st.mode;
   if(m === 'mosaic'){
-    const gw = (st.engine === 'voro' || st.engine === 'multi') ? 2 * Math.max(0.5, w * 0.6) : (st.engine === 'tess' || st.engine === 'subst') ? Math.max(.6, w * 0.5) : Math.max(1, w * 0.7);
+    const gw = convexCells(st) ? 2 * Math.max(0.5, w * 0.6) : (st.engine === 'tess' || st.engine === 'subst') ? Math.max(.6, w * 0.5) : Math.max(1, w * 0.7);
     return `<path d="${d}" fill="none" stroke="${P.grout}" stroke-width="${f(gw)}" stroke-linecap="round"/>`;
   }
   if(m === 'jali') return `<path d="${d}" fill="none" stroke="${P.mat}" stroke-width="${f(w * 2.2)}" stroke-linecap="round"/>`;
@@ -4485,10 +4539,10 @@ function editHit(q, radius, E){
   return best;
 }
 
-function editRecord(){ EL.hist.push({ eAdd: st.eAdd, eDel: st.eDel }); if(EL.hist.length > 200) EL.hist.shift(); }
+function editRecord(){ EL.hist.push({ eAdd: st.eAdd, eDel: st.eDel, eSig: st.eSig }); if(EL.hist.length > 200) EL.hist.shift(); }
 function editUndo(){
   const h = EL.hist.pop(); if(!h) return;
-  st.eAdd = h.eAdd; st.eDel = h.eDel; EL.start = null; render(); sync();
+  st.eAdd = h.eAdd; st.eDel = h.eDel; st.eSig = h.eSig; EL.start = null; render(); sync();
 }
 function editClear(){
   if(!st.eAdd && !st.eDel) return;
@@ -4496,11 +4550,11 @@ function editClear(){
 }
 function editAddLine(E, p, q){
   const s = latSeg(E.F, p, q, 5), key = s.join(',');
-  if(eParse(st.eAdd).some(t => t.join(',') === key)) return;
-  editRecord(); st.eAdd = st.eAdd ? st.eAdd + ';' + key : key;
+  if(st.eSig === editSig() && eParse(st.eAdd).some(t => t.join(',') === key)) return;
+  editRecord(); editClaim(); st.eAdd = st.eAdd ? st.eAdd + ';' + key : key;
 }
 function editErase(E, hit){
-  editRecord();
+  editRecord(); editClaim();
   if(hit.kind === 'add'){
     const k = edgeKey(E.F, hit.p, hit.q);
     st.eAdd = eParse(st.eAdd).filter(s => storedKey(E.F, s) !== k).map(s => s.join(',')).join(';');
@@ -4951,7 +5005,7 @@ function render(){
     }
   }
   else if(st.mode==='jali'){
-    if(st.engine==='voro'||st.engine==='multi'){
+    if(convexCells(st)){
       /* solid panel with the cells punched out as closed openings */
       s=`<rect width="${W}" height="${H}" fill="${P.mat}"/><g fill="${P.open}">`;
       let open=0;
@@ -4973,7 +5027,7 @@ function render(){
   }
   else { /* mosaic */
     const nf=P.fills.length, pick=colourer(shapes,st.colourBy,nf);
-    if(st.engine==='voro'||st.engine==='multi'){
+    if(convexCells(st)){
       const gap=Math.max(0.5,w*0.6);
       const mm=mosaicMerge(shapes.map(sh=>sh.pts),shapes.map((sh,i)=>P.fills[pick(sh,i)]),E,2*gap+1);
       s+=`<g>`;
@@ -5136,8 +5190,12 @@ function updateInfo(shapes,measured){
 
 /* ============================================================ UI */
 const $=id=>document.getElementById(id);
+/* a preset is current only while the canvas still is exactly that preset */
+const presetMatches=p=>Object.entries(p.s).every(([k,v])=>st[k]===v);
+let lastPreset=-1;
 function applyPreset(i){
   const p=PRESETS[i]; if(!p) return;
+  lastPreset=i;
   st=Object.assign({},DEF,p.s);      /* start from defaults so nothing stale leaks in */
   setDualGridActive(!!(p.s && (p.s.dualGrid || p.s.tessDual)));
   clampAll();
@@ -5151,12 +5209,8 @@ function loadGridPattern(i){
   GP.start=null; GP.hist=[]; GP.splinePts=null;
   clampAll(); buildLists(); buildParams(); render(); sync();
 }
-function buildGridLib(){
-  const on=st.engine==='gridp';
-  $('h-glib').style.display=on?'':'none';
-  if(!on){$('glib').innerHTML='';return}
-  if(!GRID_LIB.length){$('glib').innerHTML='<div class="card">No patterns loaded yet.</div>';return}
-  /* one dropdown, grouped by where the pattern comes from, instead of a long list */
+/* one dropdown, grouped by where the pattern comes from, instead of a long list */
+function gridLibOptions(){
   const size=e=>e.s.gType==='iso'?`triangle ${e.s.gW}`:`${e.s.gW}×${e.s.gH}`;
   let opts=`<option value="">Choose a pattern (${GRID_LIB.length})…</option>`, cur='', open=false;
   GRID_LIB.forEach((e,i)=>{
@@ -5164,6 +5218,14 @@ function buildGridLib(){
     opts+=`<option value="${i}"${i===GP.lib?' selected':''}>${e.name} · ${size(e)}</option>`;
   });
   if(open) opts+='</optgroup>';
+  return opts;
+}
+function buildGridLib(){
+  const on=st.engine==='gridp';
+  $('h-glib').style.display=on?'':'none';
+  if(!on){$('glib').innerHTML='';return}
+  if(!GRID_LIB.length){$('glib').innerHTML='<div class="card">No patterns loaded yet.</div>';return}
+  const opts=gridLibOptions();
   $('glib').innerHTML=`
     <div style="margin-bottom:10px;padding:10px;border-radius:8px;background:var(--bg);border:1px solid var(--line);border-left:3px solid var(--accent)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
@@ -5231,7 +5293,7 @@ function renderPresetsList(q = ''){
   }
 
   container.innerHTML = filtered.map(({ p, i }) => {
-    const isCur = st.engine === p.s.engine && (p.s.tiling ? st.tiling === p.s.tiling : true);
+    const isCur = presetMatches(p);
     return `<div class="pcard${isCur ? ' on' : ''}" data-pre="${i}">
       <div class="pcard-hdr">
         <span class="pcard-title">${p.name}</span>
@@ -5244,6 +5306,16 @@ function renderPresetsList(q = ''){
   container.querySelectorAll('[data-pre]').forEach(el => {
     el.onclick = () => applyPreset(+el.dataset.pre);
   });
+}
+
+function pickEngine(id){
+  if(st.engine!==id){
+    st.engine=id;
+    const d=(ENGINES.find(x=>x.id===st.engine)||{}).def;
+    if(d) Object.assign(st,d);
+    clampAll();
+  }
+  buildLists();buildParams();render();sync();
 }
 
 function buildLists(){
@@ -5312,6 +5384,13 @@ function buildLists(){
   if(eUndoB) eUndoB.onclick = () => editUndo();
   if(eClearB) eClearB.onclick = () => editClear();
 
+  // Stage bar border frame toggle (phone layout)
+  const btnFrame = $('btnStageFrame');
+  if(btnFrame){
+    btnFrame.classList.toggle('on', !!st.frame);
+    btnFrame.onclick = () => { st.frame = !st.frame; btnFrame.classList.toggle('on', !!st.frame); buildParams(); render(); sync(); };
+  }
+
   // Stage bar Add Pattern button
   const btnAddPat = $('btnAddPatternToDraw');
   if(btnAddPat){
@@ -5368,15 +5447,7 @@ function buildLists(){
       </div>
       <div class="ecard-sub">${e.sub}</div>
     </div>`).join('');
-  $('engines').querySelectorAll('[data-e]').forEach(el=>el.onclick=()=>{
-    if(st.engine!==el.dataset.e){
-      st.engine=el.dataset.e;
-      const d=(ENGINES.find(x=>x.id===st.engine)||{}).def;
-      if(d) Object.assign(st,d);
-      clampAll();
-    }
-    buildLists();buildParams();render();sync();
-  });
+  $('engines').querySelectorAll('[data-e]').forEach(el=>el.onclick=()=>pickEngine(el.dataset.e));
 
   const showTil=st.engine==='pic';
   $('h-tiling').style.display=showTil?'':'none';
@@ -5419,6 +5490,24 @@ function sizeBlock(){
     </div>`;
 }
 
+/* on a phone the preset, engine and tiling lists become one row of dropdowns
+   at the top of the controls, so the pinned artwork above stays in view */
+function pickRow(){
+  const opt = (v, label, on, title) => `<option value="${v}"${on ? ' selected' : ''}${title ? ` title="${title}"` : ''}>${label}</option>`;
+  const cur = PRESETS.findIndex(presetMatches);
+  let h = `<div class="insp-pick">`;
+  h += `<select id="pickPreset" aria-label="Preset">${opt('', 'Presets…', cur < 0)}${PRESETS.map((p, i) => opt(i, p.name, i === cur, p.note)).join('')}</select>`;
+  h += `<select id="pickEngine" aria-label="Construction engine">${ENGINES.map(e => opt(e.id, e.name, e.id === st.engine, e.sub)).join('')}</select>`;
+  if(st.engine === 'pic') h += `<select id="pickTiling" aria-label="Underlying tiling">${TILING_GROUPS.map(([g]) => {
+    const rows = Object.entries(TILINGS).filter(([, t]) => t.g === g);
+    return rows.length ? `<optgroup label="${g}">${rows.map(([k, t]) => opt(k, `${t.label} · ${t.vf}`, k === st.tiling)).join('')}</optgroup>` : '';
+  }).join('')}</select>`;
+  if(st.engine === 'gridp'){
+    if(GRID_LIB.length) h += `<select id="pickLib" aria-label="Pattern collection">${gridLibOptions()}</select>`;
+    h += `<button class="btn pri" id="pickAdd" type="button" title="Add Polygons in Contact or other patterns to the drawing">➕ Add</button>`;
+  } else h += `<button class="btn" id="pickSend" type="button" title="Send this pattern to the Drawing Grid">✏️ To Draw</button>`;
+  return h + `</div>`;
+}
 function buildParams(){
   fitViewBox();
   const rows=visibleCtrls();
@@ -5431,7 +5520,7 @@ function buildParams(){
 
   if(paramTab === 'geo'){
     const eng = ENGINES.find(x => x.id === st.engine) || ENGINES[0];
-    h += `<div class="insp-sec">
+    h += `<div class="insp-sec">${pickRow()}<div class="insp-desk">
       <div class="insp-hdr">
         <span>${eng.name}</span>
         <button class="btn btn-sm" id="btnChangeEngine" type="button" style="font-size:10.5px;padding:2px 7px">Engines &amp; Tilings ▾</button>
@@ -5465,6 +5554,7 @@ function buildParams(){
         </button>
       </div>`;
     }
+    h += `</div>`;
 
     const geoRows = rows.filter(c => c.k !== 'width' && c.k !== 'frame' && c.k !== 'palMode' && c.k !== 'cHue' && c.k !== 'cSpread' && c.k !== 'cSat' && c.k !== 'cLight' && c.k !== 'cContrast' && c.k !== 'cReverse' && c.k !== 'colourBy');
     for(const c of geoRows) h += renderCtrlRow(c);
@@ -5475,7 +5565,8 @@ function buildParams(){
     h += `<div class="insp-sec">
       <div class="insp-hdr">Line &amp; Frame Stroke</div>`;
     const lineRows = rows.filter(c => c.k === 'width' || c.k === 'frame');
-    for(const c of lineRows) h += renderCtrlRow(c);
+    /* on a phone the frame is a toggle beside Edit, over the artwork */
+    for(const c of lineRows) h += c.k === 'frame' ? `<div class="insp-desk">${renderCtrlRow(c)}</div>` : renderCtrlRow(c);
     h += `</div>`;
 
     h += `<div class="insp-sec">
@@ -5526,6 +5617,13 @@ function buildParams(){
       outs();
     };
   });
+
+  const pkP = $('pickPreset'); if(pkP) pkP.onchange = () => { if(pkP.value !== '') applyPreset(+pkP.value); };
+  const pkE = $('pickEngine'); if(pkE) pkE.onchange = () => pickEngine(pkE.value);
+  const pkT = $('pickTiling'); if(pkT) pkT.onchange = () => { st.tiling = pkT.value; buildLists(); buildParams(); render(); sync(); };
+  const pkL = $('pickLib'); if(pkL) pkL.onchange = () => { if(pkL.value !== '') loadGridPattern(+pkL.value); };
+  const pkS = $('pickSend'); if(pkS) pkS.onclick = () => openAddPatternModal('current');
+  const pkA = $('pickAdd'); if(pkA) pkA.onclick = () => openAddPatternModal('pic');
 
   const bce = $('btnChangeEngine');
   if(bce) bce.onclick = () => {
@@ -5639,7 +5737,7 @@ function outs(){
       :'Underlying polygons, edge midpoints and contact rays, with the resulting pattern over them.',
     line:'The bare construction as single-weight line art.',
     interlace:'Over and under decided per crossing by walking each strand and flipping as it goes.',
-    jali:(st.engine==='voro'||st.engine==='multi')
+    jali:convexCells(st)
       ?'Solid panel with each tile cut out as a closed opening. Rib width sets the material left between them, and the aperture is measured from the shapes on screen.'
       :'Lines read as physical ribs; everything between them is an opening.',
     mosaic:'Closed pieces filled from the palette and separated by grout.'}[st.mode];
@@ -5667,11 +5765,20 @@ function sync(){
 function load(){
   if(!location.hash) return;
   for(const p of location.hash.slice(1).split('&')){
-    const [k,val]=p.split('='); if(!(k in DEF)) continue;
-    st[k]=typeof DEF[k]==='boolean'?val==='1':(typeof DEF[k]==='number'?parseFloat(val):val);
+    const [k,raw='']=p.split('='); if(!(k in DEF)) continue;
+    let val=raw; try{ val=decodeURIComponent(raw) }catch(e){}
+    const n=parseFloat(val);
+    /* a palette is either an index or a named id; any other number that
+       doesn't parse keeps its default rather than becoming NaN */
+    st[k]=typeof DEF[k]==='boolean'?val==='1'
+      :typeof DEF[k]==='number'?(Number.isFinite(n)?n:(k==='pal'?val:DEF[k]))
+      :val;
   }
   if(!TILINGS[st.tiling]) st.tiling=DEF.tiling;
   if(!ENGINES.some(e=>e.id===st.engine)) st.engine=DEF.engine;
+  if(!MODES.some(m=>m[0]===st.mode)) st.mode=DEF.mode;
+  if(!UNITS[st.units]) st.units=DEF.units;
+  if(!(st.artW>0)||!(st.artH>0)){ st.artW=DEF.artW; st.artH=DEF.artH; }
   setDualGridActive(isDualGridActive());
 }
 
@@ -5730,7 +5837,7 @@ function exportShapesRaw(){
   if(st.mode==='mosaic'&&last.faces&&last.faces.length) return last.faces.map(f=>roundedPoly(f.pts,r));
   for(const sh of shapes){
     let pts=sh.pts;
-    if(st.mode==='jali'&&(st.engine==='voro'||st.engine==='multi')){
+    if(st.mode==='jali'&&convexCells(st)){
       pts=insetConvex(pts,st.width*1.1); if(pts.length<3) continue;
     }
     out.push(roundedPoly(pts,r));
@@ -5811,8 +5918,37 @@ function exportPDF(){
   return pdf;
 }
 
-function exportPNG(scale){
-  const sc = scale || 2;
+/* pixels per canvas unit for a print of the artwork's real size at `dpi`, kept
+   inside what a browser canvas can allocate */
+function printScale(dpi){
+  const inches = st.artW * UNITS[st.units].mm / 25.4;
+  return Math.min(inches * dpi / W, 16384 / Math.max(W, H), Math.sqrt(1.2e8 / (W * H)));
+}
+/* a canvas PNG says nothing about resolution: add a pHYs chunk so print
+   software opens it at the artwork's real size */
+const CRC_T = (() => { const t = new Uint32Array(256); for(let n = 0; n < 256; n++){ let c = n; for(let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(bytes){ let c = 0xffffffff; for(const b of bytes) c = CRC_T[(c ^ b) & 255] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; }
+async function pngWithDpi(blob, dpi){
+  const src = new Uint8Array(await blob.arrayBuffer());
+  for(let i = 8; i + 8 <= src.length;){
+    const n = ((src[i] << 24) | (src[i + 1] << 16) | (src[i + 2] << 8) | src[i + 3]) >>> 0;
+    if(String.fromCharCode(src[i + 4], src[i + 5], src[i + 6], src[i + 7]) === 'pHYs') return blob;
+    i += 12 + n;
+  }
+  const ppm = Math.round(dpi / 0.0254), chunk = new Uint8Array(21), dv = new DataView(chunk.buffer);
+  dv.setUint32(0, 9); chunk.set([112, 72, 89, 115], 4);             /* length, "pHYs" */
+  dv.setUint32(8, ppm); dv.setUint32(12, ppm); chunk[16] = 1;        /* pixels per metre */
+  dv.setUint32(17, crc32(chunk.subarray(4, 17)));
+  const at = 33, out = new Uint8Array(src.length + 21);              /* after the signature and IHDR */
+  out.set(src.subarray(0, at)); out.set(chunk, at); out.set(src.subarray(at), at + 21);
+  return new Blob([out], { type: 'image/png' });
+}
+
+/* `dpi` sizes the image from the artwork's real size; otherwise `scale` is a
+   plain multiple of the canvas (the 4K option) */
+function exportPNG({ dpi, scale } = {}){
+  const sc = dpi ? printScale(dpi) : (scale || 2);
+  const inches = st.artW * UNITS[st.units].mm / 25.4, realDpi = W * sc / inches;
   const svg = $('svg').cloneNode(true);
   const ov = svg.querySelector('#ov'); if(ov) ov.remove();
   const guides = svg.querySelector('#gp-guides'); if(guides) guides.remove();
@@ -5840,10 +5976,9 @@ function exportPNG(scale){
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     URL.revokeObjectURL(url);
-    canvas.toBlob(blob => {
-      if(blob){
-        download(blob, baseName() + (sc >= 4 ? '-4k.png' : '-300dpi.png'));
-      }
+    canvas.toBlob(async blob => {
+      if(!blob){ showToast('PNG export failed: the image is too large for this browser', 'error'); return; }
+      download(await pngWithDpi(blob, realDpi), baseName() + (dpi ? `-${Math.round(realDpi)}dpi.png` : '-4k.png'));
     }, 'image/png');
   };
   img.onerror = () => {
@@ -5915,10 +6050,11 @@ function doExportPDF(){
   }
 }
 
-function doExportPNG(sc){
+function doExportPNG(opt){
   try {
-    exportPNG(sc);
-    showToast(sc >= 4 ? 'Generating Ultra 4K PNG...' : 'Generating High-Res PNG (300 DPI)...', 'info');
+    exportPNG(opt);
+    const dpi = opt.dpi && Math.round(W * printScale(opt.dpi) / (st.artW * UNITS[st.units].mm / 25.4));
+    showToast(opt.dpi ? (dpi < opt.dpi ? `Generating PNG at ${dpi} DPI (the most a browser can hold at this size)...` : `Generating High-Res PNG (${dpi} DPI)...`) : 'Generating Ultra 4K PNG...', 'info');
   } catch(e) {
     showToast('PNG export failed: ' + e.message, 'error');
   }
@@ -5940,35 +6076,30 @@ async function copyDesignLink(){
 }
 
 /* ================= Viewport & Zoom Actions ================= */
-function zoomIn(){
-  if(st.engine === 'gridp'){
-    st.gSize = Math.min(120, Math.round((st.gSize || 45) * 1.2));
-  } else {
-    st.scale = Math.min(220, Math.round(st.scale * 1.2));
-  }
+/* zoom is the pattern's own size — the grid spacing when drawing — kept inside
+   its slider's range. Voronoi and subdivision are sized by their count and
+   depth, so they have nothing to zoom */
+function zoomKey(){
+  const k = st.engine === 'gridp' ? 'gSize' : 'scale';
+  const c = (CTRL[st.engine] || []).find(c => c.k === k);
+  return c && { k, min: cv(c.min), max: cv(c.max) };
+}
+function zoomBy(f){
+  const z = zoomKey();
+  if(!z){ showToast('This pattern is sized by its count and depth — use those sliders', 'info'); return; }
+  st[z.k] = Math.max(z.min, Math.min(z.max, Math.round(st[z.k] * f)));
   buildParams(); render(); sync();
 }
-
-function zoomOut(){
-  if(st.engine === 'gridp'){
-    st.gSize = Math.max(16, Math.round((st.gSize || 45) / 1.2));
-  } else {
-    st.scale = Math.max(20, Math.round(st.scale / 1.2));
-  }
-  buildParams(); render(); sync();
-}
+function zoomIn(){ zoomBy(1.2); }
+function zoomOut(){ zoomBy(1 / 1.2); }
 
 function fitView(){
-  if(st.engine === 'gridp'){
-    st.gSize = Math.max(28, Math.min(80, Math.round(360 / (st.gW || 8))));
-  } else if(st.engine === 'tess'){
-    st.scale = 75;
-  } else if(st.engine === 'pic'){
-    st.scale = 80;
-  } else if(st.engine === 'multi'){
-    st.scale = 48;
-  } else {
-    st.scale = 65;
+  const z = zoomKey();
+  if(z){
+    const d = (ENGINES.find(e => e.id === st.engine) || {}).def || {};
+    const want = st.engine === 'gridp' ? Math.round(360 / (st.gW || 8)) : (d.scale || DEF.scale);
+    st[z.k] = st.engine === 'gridp' ? Math.max(28, Math.min(80, want)) : want;
+    st[z.k] = Math.max(z.min, Math.min(z.max, st[z.k]));
   }
   buildParams(); render(); sync();
   showToast('Canvas view fitted to artboard', 'info');
@@ -5976,6 +6107,8 @@ function fitView(){
 
 function doRandomise(){
   const R = Math.random;
+  /* a drawing gets a random symmetric sketch of its own */
+  if(st.engine === 'gridp'){ gRandom(); showToast('Generated random variations', 'info'); return; }
   if(st.engine === 'tess'){
     st.tessFam = R() < 0.5 ? 'regular' : 'fractal';
     if(st.tessFam === 'regular'){
@@ -6005,6 +6138,12 @@ function doRandomise(){
     st.seed = 1 + Math.floor(R()*999);
     st.scale = 24 + Math.floor(R()*60);
     clampAll();
+  } else if(st.engine === 'subst'){
+    const rules = Object.keys(SUBST);
+    st.subRule = rules[Math.floor(R()*rules.length)];
+    st.subDepth = 2 + Math.floor(R()*4);
+    st.rotation = Math.floor(R()*7)*15;
+    clampAll();
   } else {
     st.vlayout = ['hex','grid','brick','hex','radial'][Math.floor(R()*5)];
     st.seed = 1 + Math.floor(R()*999);
@@ -6024,8 +6163,8 @@ function doRandomise(){
 }
 
 function cyclePreset(dir){
-  let cur = PRESETS.findIndex(p => st.engine===p.s.engine && (p.s.tiling ? st.tiling===p.s.tiling : true));
-  if(cur < 0) cur = 0;
+  let cur = lastPreset >= 0 ? lastPreset : PRESETS.findIndex(presetMatches);
+  if(cur < 0) cur = dir > 0 ? -1 : 0;
   let next = (cur + dir + PRESETS.length) % PRESETS.length;
   applyPreset(next);
   showToast(`Loaded preset: ${PRESETS[next].name}`, 'info');
@@ -6081,8 +6220,8 @@ if(expBtn && expMenu){
 }
 
 const optSvg = $('expSvgOpt'); if(optSvg) optSvg.onclick = () => { if(expMenu) expMenu.style.display='none'; exportSVG(); };
-const optPng300 = $('expPng300Opt'); if(optPng300) optPng300.onclick = () => { if(expMenu) expMenu.style.display='none'; doExportPNG(2); };
-const optPng4k = $('expPng4kOpt'); if(optPng4k) optPng4k.onclick = () => { if(expMenu) expMenu.style.display='none'; doExportPNG(4); };
+const optPng300 = $('expPng300Opt'); if(optPng300) optPng300.onclick = () => { if(expMenu) expMenu.style.display='none'; doExportPNG({ dpi: 300 }); };
+const optPng4k = $('expPng4kOpt'); if(optPng4k) optPng4k.onclick = () => { if(expMenu) expMenu.style.display='none'; doExportPNG({ scale: 4 }); };
 const optPdf = $('expPdfOpt'); if(optPdf) optPdf.onclick = () => { if(expMenu) expMenu.style.display='none'; doExportPDF(); };
 const optDxf = $('expDxfOpt'); if(optDxf) optDxf.onclick = () => { if(expMenu) expMenu.style.display='none'; doExportDXF(); };
 
@@ -6170,8 +6309,9 @@ function openAddPatternModal(tab = 'pic'){
   const modal = $('patDrawModal');
   if(!modal) return;
   modal.style.display = 'flex';
-  patModalTab = tab;
-  if(tab === 'current'){
+  /* on the Drawing Grid the screen already is the drawing */
+  patModalTab = tab === 'current' && st.engine === 'gridp' ? 'pic' : tab;
+  if(patModalTab === 'current'){
     selectedPatSpec = getCurrentPatternSpec({ include: patIncludeMode });
   } else if(!selectedPatSpec && PIC_PATTERNS.length){
     selectedPatSpec = PIC_PATTERNS[0].s;
@@ -6204,14 +6344,14 @@ function renderPatModalContent(){
     <div class="pat-tabs">
       <button class="pat-tab-btn ${patModalTab==='pic'?'on':''}" id="patTabPic">⭐ Polygons in Contact (${PIC_PATTERNS.length})</button>
       <button class="pat-tab-btn ${patModalTab==='field'?'on':''}" id="patTabField">📐 Classic Lattices</button>
-      <button class="pat-tab-btn ${patModalTab==='current'?'on':''}" id="patTabCurrent">⚡ Current Screen Pattern</button>
+      ${st.engine==='gridp'?'':`<button class="pat-tab-btn ${patModalTab==='current'?'on':''}" id="patTabCurrent">⚡ Current Screen Pattern</button>`}
     </div>
   `;
 
   let contentHtml = '';
 
   if(patModalTab === 'pic'){
-    if(!selectedPatSpec && PIC_PATTERNS.length) selectedPatSpec = PIC_PATTERNS[0].s;
+    if(!PIC_PATTERNS.some(p => p.s === selectedPatSpec) && PIC_PATTERNS.length) selectedPatSpec = PIC_PATTERNS[0].s;
     contentHtml = `
       <div style="font-size:12px;color:var(--mute);margin-bottom:6px">
         Select a Saracenic contact polygon construction. Every line is loaded directly onto the grid so you can freely draw, erase, and edit.
@@ -6237,7 +6377,7 @@ function renderPatModalContent(){
     `;
   } else if(patModalTab === 'field'){
     const fieldPats = GRID_LIB.filter(x => x.group !== 'Polygons in Contact (Hankin · Kaplan)');
-    if(!selectedPatSpec && fieldPats.length) selectedPatSpec = fieldPats[0].s;
+    if(!fieldPats.some(p => p.s === selectedPatSpec) && fieldPats.length) selectedPatSpec = fieldPats[0].s;
     contentHtml = `
       <div style="font-size:12px;color:var(--mute);margin-bottom:6px">
         Classic architectural window lattices transcribed from Robert Field's geometric studies.
@@ -6322,7 +6462,7 @@ function renderPatModalContent(){
   // Tab listeners
   $('patTabPic').onclick = () => { patModalTab = 'pic'; renderPatModalContent(); };
   $('patTabField').onclick = () => { patModalTab = 'field'; renderPatModalContent(); };
-  $('patTabCurrent').onclick = () => { patModalTab = 'current'; renderPatModalContent(); };
+  const tabCur = $('patTabCurrent'); if(tabCur) tabCur.onclick = () => { patModalTab = 'current'; renderPatModalContent(); };
 
   // Current tab include mode buttons
   const bBoth = $('patIncBoth');
@@ -6354,7 +6494,8 @@ function renderPatModalContent(){
   });
 
   // Footer
-  const selName = selectedPatSpec?.name || (patModalTab === 'current' ? 'Current Pattern' : 'Selected Pattern');
+  const selEntry = PIC_PATTERNS.concat(GRID_LIB).find(p => p.s === selectedPatSpec);
+  const selName = selEntry ? selEntry.name : (selectedPatSpec?.name || 'Current Pattern');
   footer.innerHTML = `
     <button class="btn" id="patBtnCancel">Cancel</button>
     <span class="spacer"></span>
@@ -6364,8 +6505,7 @@ function renderPatModalContent(){
   $('patBtnCancel').onclick = closeAddPatternModal;
   $('patBtnApply').onclick = () => {
     if(!selectedPatSpec) return;
-    loadPatternIntoDraw(selectedPatSpec, { mode: patLoadAction, title: selName });
-    closeAddPatternModal();
+    if(loadPatternIntoDraw(selectedPatSpec, { mode: patLoadAction, title: selName }) !== false) closeAddPatternModal();
   };
 }
 
@@ -6559,6 +6699,10 @@ function snapshotGridSpec(include){
 }
 
 function getCurrentPatternSpec(opts = {}){
+  /* on the Drawing Grid the pattern on screen is the drawing itself */
+  if(st.engine === 'gridp') return { gType: st.gType, gW: st.gW, gH: st.gH, gSub: st.gSub, gSize: st.gSize, gSym: st.gSym,
+    gData: st.gData, gCirc: st.gCirc, gArcs: st.gArcs, gSplines: st.gSplines, gFill: st.gFill, gShowGrid: st.gShowGrid,
+    width: st.width, frame: st.frame, name: 'Current drawing', count: gParse(st.gData).length, periodic: true };
   const include = opts.include || patIncludeMode || 'star';
   const L = patternLattice();
   return (L && latticeGridSpec(L, include)) || snapshotGridSpec(include);
@@ -6576,8 +6720,16 @@ function loadPatternIntoDraw(pState, { mode = 'replace', title = 'Pattern' } = {
   let newGCirc = pState.gCirc || '';
   let newGArcs = pState.gArcs || '';
   let newGSplines = pState.gSplines || '';
+  let newGFill = pState.gFill || '';
 
-  if(mode === 'merge' && st.engine === 'gridp'){
+  if(mode === 'merge' && st.engine === 'gridp' && (st.gData || st.gCirc || st.gArcs || st.gSplines || st.gFill)){
+    /* lines are stored as grid points, so two drawings only merge on the same grid */
+    if(st.gType !== gType || st.gW !== gW || (gType !== 'iso' && st.gH !== gH) || st.gSub !== gSub){
+      const desc = (t, w, h, n) => `${t === 'iso' ? `triangle ${w}` : `${w}×${h}`} grid with ${n} point${n > 1 ? 's' : ''} per square`;
+      showToast(`Can't merge: the pattern is on a ${desc(gType, gW, gH, gSub)}, your drawing on a ${desc(st.gType, st.gW, st.gH, st.gSub)}. Use Replace instead.`, 'error', 5200);
+      return false;
+    }
+    newGFill = [...new Set((st.gFill + ';' + newGFill).split(';').filter(Boolean))].join(';');
     const curSegs = gParse(st.gData);
     const addSegs = gParse(newGData);
     const seen = new Set(curSegs.map(s => gCanon(s).join(',')));
@@ -6605,12 +6757,13 @@ function loadPatternIntoDraw(pState, { mode = 'replace', title = 'Pattern' } = {
     gCirc: newGCirc,
     gArcs: newGArcs,
     gSplines: newGSplines,
+    gFill: newGFill,
     gSplineTension: 0.5,
     gSize: pState.gSize || Math.max(28, Math.min(80, Math.round(360 / gW))),
     gShowGrid: pState.gShowGrid !== undefined ? pState.gShowGrid : true,
     gShowCell: true,
     gTool: 'line',
-    pal: st.pal || 1,
+    pal: st.pal !== undefined ? st.pal : 1,
     width: pState.width || 2.2,
     /* keep the paper: the grid's cell is sized in canvas pixels, which only
        mean the same thing on the same artboard */
@@ -6630,7 +6783,7 @@ function loadPatternIntoDraw(pState, { mode = 'replace', title = 'Pattern' } = {
   buildParams();
   render();
   sync();
-  showToast(`✓ ${title} loaded into Drawing Grid! You can now draw, edit lines, or erase.`, 'success');
+  showToast(`${title} loaded into Drawing Grid! You can now draw, edit lines, or erase.`, 'success');
 }
 
 window.addEventListener('keydown', e => {
