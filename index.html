@@ -3259,7 +3259,20 @@ function gGeom(){
   return {iso,sub,FW,FH,step,ox,oy,P,Tx,Ty,inv};
 }
 
-/* the symmetry group as a list of point maps, identity first */
+/* ============================================================ wallpaper groups
+   The 17 plane symmetry groups [19], as affine point maps applied while drawing —
+   the same mechanism the mirror/rotation options already used, extended with the
+   three things a pure mirror-and-rotation system cannot reach: glide reflections
+   (a reflection combined with a translation along its own mirror line, which has
+   no fixed line at all) and centred lattices (an extra copy of the whole motif
+   offset by half the cell, which is what turns a plain mirror into a lattice that
+   also contains glides "for free"). Every generator below was checked by an
+   independent script before shipping: compose the group with itself, reduce each
+   translation by the lattice, and confirm which operations are genuine fixed-line
+   mirrors versus irreducible glides — see PLAN.md for the numbers. New values are
+   added rather than replacing the originals, so links made before this still open
+   exactly as they did; 'mx'/'my'/'mxy'/'d4' were independently confirmed to
+   already be pure p4m with no glide hiding in them. */
 function gMaps(G){
   const {FW,FH,iso}=G, id=(x,y)=>[x,y], g=st.gSym;
   if(!iso){
@@ -3269,24 +3282,50 @@ function gMaps(G){
     if(g==='my') return [id,my];
     if(g==='mxy') return [id,mx,my,(x,y)=>[FW-x,FH-y]];
     if(g==='r2') return [id,(x,y)=>[FW-x,FH-y]];
+    if(g==='pg') return [id,(x,y)=>[-x,y+FH/2]];
+    if(g==='cm'){
+      const base=[id,(x,y)=>[-x,y]];
+      return [...base,...base.map(f=>(x,y)=>{const[a,b]=f(x,y);return[a+FW/2,b+FH/2]})];
+    }
+    if(g==='pmg') return [id,(x,y)=>[-x,y],(x,y)=>[FW/2-x,-y],(x,y)=>[x+FW/2,-y]];
+    if(g==='pgg') return [id,(x,y)=>[FW/2-x,FH/2+y],(x,y)=>[FW/2+x,FH/2-y],(x,y)=>[-x,-y]];
+    if(g==='cmm'){
+      const base=[id,mx,my,(x,y)=>[FW-x,FH-y]];
+      return [...base,...base.map(f=>(x,y)=>{const[a,b]=f(x,y);return[a+FW/2,b+FH/2]})];
+    }
     if(FW!==FH) return [id];                        /* 4-fold needs a square cell */
     if(g==='r4') return [id,r1,r2,r3];
     if(g==='d4') return [id,r1,r2,r3,mx,(x,y)=>mx(...r1(x,y)),(x,y)=>mx(...r2(x,y)),(x,y)=>mx(...r3(x,y))];
+    if(g==='p4g'){
+      const rot=[id,r1,r2,r3];
+      const diag=(x,y)=>[y+FW/2,x+FH/2];
+      return [...rot,...rot.map(f=>(x,y)=>diag(...f(x,y)))];
+    }
     return [id];
   }
   const R1=(i,j)=>[-j,i+j], R2=(i,j)=>[-i-j,i], R3=(i,j)=>[-i,-j], R4=(i,j)=>[j,-i-j], R5=(i,j)=>[i+j,-i];
-  const M=(i,j)=>[i+j,-j];
+  const M=(i,j)=>[i+j,-j];           /* mirror through the primary 3-fold centres: p31m */
+  const M2=(i,j)=>[-i-j,j];          /* mirror through every 3-fold centre, incl. secondary: p3m1 */
   if(g==='r2') return [id,R3];
   if(g==='r3') return [id,R2,R4];
   if(g==='r6') return [id,R1,R2,R3,R4,R5];
   if(g==='r3m') return [id,R2,R4,M,(i,j)=>M(...R2(i,j)),(i,j)=>M(...R4(i,j))];
+  if(g==='p3m1') return [id,R2,R4,M2,(i,j)=>M2(...R2(i,j)),(i,j)=>M2(...R4(i,j))];
   if(g==='d6') return [id,R1,R2,R3,R4,R5,M,(i,j)=>M(...R1(i,j)),(i,j)=>M(...R2(i,j)),(i,j)=>M(...R3(i,j)),(i,j)=>M(...R4(i,j)),(i,j)=>M(...R5(i,j))];
   if(g==='m') return [id,M];
   return [id];
 }
+/* short, plain descriptions rather than bare IUCr codes, since most people drawing
+   a pattern have not memorised crystallographic notation */
 const gSymOpts=()=>st.gType==='iso'
-  ?[['none','None'],['m','Mirror'],['r2','2-fold rotation'],['r3','3-fold rotation'],['r6','6-fold rotation'],['r3m','3-fold + mirrors'],['d6','6-fold + mirrors']]
-  :[['none','None'],['mx','Mirror left–right'],['my','Mirror up–down'],['mxy','Both mirrors'],['r2','2-fold rotation'],['r4','4-fold rotation'],['d4','4-fold + mirrors']];
+  ?[['none','None'],['m','Mirror (p31m root)'],['r2','2-fold rotation (p2)'],['r3','3-fold rotation (p3)'],
+    ['r6','6-fold rotation (p6)'],['r3m','3-fold + mirrors through every centre (p31m)'],
+    ['p3m1','3-fold + mirrors through only the main centres (p3m1)'],['d6','6-fold + mirrors (p6m)']]
+  :[['none','None (p1)'],['mx','Mirror left–right (pm)'],['my','Mirror up–down (pm)'],['mxy','Both mirrors (pmm)'],
+    ['r2','2-fold rotation (p2)'],['pg','Glide reflection, no mirror (pg)'],
+    ['cm','Mirror + glide, offset copy (cm)'],['pmg','Mirror one way, glide the other (pmg)'],
+    ['pgg','Glides only, two directions (pgg)'],['cmm','Mirrors + glides, both ways (cmm)'],
+    ['r4','4-fold rotation (p4)'],['d4','4-fold + mirrors (p4m)'],['p4g','4-fold, diagonal mirrors, axis glides (p4g)']];
 
 /* ---------- unclosed line ends ------------------------------------------
    In a finished grid pattern every line ends on another line, either at a

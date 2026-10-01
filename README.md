@@ -67,7 +67,13 @@ Geometry is checked by measurement, not by eye:
 - **Snub square 3.3.4.3.4** and **snub hexagonal 3.3.3.3.6** — 2 of the 11 uniform tilings — are not built.
 - **DWG** is not written; the format is proprietary. DXF is provided, which AutoCAD opens directly.
 - **PDF and DXF have not been opened in Illustrator or AutoCAD.** They are validated structurally (xref offsets resolve, group codes are integers, POLYLINE/SEQEND balance) — which is not the same as those applications accepting them.
-- Not yet built: wallpaper-group symmetry layer, Gothic tracery, Art Nouveau ironwork, Art Deco grammars, Ottoman floral fields, arboreal jali, and minimum-bridge validation for fabrication.
+- Not yet built: Gothic tracery, Art Nouveau ironwork, Art Deco grammars, Ottoman floral fields, arboreal jali, and minimum-bridge validation for fabrication.
+
+## Wallpaper groups (Draw on a grid)
+
+The grid designer's Symmetry option implements all 17 plane symmetry groups [19], not just mirrors and rotations. The seven that need a glide reflection or a centred lattice (`pg`, `cm`, `pmg`, `pgg`, `cmm`, `p4g`, and the hexagonal `p3m1`) are an original implementation derived from the published classification, each independently checked before shipping: generate the group by repeatedly composing its own generators, confirm it closes (every composition lands back in the group) with exactly the textbook order (`p4g`/`p4m` both order 8, `p31m`/`p3m1` both order 6), then classify every reflection-type element as a genuine mirror or an irreducible glide by reducing its translation modulo the lattice and checking whether a fixed line exists. `p4g` needed particular care — minimising against the wrong axis makes a true mirror look like a glide — so the check was re-derived until the diagonal mirrors and axis-aligned glides came out matching the textbook structure exactly. The four options that existed before this work (`mx`/`my`/`mxy`/`d4`) were independently confirmed to already be pure `p4m`, with no glide hiding in them, so nothing there changed.
+
+This was prompted by a study of a different, unrelated resource: Jaap Scherphuis's "Tiling Viewer" (jaapsch.net/tilings), a Java catalogue of isohedral tiling types. Its source carries no stated licence and its copyright is retained by its author, so none of its code or data was used; what is built here is original, from the public 17-group classification, in the spirit of what that catalogue does rather than from its implementation.
 
 ## Rights
 
