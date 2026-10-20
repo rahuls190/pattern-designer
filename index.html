@@ -9,45 +9,47 @@
 <meta property="og:description" content="Interactive designer for geometric ornament, Islamic star patterns, regular and fractal tessellations, dual-grid lattices, Voronoi designs, and multi-format vector exports (SVG, High-Res PNG, DXF).">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f8f6f1;
-  --panel:#ffffff;
-  --panel-sub:#f3f0e8;
-  --panel-rgb:255,255,255;
-  --ink:#1b1922;
-  --mute:#696472;
-  --line:#ded8cc;
-  --line-light:#eae5db;
-  --accent:#243372;
-  --accent-soft:rgba(36,51,114,0.08);
-  --gold:#b88628;
+  --bg:#EEF0EA;
+  --panel:#F8F9F5;
+  --panel-sub:#E9ECE4;
+  --panel-rgb:248,249,245;
+  --ink:#161A17;
+  --mute:#555D54;
+  --line:#D2D7CC;
+  --line-light:#E3E7DD;
+  --accent:#355CFF;
+  --accent-ink:#2447E0;
+  --accent-soft:rgba(53,92,255,0.09);
+  --gold:#B88628;
   --ok:#1b7447;
-  --shadow-sm:0 1px 3px rgba(27,25,34,0.06), 0 1px 2px rgba(27,25,34,0.04);
-  --shadow-md:0 4px 16px rgba(27,25,34,0.08);
-  --shadow-art:0 12px 36px rgba(27,25,34,0.11), 0 2px 8px rgba(27,25,34,0.05);
+  --shadow-sm:0 1px 2px rgba(22,26,23,0.06);
+  --shadow-md:0 6px 20px rgba(22,26,23,0.10);
+  --shadow-art:0 18px 44px rgba(22,26,23,0.16), 0 2px 8px rgba(22,26,23,0.06);
   --radius-sm:6px;
-  --radius-md:8px;
-  --radius-lg:12px;
+  --radius-md:10px;
+  --radius-lg:14px;
 }
 @media(prefers-color-scheme:dark){
   :root{
-    --bg:#110f17;
-    --panel:#191622;
-    --panel-sub:#201d2c;
-    --panel-rgb:25,22,34;
-    --ink:#f3eef3;
-    --mute:#9e97a8;
-    --line:#322e3e;
-    --line-light:#292535;
-    --accent:#8396f8;
-    --accent-soft:rgba(131,150,248,0.12);
-    --gold:#d8ad4d;
+    --bg:#0F120F;
+    --panel:#161A16;
+    --panel-sub:#1E231E;
+    --panel-rgb:22,26,22;
+    --ink:#EEF0EA;
+    --mute:#A3AB9F;
+    --line:#2B312B;
+    --line-light:#232923;
+    --accent:#7C96FF;
+    --accent-ink:#9FB2FF;
+    --accent-soft:rgba(124,150,255,0.14);
+    --gold:#D8AD4D;
     --ok:#4abd87;
-    --shadow-sm:0 1px 3px rgba(0,0,0,0.3);
-    --shadow-md:0 4px 16px rgba(0,0,0,0.4);
-    --shadow-art:0 14px 40px rgba(0,0,0,0.55);
+    --shadow-sm:0 1px 2px rgba(0,0,0,0.35);
+    --shadow-md:0 6px 20px rgba(0,0,0,0.45);
+    --shadow-art:0 20px 50px rgba(0,0,0,0.6);
   }
 }
 *{box-sizing:border-box}
@@ -55,7 +57,7 @@ body{
   margin:0;
   background:var(--bg);
   color:var(--ink);
-  font:14px/1.5 'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;
+  font:14px/1.5 'Atkinson Hyperlegible',system-ui,-apple-system,sans-serif;
   -webkit-font-smoothing:antialiased;
 }
 
@@ -79,7 +81,7 @@ header.studio-header{
   display:inline-flex;
   align-items:center;
   gap:8px;
-  font-family:'Cormorant Garamond',Georgia,serif;
+  font-family:'Bricolage Grotesque',system-ui,sans-serif;
   font-size:22px;
   font-weight:700;
   letter-spacing:0.01em;
@@ -127,7 +129,7 @@ nav.studio-nav a.on{
 
 /* Buttons */
 .btn{
-  font:600 12.5px 'Plus Jakarta Sans',system-ui,sans-serif;
+  font:600 12.5px 'Atkinson Hyperlegible',system-ui,sans-serif;
   padding:6px 13px;
   border-radius:6px;
   border:1px solid var(--line);
@@ -232,13 +234,13 @@ nav.studio-nav a.on{
 /* ================= Main Studio Layout ================= */
 main{
   display:grid;
-  grid-template-columns:290px 1fr 310px;
+  grid-template-columns:340px 1fr 310px;
   height:calc(100vh - 56px);
   min-height:550px;
   transition:grid-template-columns 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 main.drawer-collapsed{grid-template-columns:0px 1fr 310px}
-main.inspector-collapsed{grid-template-columns:290px 1fr 0px}
+main.inspector-collapsed{grid-template-columns:340px 1fr 0px}
 main.drawer-collapsed.inspector-collapsed{grid-template-columns:0px 1fr 0px}
 
 aside{
@@ -282,7 +284,7 @@ main.inspector-collapsed aside.r{display:none}
   background:transparent;
   color:var(--mute);
   padding:6px 8px;
-  font:600 11.5px 'Plus Jakarta Sans',sans-serif;
+  font:600 11.5px 'Atkinson Hyperlegible',sans-serif;
   border-radius:4px;
   cursor:pointer;
   transition:all 0.12s ease;
@@ -304,7 +306,7 @@ main.inspector-collapsed aside.r{display:none}
   line-height:1.4;
 }
 .drawer-sec-title{
-  font:700 10.5px 'Plus Jakarta Sans',sans-serif;
+  font:700 10.5px 'Atkinson Hyperlegible',sans-serif;
   letter-spacing:.08em;
   text-transform:uppercase;
   color:var(--mute);
@@ -447,7 +449,7 @@ main.inspector-collapsed aside.r{display:none}
   font-family:'JetBrains Mono',monospace;
 }
 .grp{
-  font:700 9.5px 'Plus Jakarta Sans',sans-serif;
+  font:700 9.5px 'Atkinson Hyperlegible',sans-serif;
   letter-spacing:.08em;
   text-transform:uppercase;
   color:var(--mute);
@@ -458,7 +460,7 @@ main.inspector-collapsed aside.r{display:none}
 .grp:first-child{margin-top:0}
 .grp em{
   display:block;
-  font:400 10.5px 'Plus Jakarta Sans',sans-serif;
+  font:400 10.5px 'Atkinson Hyperlegible',sans-serif;
   letter-spacing:0;
   text-transform:none;
   opacity:.8;
@@ -554,7 +556,7 @@ main.inspector-collapsed aside.r{display:none}
   background:transparent;
   color:var(--mute);
   padding:5px 11px;
-  font:500 12px 'Plus Jakarta Sans',sans-serif;
+  font:500 12px 'Atkinson Hyperlegible',sans-serif;
   cursor:pointer;
   transition:all 0.12s ease;
   white-space:nowrap;
@@ -597,7 +599,7 @@ main.inspector-collapsed aside.r{display:none}
   background:transparent;
   color:var(--mute);
   padding:6px 4px;
-  font:600 11.5px 'Plus Jakarta Sans',sans-serif;
+  font:600 11.5px 'Atkinson Hyperlegible',sans-serif;
   border-radius:4px;
   cursor:pointer;
   transition:all 0.12s ease;
@@ -616,7 +618,7 @@ main.inspector-collapsed aside.r{display:none}
 }
 .insp-sec:last-child{border-bottom:0}
 .insp-hdr{
-  font:700 10.5px 'Plus Jakarta Sans',sans-serif;
+  font:700 10.5px 'Atkinson Hyperlegible',sans-serif;
   letter-spacing:.08em;
   text-transform:uppercase;
   color:var(--mute);
@@ -679,7 +681,7 @@ main.inspector-collapsed aside.r{display:none}
   border-radius:6px;
   background:var(--panel-sub);
   color:var(--ink);
-  font:12.5px 'Plus Jakarta Sans',sans-serif;
+  font:12.5px 'Atkinson Hyperlegible',sans-serif;
 }
 .numbox:focus{
   border-color:var(--accent);
@@ -699,7 +701,7 @@ select{
   border-radius:6px;
   background:var(--panel-sub);
   color:var(--ink);
-  font:12.5px 'Plus Jakarta Sans',sans-serif;
+  font:12.5px 'Atkinson Hyperlegible',sans-serif;
   cursor:pointer;
 }
 select:focus{
@@ -780,7 +782,7 @@ select:focus{
   margin-bottom:7px;
 }
 .contrast-title{
-  font:700 10.5px 'Plus Jakarta Sans',sans-serif;
+  font:700 10.5px 'Atkinson Hyperlegible',sans-serif;
   letter-spacing:.06em;
   text-transform:uppercase;
   color:var(--mute);
@@ -829,7 +831,7 @@ select:focus{
   font-size:11.5px;
 }
 .contrast-table th{
-  font:700 10px 'Plus Jakarta Sans',sans-serif;
+  font:700 10px 'Atkinson Hyperlegible',sans-serif;
   text-transform:uppercase;
   letter-spacing:.06em;
   color:var(--mute);
@@ -879,14 +881,14 @@ select:focus{
   border-bottom:1px solid var(--line-light);
 }
 .page h1{
-  font-family:'Cormorant Garamond',Georgia,serif;
+  font-family:'Bricolage Grotesque',system-ui,sans-serif;
   font-size:32px;
   font-weight:700;
   margin:0 0 8px;
   color:var(--ink);
 }
 .page h2{
-  font-family:'Cormorant Garamond',Georgia,serif;
+  font-family:'Bricolage Grotesque',system-ui,sans-serif;
   font-size:22px;
   font-weight:600;
   margin:32px 0 12px;
@@ -916,7 +918,7 @@ select:focus{
   vertical-align:top;
 }
 .page th{
-  font:700 11px 'Plus Jakarta Sans',sans-serif;
+  font:700 11px 'Atkinson Hyperlegible',sans-serif;
   text-transform:uppercase;
   letter-spacing:.08em;
   color:var(--mute);
@@ -1057,7 +1059,7 @@ code{
   background:var(--panel-sub);
 }
 .ai-modal-title{
-  font:600 15px 'Plus Jakarta Sans',sans-serif;
+  font:600 15px 'Atkinson Hyperlegible',sans-serif;
   display:flex;
   align-items:center;
   gap:7px;
@@ -1134,6 +1136,152 @@ code{
   .insp-desk,aside.l,#btnToggleDrawer{display:none}
   aside.l,aside.r{border:0;border-top:1px solid var(--line);width:100%}
 }
+
+/* ===================== v2 redesign: huescript drafting studio ===================== */
+.ic{display:inline-block;flex:none;width:1.15em;height:1.15em;vertical-align:-.2em;background:currentColor;-webkit-mask:var(--m) center/contain no-repeat;mask:var(--m) center/contain no-repeat}
+.ic[data-i=dice]{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='3.5' y='3.5' width='17' height='17' rx='3.5' fill='none' stroke='%23000' stroke-width='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.4'/%3E%3Ccircle cx='15.5' cy='8.5' r='1.4'/%3E%3Ccircle cx='12' cy='12' r='1.4'/%3E%3Ccircle cx='8.5' cy='15.5' r='1.4'/%3E%3Ccircle cx='15.5' cy='15.5' r='1.4'/%3E%3C/svg%3E")}
+.ic[data-i=link]{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+.ic[data-i=star]{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2.5l2.9 6.2 6.6.8-4.9 4.6 1.3 6.7L12 17.5 6.1 20.8l1.3-6.7L2.5 9.5l6.6-.8z' fill='none' stroke='%23000' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E")}
+.ic[data-i=ruler]{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 20V4l16 16z' fill='none' stroke='%23000' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M4 14h3M4 10h2M10 20v-3M14 20v-2' stroke='%23000' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")}
+.ic[data-i=palette]{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 3a9 9 0 1 0 0 18c1.2 0 1.7-.9 1.4-1.8-.3-.9.2-1.9 1.3-1.9H17a4 4 0 0 0 4-4c0-5-4-9.3-9-9.3z' fill='none' stroke='%23000' stroke-width='2' stroke-linejoin='round'/%3E%3Ccircle cx='8' cy='11' r='1.3'/%3E%3Ccircle cx='12' cy='7.5' r='1.3'/%3E%3Ccircle cx='16' cy='11' r='1.3'/%3E%3C/svg%3E")}
+.ic[data-i=file]{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5' fill='none' stroke='%23000' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E")}
+.ic[data-i=save]{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 3h11l3 3v15H5zM8 3v6h7V3M8 21v-7h8v7' fill='none' stroke='%23000' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E")}
+.ic[data-i=magnet]{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 3v8a6 6 0 0 0 12 0V3h-4v8a2 2 0 0 1-4 0V3zM6 7h4M14 7h4' fill='none' stroke='%23000' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E")}
+.ic[data-i=mirror]{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 3v18M8 7l-5 5 5 5zM16 7l5 5-5 5z' fill='none' stroke='%23000' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E")}
+.ic[data-i=bolt]{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M13 2L4 14h7l-1 8 9-12h-7z' fill='none' stroke='%23000' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E")}
+.ic[data-i=target]{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9' fill='none' stroke='%23000' stroke-width='2'/%3E%3Ccircle cx='12' cy='12' r='4.5' fill='none' stroke='%23000' stroke-width='2'/%3E%3Ccircle cx='12' cy='12' r='1.2'/%3E%3C/svg%3E")}
+.ic[data-i=plus]{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 5v14M5 12h14' stroke='%23000' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E")}
+.ic[data-i=pencil]{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 20l1-4L16 5a2.1 2.1 0 0 1 3 3L8 19zM14 7l3 3' fill='none' stroke='%23000' stroke-width='2' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E")}
+.ic[data-i=sliders]{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 7h9M19 7h1M4 12h3M13 12h7M4 17h11M19 17h1' stroke='%23000' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='7' r='2.2' fill='none' stroke='%23000' stroke-width='2'/%3E%3Ccircle cx='10' cy='12' r='2.2' fill='none' stroke='%23000' stroke-width='2'/%3E%3Ccircle cx='17' cy='17' r='2.2' fill='none' stroke='%23000' stroke-width='2'/%3E%3C/svg%3E")}
+.ic[data-i=menu]{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 6h16M4 12h16M4 18h16' stroke='%23000' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")}
+.ic[data-i=expand]{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+.ic[data-i=x]{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 6l12 12M18 6L6 18' stroke='%23000' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E")}
+.ic[data-i=keyboard]{--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='3' y='6' width='18' height='12' rx='2.5' fill='none' stroke='%23000' stroke-width='2'/%3E%3Cpath d='M7 10h.01M11 10h.01M15 10h.01M7 14h10' stroke='%23000' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E")}
+body{font-family:'Atkinson Hyperlegible',system-ui,sans-serif;font-size:14px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+header.studio-header{height:60px;gap:18px;padding:0 20px}
+.brand{font-size:21px;font-weight:700;letter-spacing:-.025em;font-variation-settings:"wdth" 92;gap:9px}
+.brand-mark{display:inline-flex;color:var(--accent)}
+.by{font-size:12px;color:var(--mute);text-decoration:none;padding:3px 9px;border:1px solid var(--line);border-radius:999px;white-space:nowrap;transition:color .15s,border-color .15s}
+.by:hover{color:var(--ink);border-color:var(--ink)}
+nav.studio-nav{gap:2px;font-size:14px;font-weight:700}
+nav.studio-nav a{border-radius:8px;padding:7px 12px}
+nav.studio-nav a.on{background:transparent;box-shadow:inset 0 -2px 0 var(--accent)}
+.btn{font-weight:700;font-size:13px;min-height:34px;padding:6px 14px;border-radius:9px;border:1px solid var(--line);background:var(--panel)}
+.btn:hover{border-color:var(--ink);background:var(--panel)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.pri:hover{background:var(--accent-ink);border-color:var(--accent-ink);filter:none}
+.btn.on{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:none}
+.btn-sm{min-height:32px;padding:5px 12px;font-size:12.5px}
+.seg{border-radius:10px;padding:3px;gap:2px;background:var(--panel-sub);border:1px solid var(--line)}
+.seg button{border:0;border-radius:7px;padding:5px 12px;font-weight:700;font-size:12.5px}
+.seg button.on{background:var(--panel);color:var(--ink);box-shadow:var(--shadow-sm)}
+.seg button:hover:not(.on){background:transparent;color:var(--ink)}
+.stage-bar{padding:10px 16px;gap:10px}
+.canvas-artboard-wrap{background:radial-gradient(circle,color-mix(in srgb,var(--ink) 16%,transparent) 1px,transparent 1.4px) 0 0/22px 22px,var(--bg);padding:24px}
+.canvas{background:transparent;border:0;border-radius:0;box-shadow:none;overflow:visible}
+.stage-footer{background:var(--panel)}
+aside.l,aside.r{background:var(--panel)}
+.pcard,.ecard{border-radius:12px;border:1px solid var(--line);background:var(--panel);transition:border-color .15s,box-shadow .15s}
+.pcard:hover,.ecard:hover{border-color:var(--ink);box-shadow:var(--shadow-sm)}
+.pcard.on,.ecard.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);background:var(--accent-soft)}
+.pcard-title,.ecard-title{font-weight:700}
+.drawer-seg{border-radius:10px;background:var(--panel-sub);padding:3px}
+.drawer-seg button{border-radius:7px;font-weight:700}
+.drawer-seg button.on{background:var(--panel);color:var(--ink);box-shadow:var(--shadow-sm)}
+.insp-nav{gap:4px}
+.insp-tab{font-weight:700;border-radius:8px}
+.insp-tab.on{box-shadow:inset 0 -2px 0 var(--accent);color:var(--ink)}
+.insp-hdr,.drawer-sec-title{font-family:'Bricolage Grotesque',system-ui,sans-serif;letter-spacing:-.01em}
+.page h1,.page h2{font-family:'Bricolage Grotesque',system-ui,sans-serif;letter-spacing:-.025em;font-variation-settings:"wdth" 92}
+.page h1{font-weight:700}
+input[type=range]{accent-color:var(--accent)}
+.val input,.numbox{font-family:'JetBrains Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.toast,.ai-modal,.exp-dropdown-menu{border-radius:14px}
+@media(max-width:900px){
+  header.studio-header{height:auto;flex-wrap:wrap;gap:8px 12px;padding:10px 14px}
+  .by{display:none}
+  nav.studio-nav{order:3;width:100%;overflow-x:auto;scrollbar-width:none}
+  .spacer{display:none}
+  .hdr-actions{margin-left:auto}
+  .hdr-actions .lbl{display:none}
+  .hdr-actions .btn{padding:6px 10px}
+  .hdr-actions .btn .ic{width:1.3em;height:1.3em}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ===================== v3 consolidation ===================== */
+.drawer-header[hidden],.howto[hidden]{display:none!important}
+.drawer-title{margin:0 0 10px;font:700 18px 'Bricolage Grotesque',system-ui,sans-serif;letter-spacing:-.02em}
+.drawer-hint{font-size:13px;color:var(--mute);margin:10px 0 12px}
+.pcard-note{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+details.adv{margin-top:18px;border-top:1px solid var(--line);padding-top:12px}
+details.adv>summary{cursor:pointer;font-weight:700;font-size:13px;color:var(--mute);padding:8px 0;list-style:none;display:flex;align-items:center;gap:8px;min-height:36px}
+details.adv>summary::before{content:"";width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);transition:transform .15s}
+details.adv[open]>summary::before{transform:rotate(45deg)}
+details.adv>summary:hover{color:var(--ink)}
+details.adv>summary::-webkit-details-marker{display:none}
+.howto{display:flex;align-items:center;gap:16px;padding:10px 16px;background:var(--accent-soft);border-bottom:1px solid var(--line)}
+.howto ol{display:flex;flex-wrap:wrap;gap:6px 22px;list-style:none;margin:0;padding:0;counter-reset:s;flex:1;font-size:13.5px}
+.howto li{counter-increment:s;display:flex;align-items:center;gap:8px}
+.howto li::before{content:counter(s);display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font:700 12px 'Atkinson Hyperlegible',sans-serif}
+.navmore{position:relative}
+.navmore>summary{list-style:none;cursor:pointer;padding:7px 12px;border-radius:8px;color:var(--mute);display:flex;align-items:center;gap:6px;transition:color .15s,background .15s}
+.navmore>summary::-webkit-details-marker{display:none}
+.navmore>summary::after{content:"";width:6px;height:6px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translateY(-2px)}
+.navmore>summary:hover,.navmore[open]>summary{color:var(--ink);background:var(--panel-sub)}
+.navmore:has(a.on)>summary{color:var(--ink);box-shadow:inset 0 -2px 0 var(--accent)}
+.navmenu{position:absolute;top:calc(100% + 6px);left:0;min-width:190px;display:flex;flex-direction:column;padding:6px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-md);z-index:60}
+.navmenu a{padding:9px 12px}
+@media(pointer:coarse){.btn,.seg button,.insp-tab,.navmore>summary{min-height:44px}}
+@media(max-width:900px){
+  .navmenu{position:static;flex-direction:row;border:0;box-shadow:none;padding:0;background:transparent;min-width:0}
+  .navmore[open]{display:flex;align-items:center}
+  .howto{flex-wrap:wrap}
+}
+
+/* ===================== v4 visual previews ===================== */
+.pcard{display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:start;padding:10px;cursor:pointer}
+.pcard-thumb,.ecard-thumb,.item-thumb{display:block;overflow:hidden;background:var(--panel-sub);border:1px solid var(--line);border-radius:9px;position:relative}
+.pcard-thumb{width:96px;aspect-ratio:3/2}
+.pcard-thumb:empty,.ecard-thumb:empty,.item-thumb:empty{background:linear-gradient(100deg,var(--panel-sub) 30%,var(--line-light) 50%,var(--panel-sub) 70%) 0 0/200% 100%;animation:shine 1.2s linear infinite}
+@keyframes shine{to{background-position:-200% 0}}
+.pcard-thumb svg,.ecard-thumb svg,.item-thumb svg{display:block;width:100%;height:100%}
+.pcard-body{min-width:0}
+.pcard .pcard-hdr{display:block}
+.pcard .pcard-title{display:block;font-size:13.5px;line-height:1.25}
+.pcard .tag{display:inline-block;margin-top:4px}
+.pcard-note{font-size:12px;margin-top:4px}
+.ecard{display:grid;grid-template-columns:72px 1fr;gap:10px;align-items:center;padding:8px;cursor:pointer}
+.ecard-thumb{width:72px;aspect-ratio:3/2}
+.ecard-body{min-width:0}
+.item{display:grid;grid-template-columns:52px 1fr;grid-template-rows:auto auto;column-gap:10px;align-items:center;cursor:pointer}
+.item-thumb{grid-row:1/3;width:52px;aspect-ratio:3/2;border-radius:7px}
+.item .item-name{align-self:end}
+.item small{align-self:start}
+.seg button .mi{display:inline-block;vertical-align:-2px;margin-right:6px}
+@media(max-width:900px){.seg button .mi{display:none}}
+@media(prefers-reduced-motion:reduce){.pcard-thumb:empty,.ecard-thumb:empty,.item-thumb:empty{animation:none}}
+
+/* gallery layout for pattern cards */
+#presets{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.pcard{display:block;padding:8px}
+.pcard-thumb{width:100%}
+.pcard-note{display:none}
+.pcard .pcard-title{font-size:13px;margin-top:9px;line-height:1.25}
+.pcard .tag{margin-top:5px}
+.pcard.on .pcard-thumb{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+
+/* phones: the same visual gallery, as a swipeable row under the artwork */
+@media(max-width:768px){
+  aside.l{display:block;padding:10px 0 4px}
+  aside.l .drawer-body{padding:0 12px}
+  aside.l .drawer-title{font-size:15px;margin-bottom:8px}
+  aside.l .drawer-hint,aside.l .preset-search-wrap,aside.l details.adv{display:none}
+  #presets{display:flex;overflow-x:auto;gap:10px;padding-bottom:10px;scroll-snap-type:x proximity;scrollbar-width:thin}
+  #presets .pcard{flex:0 0 132px;scroll-snap-align:start}
+  #presets .pcard .tag{display:none}
+}
 </style>
 </head>
 <body>
@@ -1142,20 +1290,22 @@ code{
 
 <header class="studio-header">
   <a class="brand" id="brandLink" title="Pattern Designer Studio">
-    <span class="brand-mark">◆</span>
+    <span class="brand-mark"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><polygon points="12.00,1.00 13.99,7.20 19.78,4.22 16.80,10.01 23.00,12.00 16.80,13.99 19.78,19.78 13.99,16.80 12.00,23.00 10.01,16.80 4.22,19.78 7.20,13.99 1.00,12.00 7.20,10.01 4.22,4.22 10.01,7.20" fill="currentColor"/></svg></span>
     <span>Pattern Designer</span>
   </a>
+  <a class="by" href="https://huescript.com/#/projects" target="_blank" rel="noopener">by huescript</a>
   <nav id="nav" class="studio-nav">
     <a class="on" data-p="designer">Designer</a>
     <a data-p="guide">Guide</a>
-    <a data-p="constructions">Constructions</a>
-    <a data-p="sources">Sources</a>
+    <details class="navmore"><summary>Reference</summary>
+      <div class="navmenu"><a data-p="constructions">Constructions</a><a data-p="sources">Sources</a></div>
+    </details>
     <a data-p="about">About</a>
   </nav>
   <div class="spacer"></div>
   <div class="hdr-actions">
-    <button class="btn btn-sm" id="rnd" title="Generate random variations (Keyboard shortcut: R)">🎲 Randomise</button>
-    <button class="btn btn-sm" id="copy" title="Copy shareable link with parameters">🔗 Share</button>
+    <button class="btn btn-sm" id="rnd" title="Generate random variations (Keyboard shortcut: R)"><i class=ic data-i=dice></i><span class="lbl">Randomise</span></button>
+    <button class="btn btn-sm" id="copy" title="Copy shareable link with parameters"><i class=ic data-i=link></i><span class="lbl">Share</span></button>
     
     <!-- Consolidated Export Dropdown -->
     <div class="exp-dropdown-wrap">
@@ -1202,7 +1352,7 @@ code{
         </button>
       </div>
     </div>
-    <button class="btn btn-sm" id="btnHelp" title="Keyboard Shortcuts &amp; Help (?)" aria-label="Shortcuts"><span>⌨</span> Shortcuts</button>
+    <button class="btn btn-sm" id="btnHelp" title="Keyboard Shortcuts &amp; Help (?)" aria-label="Shortcuts"><i class=ic data-i=keyboard></i><span class="lbl">Shortcuts</span></button>
   </div>
 </header>
 
@@ -1210,23 +1360,25 @@ code{
 <main id="p-designer">
   <!-- Left Panel: Presets & Geometric Engines Drawer -->
   <aside class="l" id="leftDrawer">
-    <div class="drawer-header">
+    <div class="drawer-header" hidden>
       <div class="drawer-seg">
-        <button id="tabPresets" class="on" type="button">⭐ Presets</button>
-        <button id="tabEngines" type="button">📐 Engines &amp; Tilings</button>
+        <button id="tabPresets" class="on" type="button"><i class=ic data-i=star></i> Presets</button>
+        <button id="tabEngines" type="button"><i class=ic data-i=ruler></i> Engines &amp; Tilings</button>
       </div>
     </div>
     <div class="drawer-body">
+      <h2 class="drawer-title">Choose a pattern</h2>
       <!-- Presets pane -->
       <div id="panePresets">
         <div class="preset-search-wrap">
-          <input type="search" id="presetSearch" placeholder="Filter presets (e.g. star, zellige, hex)..." class="preset-search-input" aria-label="Filter presets">
+          <input type="search" id="presetSearch" placeholder="Search patterns (star, hex, mandala)" class="preset-search-input" aria-label="Search patterns">
         </div>
-        <div class="drawer-hint">Select a starter design to explore geometries, modes, and palettes:</div>
+        <div class="drawer-hint">Pick a starting point. You can change everything afterwards.</div>
         <div id="presets"></div>
       </div>
       <!-- Engines & Tilings pane -->
-      <div id="paneEngines" style="display:none">
+      <details id="advEngines" class="adv"><summary>Advanced: build from a construction method</summary>
+      <div id="paneEngines">
         <div class="drawer-sec-title">Construction Engine</div>
         <div id="engines"></div>
         <div id="h-tiling" class="drawer-sec-title" style="margin-top:14px">Underlying Tiling</div>
@@ -1234,39 +1386,47 @@ code{
         <div id="h-glib" class="drawer-sec-title" style="display:none;margin-top:14px">Numbered Pattern Collection</div>
         <div id="glib"></div>
         <div class="card" id="srcCard"></div>
-      </div>
+      </div></details>
     </div>
   </aside>
 
   <!-- Center Stage: Canvas & Studio Toolbar -->
   <section class="stage">
+    <div class="howto" id="howto" role="note" hidden>
+      <ol>
+        <li><span><b>Pick</b> a pattern</span></li>
+        <li><span><b>Adjust</b> its shape and color</span></li>
+        <li><span><b>Export</b> it for print or cutting</span></li>
+      </ol>
+      <button class="btn btn-sm" id="howtoClose" type="button">Got it</button>
+    </div>
     <div class="stage-bar">
-      <button class="btn btn-sm" id="btnToggleDrawer" title="Toggle presets &amp; library drawer">
-        <span>☰</span> Library
+      <button class="btn btn-sm" id="btnToggleDrawer" title="Show or hide the pattern list">
+        <span><i class=ic data-i=menu></i></span> Patterns
       </button>
       <div class="bar-sep"></div>
       <div class="seg" id="modes"></div>
       <button class="btn btn-sm" id="btnStageDualGrid" style="display:inline-flex;align-items:center;gap:5px" title="Toggle Dual (Laves) Grid Lattice Overlay"><span>⬡</span> Dual Grid</button>
-      <button class="btn btn-sm pri" id="btnEditInDraw" style="display:none;align-items:center;gap:5px" title="Edit the pattern directly: draw and erase lines on it. Every edit repeats across the whole pattern."><span>✏️</span> Edit</button>
+      <button class="btn btn-sm pri" id="btnEditInDraw" style="display:none;align-items:center;gap:5px" title="Edit the pattern directly: draw and erase lines on it. Every edit repeats across the whole pattern."><span><i class=ic data-i=pencil></i></span> Edit</button>
       <div class="seg" id="editBar" style="display:none">
         <button id="eToolLine" class="on" title="Draw a line: click a start point, then an end point. Keeps going from the last point; Esc or right-click stops.">Line</button>
         <button id="eToolErase" title="Erase a line of the pattern, or one you drew">Erase</button>
         <button id="eUndo" title="Undo the last edit (Ctrl+Z)">Undo</button>
         <button id="eClear" title="Remove every edit and go back to the generated pattern">Clear</button>
-        <button id="eSave" title="Save the edited pattern as SVG, PNG, PDF or DXF">💾 Save</button>
+        <button id="eSave" title="Save the edited pattern as SVG, PNG, PDF or DXF"><i class=ic data-i=save></i> Save</button>
       </div>
       <button class="btn btn-sm" id="btnStageFrame" type="button" title="Border frame around the artwork">▢ Frame</button>
-      <button class="btn btn-sm pri" id="btnAddPatternToDraw" style="display:none;align-items:center;gap:5px" title="Add Polygons in Contact or other geometric patterns to the canvas to edit"><span>➕</span> Add Pattern…</button>
-      <button class="btn btn-sm" id="btnSmartSnap" style="display:none;align-items:center;gap:5px" title="Smart Snap: automatically align drawing points to the nearest structural intersection point within the detected grid"><span>🧲</span> Smart Snap</button>
+      <button class="btn btn-sm pri" id="btnAddPatternToDraw" style="display:none;align-items:center;gap:5px" title="Add Polygons in Contact or other geometric patterns to the canvas to edit"><span><i class=ic data-i=plus></i></span> Add Pattern…</button>
+      <button class="btn btn-sm" id="btnSmartSnap" style="display:none;align-items:center;gap:5px" title="Smart Snap: automatically align drawing points to the nearest structural intersection point within the detected grid"><span><i class=ic data-i=magnet></i></span> Smart Snap</button>
       <span class="spacer"></span>
       <div class="seg">
         <button id="zo" title="Zoom out (−)">−</button>
         <button id="reset" title="Fit canvas view (0 or F)">Fit</button>
         <button id="zi" title="Zoom in (+)">+</button>
       </div>
-      <button class="btn btn-sm" id="btnStageFullscreen" title="Maximize canvas / full window (F11)"><span>⛶</span> Fullscreen</button>
-      <button class="btn btn-sm" id="btnToggleInspector" title="Toggle right inspector controls"><span>⚙</span> Inspector</button>
-      <button class="btn btn-sm" id="stageRnd" title="Randomise pattern (R)">🎲</button>
+      <button class="btn btn-sm" id="btnStageFullscreen" title="Maximize canvas / full window (F11)"><span><i class=ic data-i=expand></i></span> Fullscreen</button>
+      <button class="btn btn-sm" id="btnToggleInspector" title="Show or hide the settings panel"><span><i class=ic data-i=sliders></i></span> Settings</button>
+      <button class="btn btn-sm" id="stageRnd" style="display:none" title="Randomise pattern (R)"><i class=ic data-i=dice></i></button>
     </div>
     <div class="canvas-artboard-wrap">
       <div class="canvas"><svg id="svg" viewBox="0 0 1000 720" preserveAspectRatio="xMidYMid slice"></svg></div>
@@ -1287,8 +1447,8 @@ code{
 <div id="patDrawModal" class="ai-modal-backdrop" style="display:none" role="dialog" aria-modal="true" aria-labelledby="patDrawModalTitle">
   <div class="ai-modal" style="max-width:740px">
     <div class="ai-modal-header">
-      <h3 class="ai-modal-title" id="patDrawModalTitle"><span>⭐</span> Add Pattern to Drawing Grid</h3>
-      <button class="btn btn-sm" id="patDrawBtnClose" title="Close modal" style="padding:2px 8px;font-size:15px;line-height:1">✕</button>
+      <h3 class="ai-modal-title" id="patDrawModalTitle"><span><i class=ic data-i=star></i></span> Add Pattern to Drawing Grid</h3>
+      <button class="btn btn-sm" id="patDrawBtnClose" title="Close modal" style="padding:2px 8px;font-size:15px;line-height:1"><i class=ic data-i=x></i></button>
     </div>
     <div class="ai-modal-body" id="patDrawModalBody"></div>
     <div class="ai-modal-footer" id="patDrawModalFooter"></div>
@@ -1299,8 +1459,8 @@ code{
 <div id="shortcutsModal" class="ai-modal-backdrop" style="display:none" role="dialog" aria-modal="true" aria-labelledby="shortcutsModalTitle">
   <div class="ai-modal" style="max-width:540px">
     <div class="ai-modal-header">
-      <h3 class="ai-modal-title" id="shortcutsModalTitle"><span>⌨</span> Keyboard Shortcuts &amp; Studio Navigation</h3>
-      <button class="btn btn-sm" id="shortcutsBtnClose" title="Close" style="padding:2px 8px;font-size:15px;line-height:1">✕</button>
+      <h3 class="ai-modal-title" id="shortcutsModalTitle"><span><i class=ic data-i=keyboard></i></span> Keyboard Shortcuts &amp; Studio Navigation</h3>
+      <button class="btn btn-sm" id="shortcutsBtnClose" title="Close" style="padding:2px 8px;font-size:15px;line-height:1"><i class=ic data-i=x></i></button>
     </div>
     <div class="ai-modal-body" style="padding:18px 22px">
       <div class="shortcuts-grid">
@@ -1340,7 +1500,7 @@ code{
   <h2>1 · Polygons in contact (Hankin / Kaplan)</h2>
   <p>Start with an underlying tiling of regular polygons. On every polygon edge mark the <b>midpoint</b>. From each midpoint send two rays into the tile, each making the same <b>contact angle</b> with the edge. Around each tile vertex, the ray from one edge meets the ray from the neighbouring edge; that meeting point is a star point. Joining midpoint → meeting point → midpoint all the way round the tile gives the motif, and because every midpoint is shared with the neighbouring tile the lines run continuously across the whole plane. Finally the underlying polygons are discarded.</p>
   <p>The contact angle is the single control that turns one tiling into a whole family: shallow angles give wide, open stars, steep angles give tight, spiky ones. This is Hankin's method [3], in the computational form given by Kaplan [7].</p>
-  <p><b>Interactive Grid Drawing &amp; Editing:</b> You can transfer any Polygons in Contact construction directly into the interactive <b>Draw on a grid</b> engine by clicking <b>✏️ Edit in Draw</b>. Every star ray and contact polygon becomes an editable vector segment that you can draw onto, erase, extend with circular arcs or splines, and interlace with custom strapwork bands. You can also insert curated Polygons in Contact templates directly into your drawing via the <b>➕ Add Pattern</b> tool (or keyboard shortcut <kbd>P</kbd>).</p>
+  <p><b>Interactive Grid Drawing &amp; Editing:</b> You can transfer any Polygons in Contact construction directly into the interactive <b>Draw on a grid</b> engine by clicking <b><i class=ic data-i=pencil></i> Edit in Draw</b>. Every star ray and contact polygon becomes an editable vector segment that you can draw onto, erase, extend with circular arcs or splines, and interlace with custom strapwork bands. You can also insert curated Polygons in Contact templates directly into your drawing via the <b><i class=ic data-i=plus></i> Add Pattern</b> tool (or keyboard shortcut <kbd>P</kbd>).</p>
 
   <h2>2 · Underlying tilings</h2>
   <p>Eight tilings are implemented — the three regular ones and five Archimedean ones that historically carry the great majority of Islamic star patterns. The number of sides of a polygon sets the local symmetry of the star that forms on it: an octagon carries an 8-point star, a dodecagon a 12-point star.</p>
@@ -2768,7 +2928,15 @@ const ENGINES=[
   {id:'voro', name:'Voronoi — sharp to round', sub:'contemporary', tag:'pl', def:{vlayout:'hex',vrepeat:2,vcount:12,vjitter:55,vrelax:2,width:5,round:0.5},
    src:'Contemporary construction, not a historic reconstruction. Related to controlled-variation work such as <i>Random Zellij Compositions</i>, Bridges archive [20].'}
 ];
-const MODES=[['construct','Construction'],['line','Line'],['interlace','Interlace'],['jali','Solid / void'],['mosaic','Mosaic']];
+const MODES=[['construct','Guides'],['line','Lines'],['interlace','Woven'],['jali','Cut-out'],['mosaic','Tiles']];
+const MODE_ICON={
+  construct:"<path d='M2 12L9 3l7 9' stroke-dasharray='2 2'/><circle cx='9' cy='3' r='1.6' fill='currentColor' stroke='none'/>",
+  line:"<path d='M2 12L9 3l7 9z'/>",
+  interlace:"<path d='M2 7h14M9 1.5v4M9 8.5v4.5'/>",
+  jali:"<path fill='currentColor' stroke='none' fill-rule='evenodd' d='M1 1h16v12H1zM4.5 7a2 2 0 1 0 4 0a2 2 0 1 0-4 0M9.5 7a2 2 0 1 0 4 0a2 2 0 1 0-4 0'/>",
+  mosaic:"<rect x='1.5' y='1.5' width='6' height='5' fill='currentColor' stroke='none'/><rect x='10' y='1.5' width='6' height='5' fill='currentColor' fill-opacity='.45' stroke='none'/><rect x='1.5' y='8' width='6' height='4.5' fill='currentColor' fill-opacity='.45' stroke='none'/><rect x='10' y='8' width='6' height='4.5' fill='currentColor' stroke='none'/>"
+};
+const MODE_TIPS={construct:'Show the construction guides behind the pattern',line:'Plain lines only',interlace:'Lines that weave over and under each other',jali:'Solid panel with the pattern cut out, like a carved screen',mosaic:'Filled colour tiles'};
 
 /* ============================================================ starting points
    One-click looks. Each is only a set of engine settings, so everything can be
@@ -3933,7 +4101,7 @@ function renderGrid(thumb){
         else if(st.gSym === 'my') desc = hHits ? 'H-mirror (on-grid)' : 'H-mirror (half-grid)';
         else if(st.gSym === 'r4') desc = '4-fold rotation';
         else if(st.gSym === 'r2') desc = '2-fold rotation';
-        return `<span style="color:#d97706;font-weight:600">🪞 ${st.gSym.toUpperCase()}: ${desc}</span>`;
+        return `<span style="color:#d97706;font-weight:600"><i class=ic data-i=mirror></i> ${st.gSym.toUpperCase()}: ${desc}</span>`;
       } else {
         let desc = '';
         if(st.gSym === 'd6') desc = '6 mirrors (3 on-grid, 3 bisecting)';
@@ -3941,10 +4109,10 @@ function renderGrid(thumb){
         else if(st.gSym === 'r6') desc = '6-fold rotation';
         else if(st.gSym === 'r3') desc = '3-fold rotation';
         else if(st.gSym === 'r2') desc = '2-fold rotation';
-        return `<span style="color:#d97706;font-weight:600">🪞 ${st.gSym.toUpperCase()}: ${desc}</span>`;
+        return `<span style="color:#d97706;font-weight:600"><i class=ic data-i=mirror></i> ${st.gSym.toUpperCase()}: ${desc}</span>`;
       }
     })(),
-    st.gSmartSnap?'<span style="color:#2563eb;font-weight:600">🧲 Smart Snap</span>':'',
+    st.gSmartSnap?'<span style="color:#2563eb;font-weight:600"><i class=ic data-i=magnet></i> Smart Snap</span>':'',
     symBad?'<span class="warn">4-fold symmetry needs equal width and height</span>':'',
     openEnds?(openEnds.length
       ?`<span class="warn">${openEnds.length} unclosed end${openEnds.length===1?'':'s'}${(()=>{const n=openEnds.filter(e=>e.gap<=1.0001).length;return n?`, ${n} within a grid step`:''})()}</span>`
@@ -4645,7 +4813,7 @@ function setEditMode(on){
   EL.start = null; EL.hit = null;
   const bar = $('editBar'), btn = $('btnEditInDraw');
   if(bar) bar.style.display = EL.on ? 'inline-flex' : 'none';
-  if(btn){ btn.classList.toggle('on', EL.on); btn.innerHTML = EL.on ? '<span>✓</span> Done editing' : '<span>✏️</span> Edit'; }
+  if(btn){ btn.classList.toggle('on', EL.on); btn.innerHTML = EL.on ? '<span>✓</span> Done editing' : '<span><i class=ic data-i=pencil></i></span> Edit'; }
   const svg = document.getElementById('svg'); if(svg) svg.style.cursor = EL.on ? 'crosshair' : '';
   setEditTool(EL.tool);
   render();
@@ -5269,6 +5437,50 @@ const $=id=>document.getElementById(id);
 /* a preset is current only while the canvas still is exactly that preset */
 const presetMatches=p=>Object.entries(p.s).every(([k,v])=>st[k]===v);
 let lastPreset=-1;
+
+/* ---- live thumbnails: draw a spec with the real renderer, keep the markup ---- */
+const THUMBS=new Map();
+function thumbSpec(key){
+  const [kind,id]=[key.slice(0,1),key.slice(2)];
+  if(kind==='p'){ const p=PRESETS[+id]; return p?p.s:null; }
+  if(kind==='e'){
+    const e=ENGINES.find(x=>x.id===id); if(!e) return null;
+    if(id==='gridp'){ const g=GRID_LIB&&GRID_LIB[0]; return Object.assign({},e.def,{engine:'gridp'},g?g.s:{}); }
+    return Object.assign({},e.def,{engine:id,mode:'line',frame:false});
+  }
+  if(kind==='t'){ const e=ENGINES.find(x=>x.id==='pic'); return Object.assign({},e.def,{engine:'pic',tiling:id,mode:'line',frame:false,width:2.5}); }
+  return null;
+}
+function thumbMarkup(key){
+  if(THUMBS.has(key)) return THUMBS.get(key);
+  const spec=thumbSpec(key); if(!spec) return '';
+  const saved=st, wasOn=EL.on; let html='';
+  try{
+    EL.on=false;
+    st=Object.assign({},DEF,spec);
+    clampAll();
+    let inner;
+    if(st.engine==='gridp'){ inner=renderGrid(true); }
+    else { render(); inner=document.getElementById('svg').innerHTML; }
+    const x=W*0.14, y=H*0.14, w=W*0.72, h=H*0.72;
+    html='<svg viewBox="'+x+' '+y+' '+w+' '+h+'" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">'+inner+'</svg>';
+  }catch(err){ html=''; }
+  finally{ st=saved; EL.on=wasOn; }
+  THUMBS.set(key,html);
+  return html;
+}
+let thumbTimer=0;
+function fillThumbs(){
+  clearTimeout(thumbTimer);
+  const todo=[...document.querySelectorAll('[data-th]:empty')];
+  if(!todo.length) return;
+  const batch=todo.slice(0,3);
+  batch.forEach(el=>{ el.innerHTML=thumbMarkup(el.dataset.th); });
+  render();                                  /* put the real canvas back */
+  if(todo.length>batch.length) thumbTimer=setTimeout(fillThumbs,20);
+}
+function scheduleThumbs(){ clearTimeout(thumbTimer); thumbTimer=setTimeout(fillThumbs,60); }
+
 function applyPreset(i){
   const p=PRESETS[i]; if(!p) return;
   lastPreset=i;
@@ -5305,11 +5517,11 @@ function buildGridLib(){
   $('glib').innerHTML=`
     <div style="margin-bottom:10px;padding:10px;border-radius:8px;background:var(--bg);border:1px solid var(--line);border-left:3px solid var(--accent)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-        <span style="font-weight:600;font-size:12px;display:flex;align-items:center;gap:5px"><span>⭐</span> Polygons in Contact</span>
+        <span style="font-weight:600;font-size:12px;display:flex;align-items:center;gap:5px"><span><i class=ic data-i=star></i></span> Polygons in Contact</span>
         <span class="tag doc" style="font-size:9.5px">Hankin · Kaplan</span>
       </div>
       <p style="margin:0 0 8px;font-size:11px;color:var(--mute);line-height:1.4">Add Saracenic rosettes &amp; contact polygons to draw and edit on the active canvas.</p>
-      <button class="btn pri" id="openPatModalBtn" style="width:100%;font-size:12px;padding:6px 10px;display:flex;align-items:center;justify-content:center;gap:6px"><span>➕</span> Add Pattern to Canvas…</button>
+      <button class="btn pri" id="openPatModalBtn" style="width:100%;font-size:12px;padding:6px 10px;display:flex;align-items:center;justify-content:center;gap:6px"><span><i class=ic data-i=plus></i></span> Add Pattern to Canvas…</button>
     </div>
     <select id="glibSel" aria-label="Numbered patterns by complexity">${opts}</select>
     <div style="display:flex;gap:6px;margin-top:8px">
@@ -5370,18 +5582,23 @@ function renderPresetsList(q = ''){
 
   container.innerHTML = filtered.map(({ p, i }) => {
     const isCur = presetMatches(p);
-    return `<div class="pcard${isCur ? ' on' : ''}" data-pre="${i}">
-      <div class="pcard-hdr">
-        <span class="pcard-title">${p.name}</span>
-        <span class="tag">${p.s.mode || 'pattern'}</span>
+    return `<div class="pcard${isCur ? ' on' : ''}" data-pre="${i}" role="button" tabindex="0" title="${(p.note||'').replace(/"/g,'&quot;')}">
+      <div class="pcard-thumb" data-th="p:${i}">${THUMBS.get('p:'+i)||''}</div>
+      <div class="pcard-body">
+        <div class="pcard-hdr">
+          <span class="pcard-title">${p.name}</span>
+          <span class="tag">${p.s.mode || 'pattern'}</span>
+        </div>
+        <div class="pcard-note">${p.note || ''}</div>
       </div>
-      <div class="pcard-note">${p.note || ''}</div>
     </div>`;
   }).join('');
 
   container.querySelectorAll('[data-pre]').forEach(el => {
     el.onclick = () => applyPreset(+el.dataset.pre);
+    el.onkeydown = ev => { if(ev.key==='Enter'||ev.key===' '){ ev.preventDefault(); applyPreset(+el.dataset.pre); } };
   });
+  scheduleThumbs();
 }
 
 function pickEngine(id){
@@ -5438,7 +5655,7 @@ function buildLists(){
       stg.classList.toggle('fullscreen');
       const isFs = stg.classList.contains('fullscreen');
       bfs.classList.toggle('on', isFs);
-      bfs.innerHTML = isFs ? '<span>✕</span> Exit Fullscreen' : '<span>⛶</span> Fullscreen';
+      bfs.innerHTML = isFs ? '<span><i class=ic data-i=x></i></span> Exit Fullscreen' : '<span><i class=ic data-i=expand></i></span> Fullscreen';
       render();
     };
   }
@@ -5523,11 +5740,14 @@ function buildLists(){
   // Engines cards
   $('engines').innerHTML=ENGINES.map(e=>
     `<div class="ecard${e.id===st.engine?' on':''}" data-e="${e.id}">
-      <div class="ecard-hdr">
-        <span class="ecard-title">${e.name}</span>
-        <span class="tag ${e.tag}">${e.tagText||(e.tag==='doc'?'Documented':'Contemporary')}</span>
+      <div class="ecard-thumb" data-th="e:${e.id}">${THUMBS.get('e:'+e.id)||''}</div>
+      <div class="ecard-body">
+        <div class="ecard-hdr">
+          <span class="ecard-title">${e.name}</span>
+          <span class="tag ${e.tag}">${e.tagText||(e.tag==='doc'?'Documented':'Contemporary')}</span>
+        </div>
+        <div class="ecard-sub">${e.sub}</div>
       </div>
-      <div class="ecard-sub">${e.sub}</div>
     </div>`).join('');
   $('engines').querySelectorAll('[data-e]').forEach(el=>el.onclick=()=>pickEngine(el.dataset.e));
 
@@ -5538,16 +5758,17 @@ function buildLists(){
     const rows=Object.entries(TILINGS).filter(([,t])=>t.g===gname);
     if(!rows.length) return '';
     return `<div class="grp">${gname}<em>${gnote}</em></div>`+rows.map(([k,t])=>
-      `<div class="item${k===st.tiling?' on':''}" data-t="${k}"><span>${t.label}</span><small>${t.vf}</small></div>`).join('');
+      `<div class="item${k===st.tiling?' on':''}" data-t="${k}"><span class="item-thumb" data-th="t:${k}">${THUMBS.get('t:'+k)||''}</span><span class="item-name">${t.label}</span><small>${t.vf}</small></div>`).join('');
   }).join('')+`<div class="card" style="margin-top:10px"><b>Dual (Laves)</b>Each of these can also be shown as its dual — 18 tessellations in all. Two of the eight Archimedean tilings, the snub square 3.3.4.3.4 and snub hexagonal 3.3.3.3.6, are not yet built.</div>`:'';
   $('tilings').querySelectorAll('[data-t]').forEach(el=>el.onclick=()=>{st.tiling=el.dataset.t;buildLists();render();sync()});
 
   const e=ENGINES.find(x=>x.id===st.engine);
   $('srcCard').innerHTML=`<b>Source</b>${e.src}${e.id==='gridp'?' <a href="#" data-go="guide">How to use it: read the guide</a>':''}`;
   $('srcCard').querySelectorAll('[data-go]').forEach(a=>a.onclick=ev=>{ev.preventDefault();document.querySelector('#nav [data-p='+a.dataset.go+']').click()});
+  scheduleThumbs();
 
   $('modes').style.display=(st.engine==='gridp')?'none':'';
-  $('modes').innerHTML=MODES.map(([k,n])=>`<button data-m="${k}" class="${k===st.mode?'on':''}">${n}</button>`).join('');
+  $('modes').innerHTML=MODES.map(([k,n])=>`<button data-m="${k}" title="${MODE_TIPS[k]||''}" class="${k===st.mode?'on':''}"><svg class="mi" viewBox="0 0 18 14" width="18" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${MODE_ICON[k]||''}</svg>${n}</button>`).join('');
   $('modes').querySelectorAll('button').forEach(b=>b.onclick=()=>{st.mode=b.dataset.m;buildLists();render();sync()});
 
   const ab = $('artDimBadge');
@@ -5586,8 +5807,8 @@ function pickRow(){
   }).join('')}</select>`;
   if(st.engine === 'gridp'){
     if(GRID_LIB.length) h += `<select id="pickLib" aria-label="Pattern collection">${gridLibOptions()}</select>`;
-    h += `<button class="btn pri" id="pickAdd" type="button" title="Add Polygons in Contact or other patterns to the drawing">➕ Add</button>`;
-  } else h += `<button class="btn" id="pickSend" type="button" title="Send this pattern to the Drawing Grid">✏️ To Draw</button>`;
+    h += `<button class="btn pri" id="pickAdd" type="button" title="Add Polygons in Contact or other patterns to the drawing"><i class=ic data-i=plus></i> Add</button>`;
+  } else h += `<button class="btn" id="pickSend" type="button" title="Send this pattern to the Drawing Grid"><i class=ic data-i=pencil></i> To Draw</button>`;
   return h + `</div>`;
 }
 function buildParams(){
@@ -5595,9 +5816,9 @@ function buildParams(){
   const rows=visibleCtrls();
 
   let h = `<div class="insp-nav">
-    <button class="insp-tab ${paramTab==='geo'?'on':''}" data-ptab="geo" type="button">📐 Geometry</button>
-    <button class="insp-tab ${paramTab==='color'?'on':''}" data-ptab="color" type="button">🎨 Style &amp; Color</button>
-    <button class="insp-tab ${paramTab==='art'?'on':''}" data-ptab="art" type="button">📄 Artboard</button>
+    <button class="insp-tab ${paramTab==='geo'?'on':''}" data-ptab="geo" type="button"><i class=ic data-i=ruler></i> Shape</button>
+    <button class="insp-tab ${paramTab==='color'?'on':''}" data-ptab="color" type="button"><i class=ic data-i=palette></i> Color</button>
+    <button class="insp-tab ${paramTab==='art'?'on':''}" data-ptab="art" type="button"><i class=ic data-i=file></i> Page</button>
   </div>`;
 
   if(paramTab === 'geo'){
@@ -5613,26 +5834,26 @@ function buildParams(){
       h += `
       <div class="card" style="margin-bottom:12px;background:var(--panel-sub);border:1px solid var(--line);border-left:3px solid var(--accent)">
         <div style="font-weight:600;font-size:12px;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between">
-          <span>✏️ Edit in Drawing Grid</span>
+          <span><i class=ic data-i=pencil></i> Edit in Drawing Grid</span>
           <span class="tag doc" style="font-size:9.5px">Interactive</span>
         </div>
         <p style="margin:0 0 8px;font-size:11px;color:var(--mute);line-height:1.4">Transfer these contact polygons &amp; Hankin star rays to the drawing grid to edit lines, erase, and draw custom shapes.</p>
         <button class="btn pri" id="btnInspEditInDraw" type="button" style="width:100%;font-size:12px;padding:6px 10px;display:flex;align-items:center;justify-content:center;gap:6px">
-          <span>✏️</span> Send to Draw &amp; Edit
+          <span><i class=ic data-i=pencil></i></span> Send to Draw &amp; Edit
         </button>
       </div>`;
     } else if(st.engine === 'gridp'){
       h += `
       <div style="display:flex;gap:6px;margin-bottom:12px">
         <button class="btn pri" id="btnInspAddPattern" type="button" style="flex:1;font-size:12px;padding:6px 8px;display:flex;align-items:center;justify-content:center;gap:5px">
-          <span>➕</span> Add Polygons in Contact…
+          <span><i class=ic data-i=plus></i></span> Add Polygons in Contact…
         </button>
       </div>`;
     } else {
       h += `
       <div style="margin-bottom:12px">
         <button class="btn" id="btnInspEditInDraw" type="button" style="width:100%;font-size:12px;padding:6px 10px;display:flex;align-items:center;justify-content:center;gap:6px">
-          <span>✏️</span> Send Pattern to Drawing Grid
+          <span><i class=ic data-i=pencil></i></span> Send Pattern to Drawing Grid
         </button>
       </div>`;
     }
@@ -5684,7 +5905,7 @@ function buildParams(){
         </button>
       </div>
       <button class="btn" id="artCopyLink" style="width:100%;margin-top:10px;padding:8px" type="button">
-        🔗 Copy Shareable Design Link
+        <i class=ic data-i=link></i> Copy Shareable Design Link
       </button>
     </div>`;
   }
@@ -5710,7 +5931,7 @@ function buildParams(){
   const bce = $('btnChangeEngine');
   if(bce) bce.onclick = () => {
     $('p-designer').classList.remove('drawer-collapsed');
-    const te = $('tabEngines'); if(te) te.click();
+    const ad = $('advEngines'); if(ad){ ad.open = true; ad.scrollIntoView({block:'nearest'}); }
   };
 
   const es = $('artExpSvg'), ep = $('artExpPdf'), ed = $('artExpDxf'), cl = $('artCopyLink');
@@ -6452,16 +6673,16 @@ function renderPatModalContent(){
   const titleEl = $('patDrawModalTitle');
   if(titleEl){
     titleEl.innerHTML = patModalTab === 'current'
-      ? '<span>✏️</span> Transfer Pattern to Drawing Grid'
-      : '<span>⭐</span> Add Pattern to Drawing Grid';
+      ? '<span><i class=ic data-i=pencil></i></span> Transfer Pattern to Drawing Grid'
+      : '<span><i class=ic data-i=star></i></span> Add Pattern to Drawing Grid';
   }
 
   // Header tabs
   let tabsHtml = `
     <div class="pat-tabs">
-      <button class="pat-tab-btn ${patModalTab==='pic'?'on':''}" id="patTabPic">⭐ Polygons in Contact (${PIC_PATTERNS.length})</button>
-      <button class="pat-tab-btn ${patModalTab==='field'?'on':''}" id="patTabField">📐 Classic Lattices</button>
-      ${st.engine==='gridp'?'':`<button class="pat-tab-btn ${patModalTab==='current'?'on':''}" id="patTabCurrent">⚡ Current Screen Pattern</button>`}
+      <button class="pat-tab-btn ${patModalTab==='pic'?'on':''}" id="patTabPic"><i class=ic data-i=star></i> Polygons in Contact (${PIC_PATTERNS.length})</button>
+      <button class="pat-tab-btn ${patModalTab==='field'?'on':''}" id="patTabField"><i class=ic data-i=ruler></i> Classic Lattices</button>
+      ${st.engine==='gridp'?'':`<button class="pat-tab-btn ${patModalTab==='current'?'on':''}" id="patTabCurrent"><i class=ic data-i=bolt></i> Current Screen Pattern</button>`}
     </div>
   `;
 
@@ -6529,7 +6750,7 @@ function renderPatModalContent(){
     contentHtml = `
       <div style="padding:10px 12px;border-radius:8px;background:var(--panel-sub);border:1px solid var(--line);margin-bottom:4px">
         <div style="font-weight:600;font-size:13px;display:flex;align-items:center;gap:6px">
-          <span>⚡</span> Active Canvas Geometry: <b>${tileName}</b>
+          <span><i class=ic data-i=bolt></i></span> Active Canvas Geometry: <b>${tileName}</b>
         </div>
         <div style="font-size:11.5px;color:var(--mute);margin-top:2px">
           ${isPic ? `Hankin contact angle: <b>${st.angle}°</b> · Unit repeat lattice` : 'Active pattern mapped onto regular grid coordinates.'}
@@ -6541,8 +6762,8 @@ function renderPatModalContent(){
           ${isPic ? `
             <div style="font-size:11.5px;font-weight:600;color:var(--ink)">Elements to Include:</div>
             <div class="seg" style="width:100%">
-              <button class="${patIncludeMode==='both'?'on':''}" id="patIncBoth" style="flex:1">🌟 Both (Stars + Polys)</button>
-              <button class="${patIncludeMode==='star'?'on':''}" id="patIncStar" style="flex:1">⭐ Star Lines</button>
+              <button class="${patIncludeMode==='both'?'on':''}" id="patIncBoth" style="flex:1"><i class=ic data-i=star></i> Both (Stars + Polys)</button>
+              <button class="${patIncludeMode==='star'?'on':''}" id="patIncStar" style="flex:1"><i class=ic data-i=star></i> Star Lines</button>
               <button class="${patIncludeMode==='poly'?'on':''}" id="patIncPoly" style="flex:1">⬡ Contact Polys</button>
             </div>
           ` : ''}
@@ -6616,7 +6837,7 @@ function renderPatModalContent(){
   footer.innerHTML = `
     <button class="btn" id="patBtnCancel">Cancel</button>
     <span class="spacer"></span>
-    <button class="btn pri" id="patBtnApply">🎯 Load into Drawing Grid</button>
+    <button class="btn pri" id="patBtnApply"><i class=ic data-i=target></i> Load into Drawing Grid</button>
   `;
 
   $('patBtnCancel').onclick = closeAddPatternModal;
@@ -6912,7 +7133,7 @@ window.addEventListener('keydown', e => {
     if(stg && stg.classList.contains('fullscreen')){
       stg.classList.remove('fullscreen');
       const bfs = $('btnStageFullscreen');
-      if(bfs){ bfs.classList.remove('on'); bfs.innerHTML = '<span>⛶</span> Fullscreen'; }
+      if(bfs){ bfs.classList.remove('on'); bfs.innerHTML = '<span><i class=ic data-i=expand></i></span> Fullscreen'; }
       render();
     }
     return;
@@ -6960,6 +7181,22 @@ window.addEventListener('keydown', e => {
 /* go */
 load();buildLists();buildParams();render();sync();
 let rt; addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(render,120)});
+</script>
+<script>
+/* first-visit guide + header Reference menu behaviour */
+(function(){
+  try{
+    var h=document.getElementById('howto'), c=document.getElementById('howtoClose');
+    var seen=false; try{ seen=localStorage.getItem('pd-howto')==='1'; }catch(e){}
+    if(h && !seen) h.hidden=false;
+    if(c) c.onclick=function(){ if(h) h.hidden=true; try{ localStorage.setItem('pd-howto','1'); }catch(e){} };
+    var nav=document.getElementById('nav');
+    function closeMenus(){ document.querySelectorAll('.navmore[open]').forEach(function(d){ d.open=false; }); }
+    if(nav) nav.addEventListener('click', function(e){ if(e.target.closest('.navmenu a')) closeMenus(); });
+    document.addEventListener('click', function(e){ if(!e.target.closest('.navmore')) closeMenus(); });
+    document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeMenus(); });
+  }catch(e){}
+})();
 </script>
 </body>
 </html>
